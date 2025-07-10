@@ -1,6 +1,6 @@
 ---
 # based on https://github.com/mvdan/github-actions-golang
-name: CI
+name: test
 
 on:
   pull_request:
