@@ -1,6 +1,8 @@
 ---
 # based on https://github.com/mvdan/github-actions-golang
 name: test
+permissions:
+  contents: read
 
 on:
   pull_request:
