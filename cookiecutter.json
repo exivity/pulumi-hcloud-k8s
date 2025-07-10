@@ -1,0 +1,8 @@
+{
+  "project_name": "My Awesome Project",
+  "project_slug": "{{ cookiecutter.project_name.lower()|replace(' ', '_')|replace('-', '_')|replace('.', '_')|trim() }}",
+  "description": "Behold My Awesome Project!",
+  "go_module_path": "github.com/my-org/{{ cookiecutter.project_slug }}",
+  "pulumi_project_name": "{{ cookiecutter.project_slug }}",
+  "pulumi_stack": "dev"
+}

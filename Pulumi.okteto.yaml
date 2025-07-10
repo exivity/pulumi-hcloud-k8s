@@ -1,0 +1,137 @@
+config:
+  hcloud-k8s:talos:
+    image_version: v1.10.3
+    kubernetes_version: "1.33.0"
+    enable_longhorn: true
+    enable_local_storage: true
+    secretbox_encryption_secret:
+      secure: AAABAAXs0XSqFe18W2GdpusozjgadMAWL9JQsAz/9uLUEcpvWVaRZd+M3friBjqd6QHP3sVXyjAok2gqKUDx9w==
+  hcloud-k8s:network:
+    nameservers:
+      # Quad9 DNS
+      - "9.9.9.9"
+      - "2620:fe::fe"
+      # Google Public DNS
+      - "8.8.8.8"
+      - "2001:4860:4860::8888"
+  hcloud-k8s:firewall:
+    vpn_cidrs:
+      # TailScale DE
+      - "128.140.83.20/32"
+      - "2a01:4f8:c013:faa9::/64"
+      # TailScale Hel
+      - "37.27.250.95/32"
+  hcloud-k8s:control_plane:
+    node_pools:
+      - count: 1
+        server_size: cax11
+        arch: arm64
+        region: fsn1
+        labels:
+          node-role-storage: "true"
+  hcloud-k8s:node_pools:
+    node_pools:
+      # pool core components like CCM, CSI, AutoScaler, Okteto
+      - name: okteto
+        count: 1
+        server_size: cpx41
+        # server_size: cpx51
+        arch: amd64
+        region: fsn1
+        labels:
+          node-role-storage: "true"
+      # pool for the okteto developer
+      - name: okteto-dev-fsn1
+        count: 0
+        server_size: cx42
+        arch: amd64
+        region: fsn1
+        labels:
+          node-role-okteto-dev: "true"
+          # node-role-storage: "true"
+        auto_scaler:
+          min_count: 0
+          max_count: 3
+      - name: okteto-dev-nbg1
+        count: 0
+        server_size: cx42
+        arch: amd64
+        region: nbg1
+        labels:
+          node-role-okteto-dev: "true"
+          # node-role-storage: "true"
+        auto_scaler:
+          min_count: 0
+          max_count: 3
+      - name: okteto-dev-hel1
+        count: 0
+        server_size: cx42
+        arch: amd64
+        region: hel1
+        labels:
+          node-role-okteto-dev: "true"
+          # node-role-storage: "true"
+        auto_scaler:
+          min_count: 0
+          max_count: 3
+  hcloud-k8s:kubernetes:
+    hetzner_ccm:
+      enabled: true
+      version: 1.23.0
+      values:
+        nodeSelector:
+          node-role.kubernetes.io/control-plane: ""
+        additionalTolerations:
+          - key: "node-role.kubernetes.io/control-plane"
+            operator: "Equal"
+            effect: "NoSchedule"
+    cluster_auto_scaler:
+      enabled: true
+      version: 9.46.6
+      values:
+        nodeSelector:
+          node-role.kubernetes.io/control-plane: ""
+        tolerations:
+          - key: "node-role.kubernetes.io/control-plane"
+            operator: "Equal"
+            effect: "NoSchedule"
+    kubelet_serving_cert_approver:
+      enabled: true
+      version: v0.9.1
+    kubernetes_metrics_server:
+      enabled: true
+      version: 3.12.2
+      values:
+        nodeSelector:
+          node-role.kubernetes.io/control-plane: ""
+        tolerations:
+          - key: "node-role.kubernetes.io/control-plane"
+            operator: "Equal"
+            effect: "NoSchedule"
+    longhorn:
+      enabled: true
+      version: 1.8.1
+      values:
+        global:
+          tolerations:
+            - key: "node-role.kubernetes.io/control-plane"
+              operator: "Equal"
+              effect: "NoSchedule"
+        longhornUI:
+          nodeSelector:
+            node-role.kubernetes.io/control-plane: ""
+        defaultSettings:
+          kubernetesClusterAutoscalerEnabled: "true"
+          replicaAutoBalance: "best-effort"
+          nodeDrainPolicy: "always-allow"
+        persistence:
+          defaultClass: "true"
+          reclaimPolicy: "Delete"
+          defaultClassReplicaCount: "1"
+          defaultDataLocality: "best-effort"
+          migratable: "true"
+        ingress:
+          enabled: "true"
+          host: longhorn.hcloud.exivity.hosted.bier.host
+          annotations:
+            kubernetes.io/ingress.class: "okteto-controlplane-nginx"

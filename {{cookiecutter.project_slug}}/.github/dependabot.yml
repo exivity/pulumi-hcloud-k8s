@@ -1,0 +1,15 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    commit-message:
+      prefix: "deps(actions)"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "gomod"
+    commit-message:
+      prefix: "deps(go)"
+    directory: "/"
+    schedule:
+      interval: "weekly"

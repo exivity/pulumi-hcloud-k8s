@@ -1,0 +1,3 @@
+name: pulumi-hcloud-k8s
+description: Deploy a Kubernetes cluster on Hetzner Cloud using Pulumi
+runtime: go
