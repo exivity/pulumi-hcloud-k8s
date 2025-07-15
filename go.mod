@@ -10,7 +10,7 @@ require (
 	github.com/pulumi/pulumi-command/sdk v1.1.0
 	github.com/pulumi/pulumi-hcloud/sdk v1.23.0
 	github.com/pulumi/pulumi-kubernetes/sdk/v4 v4.23.0
-	github.com/pulumi/pulumi/sdk/v3 v3.181.0
+	github.com/pulumi/pulumi/sdk/v3 v3.182.0
 	github.com/pulumiverse/pulumi-talos/sdk v0.6.0
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/vuln v1.1.4
