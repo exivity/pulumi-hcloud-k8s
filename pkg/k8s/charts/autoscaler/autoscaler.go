@@ -1,7 +1,7 @@
 package autoscaler
 
 import (
-	"encoding/json"
+	"crypto/sha256"
 	"fmt"
 
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
@@ -34,69 +34,31 @@ type Taint struct {
 	Effect string `json:"effect"` // e.g. "NoExecute"
 }
 
-func (c *HCloudNodeConfig) ToJSON() (pulumi.StringOutput, error) {
-	labels, err := json.Marshal(c.Labels)
-	if err != nil {
-		return pulumi.String("").ToStringOutput(), err
-	}
-	taints, err := json.Marshal(c.Taints)
-	if err != nil {
-		return pulumi.String("").ToStringOutput(), err
-	}
+// ToJSON marshals the HCloudClusterConfig to JSON for handle pulumi serialization.
+func (c *HCloudClusterConfig) ToJSON() pulumi.StringOutput {
 
-	// Use pulumi.Apply to properly escape the CloudInit YAML for JSON
-	return pulumi.All(c.CloudInit, labels, taints).ApplyT(func(args []interface{}) string {
-		cloudInit := args[0].(string)
-		labelsJson := args[1].([]byte)
-		taintsJson := args[2].([]byte)
-
-		// JSON-escape the cloud-init YAML content
-		cloudInitJson, err := json.Marshal(cloudInit)
-		if err != nil {
-			return ""
+	nodeConfigs := map[string]interface{}{}
+	for name, config := range c.NodeConfigs {
+		nodeConfigs[name] = map[string]interface{}{
+			"cloudInit": config.CloudInit,
+			"labels":    config.Labels,
+			"taints":    config.Taints,
 		}
+	}
 
-		return fmt.Sprintf(`{
-	"cloudInit": %s,
-	"labels": %s,
-	"taints": %s
-}`,
-			cloudInitJson,
-			labelsJson,
-			taintsJson,
-		)
-	}).(pulumi.StringOutput), nil
+	return pulumi.JSONMarshal(map[string]interface{}{
+		"imagesForArch": map[string]interface{}{
+			"arm64": pulumi.Sprintf("%d", c.ImagesForArch.ARM64),
+			"amd64": pulumi.Sprintf("%d", c.ImagesForArch.AMD64),
+		},
+		"nodeConfigs": nodeConfigs,
+	})
 }
 
-// ToJSON marshals the HCloudClusterConfig to JSON for handle pulumi serialization.
-func (c *HCloudClusterConfig) ToJSON() (pulumi.StringOutput, error) {
-	nodeConfiguration := pulumi.Sprintf("")
-	nodeConfigurationInitialized := false
-
-	for node, nodeConfig := range c.NodeConfigs {
-		jsonNodeConfig, err := nodeConfig.ToJSON()
-		if err != nil {
-			return pulumi.String("").ToStringOutput(), err
-		}
-		nodeJson := pulumi.Sprintf(`"%s": %s`, node, jsonNodeConfig)
-
-		if nodeConfigurationInitialized == false {
-			nodeConfiguration = nodeJson
-			nodeConfigurationInitialized = true
-		} else {
-			nodeConfiguration = pulumi.Sprintf(`%s, %s`, nodeConfiguration, nodeJson)
-		}
-	}
-
-	return pulumi.Sprintf(`{
-    "imagesForArch": {
-        "arm64": "%d",
-        "amd64": "%d"
-    },
-    "nodeConfigs": %s
-}`,
-		c.ImagesForArch.ARM64,
-		c.ImagesForArch.AMD64,
-		nodeConfiguration,
-	), nil
+func hashJSON(jsonStr pulumi.StringOutput) pulumi.StringOutput {
+	// Use pulumi.Apply to compute the hash of the JSON string
+	return jsonStr.ApplyT(func(s string) (string, error) {
+		hash := fmt.Sprintf("%x", sha256.Sum256([]byte(s)))
+		return hash, nil
+	}).(pulumi.StringOutput)
 }

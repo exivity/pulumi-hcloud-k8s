@@ -115,10 +115,8 @@ func NewClusterAutoscaler(ctx *pulumi.Context, args *ClusterAutoscalerArgs, opts
 		},
 		NodeConfigs: nodeConfigs,
 	}
-	clusterConfigJSON, err := clusterConfig.ToJSON()
-	if err != nil {
-		return nil, err
-	}
+	clusterConfigJSON := clusterConfig.ToJSON()
+	clusterConfigJSONHash := hashJSON(clusterConfigJSON)
 
 	autoscalerSecret, err := corev1.NewSecret(ctx, "hcloud-autoscaler", &corev1.SecretArgs{
 		Metadata: &metav1.ObjectMetaArgs{
@@ -167,6 +165,7 @@ func NewClusterAutoscaler(ctx *pulumi.Context, args *ClusterAutoscalerArgs, opts
 		},
 		"extraEnv": pulumi.StringMap{
 			"HCLOUD_CLUSTER_CONFIG_FILE": pulumi.String("/etc/kubernetes/hcloud_cluster_config/HCLOUD_CLUSTER_CONFIG"),
+			"HCLOUD_CLUSTER_CONFIG_HASH": clusterConfigJSONHash, // Hash of the cluster config to detect changes
 		},
 		"extraVolumes": pulumi.Array{
 			pulumi.Map{
