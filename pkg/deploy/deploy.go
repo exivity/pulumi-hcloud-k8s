@@ -42,12 +42,31 @@ func NewHetznerTalosKubernetesCluster(ctx *pulumi.Context, name string, cfg *con
 		EnableLonghornSupport: cfg.Talos.EnableLonghorn,
 	})
 
+	enableARMIMages := false
+	enableX86IMages := false
+	for _, pool := range cfg.ControlPlane.NodePools {
+		if pool.Arch == image.ArchARM {
+			enableARMIMages = true
+		} else if pool.Arch == image.ArchX86 {
+			enableX86IMages = true
+		}
+	}
+	for _, pool := range cfg.NodePools.NodePools {
+		if pool.Arch == image.ArchARM {
+			enableARMIMages = true
+		} else if pool.Arch == image.ArchX86 {
+			enableX86IMages = true
+		}
+	}
+
 	images, err := image.NewImages(ctx, &image.ImagesArgs{
-		HetznerToken:  cfg.Hetzner.Token,
-		TalosVersion:  cfg.Talos.ImageVersion,
-		TalosImageID:  imageID,
-		ARMServerSize: cfg.Talos.GeneratorSizes.ARM,
-		X86ServerSize: cfg.Talos.GeneratorSizes.X86,
+		HetznerToken:         cfg.Hetzner.Token,
+		EnableARMImageUpload: enableARMIMages,
+		EnableX86ImageUpload: enableX86IMages,
+		TalosVersion:         cfg.Talos.ImageVersion,
+		TalosImageID:         imageID,
+		ARMServerSize:        cfg.Talos.GeneratorSizes.ARM,
+		X86ServerSize:        cfg.Talos.GeneratorSizes.X86,
 	}, pulumi.Parent(hetznerProvider))
 	if err != nil {
 		return nil, err

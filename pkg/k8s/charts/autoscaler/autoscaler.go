@@ -2,6 +2,7 @@ package autoscaler
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
@@ -43,15 +44,28 @@ func (c *HCloudNodeConfig) ToJSON() (pulumi.StringOutput, error) {
 		return pulumi.String("").ToStringOutput(), err
 	}
 
-	return pulumi.Sprintf(`{
-	"cloudInit": "%s",
+	// Use pulumi.Apply to properly escape the CloudInit YAML for JSON
+	return pulumi.All(c.CloudInit, labels, taints).ApplyT(func(args []interface{}) string {
+		cloudInit := args[0].(string)
+		labelsJson := args[1].([]byte)
+		taintsJson := args[2].([]byte)
+
+		// JSON-escape the cloud-init YAML content
+		cloudInitJson, err := json.Marshal(cloudInit)
+		if err != nil {
+			return ""
+		}
+
+		return fmt.Sprintf(`{
+	"cloudInit": %s,
 	"labels": %s,
 	"taints": %s
 }`,
-		c.CloudInit,
-		labels,
-		taints,
-	), nil
+			cloudInitJson,
+			labelsJson,
+			taintsJson,
+		)
+	}).(pulumi.StringOutput), nil
 }
 
 // ToJSON marshals the HCloudClusterConfig to JSON for handle pulumi serialization.

@@ -110,8 +110,8 @@ func NewClusterAutoscaler(ctx *pulumi.Context, args *ClusterAutoscalerArgs, opts
 
 	clusterConfig := HCloudClusterConfig{
 		ImagesForArch: ImagesForArch{
-			ARM64: imgARM.Snapshot.ImageId,
-			AMD64: imgX86.Snapshot.ImageId,
+			ARM64: imgARM.ImageId(),
+			AMD64: imgX86.ImageId(),
 		},
 		NodeConfigs: nodeConfigs,
 	}
@@ -165,11 +165,8 @@ func NewClusterAutoscaler(ctx *pulumi.Context, args *ClusterAutoscalerArgs, opts
 		"autoDiscovery": pulumi.Map{
 			"enabled": pulumi.Bool(false),
 		},
-	}
-
-	values := pulumi.Map{
 		"extraEnv": pulumi.StringMap{
-			"HCLOUD_CLUSTER_CONFIG_FILE": pulumi.String("/etc/kubernetes/hcloud_cluster_config.json"),
+			"HCLOUD_CLUSTER_CONFIG_FILE": pulumi.String("/etc/kubernetes/hcloud_cluster_config/HCLOUD_CLUSTER_CONFIG"),
 		},
 		"extraVolumes": pulumi.Array{
 			pulumi.Map{
@@ -182,11 +179,13 @@ func NewClusterAutoscaler(ctx *pulumi.Context, args *ClusterAutoscalerArgs, opts
 		"extraVolumeMounts": pulumi.Array{
 			pulumi.Map{
 				"name":      pulumi.String("hcloud-config"),
-				"mountPath": pulumi.String("/etc/kubernetes/hcloud_cluster_config.json"),
+				"mountPath": pulumi.String("/etc/kubernetes/hcloud-autoscaler-cluster-config"),
 				"subPath":   pulumi.String("hcloud-autoscaler-cluster-config"),
 			},
 		},
 	}
+
+	values := pulumi.Map{}
 	if args.Values != nil {
 		values = pulumi.ToMap(*args.Values)
 	}

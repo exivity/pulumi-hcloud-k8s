@@ -3,6 +3,7 @@ package image
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 
@@ -24,6 +25,10 @@ const (
 type ImagesArgs struct {
 	// Hetzner Token is the Hetzner Cloud API token.
 	HetznerToken string
+	// EnableARMImageUpload enables the upload of the ARM image.
+	EnableARMImageUpload bool
+	// EnableX86ImageUpload enables the upload of the x86 image.
+	EnableX86ImageUpload bool
 	// TalosVersion is the version of Talos to upload.
 	TalosVersion string
 	// TalosImageID is the ID of the Talos image to upload.
@@ -44,26 +49,33 @@ type Images struct {
 
 // NewImages uploads Talos images for both architectures to Hetzner Cloud
 func NewImages(ctx *pulumi.Context, args *ImagesArgs, opts ...pulumi.ResourceOption) (*Images, error) {
-	arm, err := NewImage(ctx, &ImageArgs{
-		HetznerToken: args.HetznerToken,
-		TalosVersion: args.TalosVersion,
-		TalosImageID: args.TalosImageID,
-		Arch:         ArchARM,
-		ServerSize:   args.ARMServerSize,
-	}, opts...)
-	if err != nil {
-		return nil, err
+	var err error
+	var arm *Image
+	if args.EnableARMImageUpload {
+		arm, err = NewImage(ctx, &ImageArgs{
+			HetznerToken: args.HetznerToken,
+			TalosVersion: args.TalosVersion,
+			TalosImageID: args.TalosImageID,
+			Arch:         ArchARM,
+			ServerSize:   args.ARMServerSize,
+		}, opts...)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	x86, err := NewImage(ctx, &ImageArgs{
-		HetznerToken: args.HetznerToken,
-		TalosVersion: args.TalosVersion,
-		TalosImageID: args.TalosImageID,
-		Arch:         ArchX86,
-		ServerSize:   args.X86ServerSize,
-	}, opts...)
-	if err != nil {
-		return nil, err
+	var x86 *Image
+	if args.EnableX86ImageUpload {
+		x86, err = NewImage(ctx, &ImageArgs{
+			HetznerToken: args.HetznerToken,
+			TalosVersion: args.TalosVersion,
+			TalosImageID: args.TalosImageID,
+			Arch:         ArchX86,
+			ServerSize:   args.X86ServerSize,
+		}, opts...)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &Images{
@@ -117,7 +129,7 @@ func NewImage(ctx *pulumi.Context, args *ImageArgs, opts ...pulumi.ResourceOptio
 	name := fmt.Sprintf("talos-%s-%s", arch, args.TalosVersion)
 
 	snapshot, err := hcloudimages.NewUploadedImage(ctx, name, &hcloudimages.UploadedImageArgs{
-		Description:      pulumi.String(name),
+		Description:      pulumi.Sprintf("%s - %s", name, time.Now().Format(time.RFC3339)),
 		HcloudToken:      pulumi.String(args.HetznerToken),
 		Architecture:     pulumi.String(arch),
 		ImageUrl:         pulumi.Sprintf("https://factory.talos.dev/image/%s/%s/hcloud-%s.raw.xz", args.TalosImageID, args.TalosVersion, args.Arch),
@@ -129,12 +141,22 @@ func NewImage(ctx *pulumi.Context, args *ImageArgs, opts ...pulumi.ResourceOptio
 			"stack":         pulumi.String(ctx.Stack()),
 			"project":       pulumi.String(ctx.Project()),
 		},
-	}, opts...)
+	}, append(opts,
+		pulumi.IgnoreChanges([]string{"description"}))...,
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Image{Snapshot: snapshot}, nil
+}
+
+func (i *Image) ImageId() pulumi.IntOutput {
+	if i != nil {
+		return i.Snapshot.ImageId
+	}
+
+	return pulumi.Int(0).ToIntOutput()
 }
 
 func (i *Images) GetImageByArch(arch CPUArchitecture) (*Image, error) {
