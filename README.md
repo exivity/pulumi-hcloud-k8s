@@ -8,6 +8,7 @@ Deploy and manage Kubernetes clusters on Hetzner Cloud using Talos Linux, powere
 - **Customizable Node Pools:** Define control plane and worker node pools with flexible sizing and configuration.
 - **Infrastructure as Code:** All cluster resources, networking, and firewall rules are managed in code.
 - **Makefile Automation:** Common tasks (build, lint, test, deploy) are automated via `make`.
+- **Talos Image Creation:** Uses [hcloud-upload-image](https://github.com/apricote/hcloud-upload-image) to create and upload Talos images to Hetzner Cloud.
 
 ## Requirements
 
