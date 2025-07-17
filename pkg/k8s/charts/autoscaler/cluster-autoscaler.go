@@ -179,8 +179,8 @@ func NewClusterAutoscaler(ctx *pulumi.Context, args *ClusterAutoscalerArgs, opts
 		"extraVolumeMounts": pulumi.Array{
 			pulumi.Map{
 				"name":      pulumi.String("hcloud-config"),
-				"mountPath": pulumi.String("/etc/kubernetes/hcloud-autoscaler-cluster-config"),
-				"subPath":   pulumi.String("hcloud-autoscaler-cluster-config"),
+				"mountPath": pulumi.String("/etc/kubernetes/hcloud_cluster_config"),
+				"readOnly":  pulumi.Bool(true),
 			},
 		},
 	}
