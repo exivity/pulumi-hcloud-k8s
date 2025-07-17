@@ -36,7 +36,6 @@ type Taint struct {
 
 // ToJSON marshals the HCloudClusterConfig to JSON for handle pulumi serialization.
 func (c *HCloudClusterConfig) ToJSON() pulumi.StringOutput {
-
 	nodeConfigs := map[string]interface{}{}
 	for name, config := range c.NodeConfigs {
 		nodeConfigs[name] = map[string]interface{}{

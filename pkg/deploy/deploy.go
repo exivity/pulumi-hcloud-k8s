@@ -27,7 +27,7 @@ type HetznerTalosKubernetesCluster struct {
 // It sets up the necessary Hetzner provider, images, network, control plane load balancer, placement group,
 // machine configuration manager, firewalls, control plane and worker node pools, and Kubernetes provider.
 // It also applies Talos upgrades and exports the kubeconfig and talosconfig.
-func NewHetznerTalosKubernetesCluster(ctx *pulumi.Context, name string, cfg *config.PulumiConfig) (*HetznerTalosKubernetesCluster, error) { //nolint:cyclop,funlen
+func NewHetznerTalosKubernetesCluster(ctx *pulumi.Context, name string, cfg *config.PulumiConfig) (*HetznerTalosKubernetesCluster, error) { //nolint:cyclop,funlen // TODO: refactor
 	out := &HetznerTalosKubernetesCluster{}
 
 	hetznerProvider, err := provider.NewProvider(ctx, "hetzner", &provider.ProviderArgs{
@@ -42,27 +42,20 @@ func NewHetznerTalosKubernetesCluster(ctx *pulumi.Context, name string, cfg *con
 		EnableLonghornSupport: cfg.Talos.EnableLonghorn,
 	})
 
-	enableARMIMages := false
-	enableX86IMages := false
+	// Extract all architectures from both control plane and worker node pools
+	var architectures []image.CPUArchitecture //nolint:prealloc
 	for _, pool := range cfg.ControlPlane.NodePools {
-		if pool.Arch == image.ArchARM {
-			enableARMIMages = true
-		} else if pool.Arch == image.ArchX86 {
-			enableX86IMages = true
-		}
+		architectures = append(architectures, pool.Arch)
 	}
 	for _, pool := range cfg.NodePools.NodePools {
-		if pool.Arch == image.ArchARM {
-			enableARMIMages = true
-		} else if pool.Arch == image.ArchX86 {
-			enableX86IMages = true
-		}
+		architectures = append(architectures, pool.Arch)
 	}
+	enableARMImages, enableX86Images := image.DetectRequiredArchitecturesFromList(architectures)
 
 	images, err := image.NewImages(ctx, &image.ImagesArgs{
 		HetznerToken:         cfg.Hetzner.Token,
-		EnableARMImageUpload: enableARMIMages,
-		EnableX86ImageUpload: enableX86IMages,
+		EnableARMImageUpload: enableARMImages,
+		EnableX86ImageUpload: enableX86Images,
 		TalosVersion:         cfg.Talos.ImageVersion,
 		TalosImageID:         imageID,
 		ARMServerSize:        cfg.Talos.GeneratorSizes.ARM,

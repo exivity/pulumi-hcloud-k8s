@@ -22,6 +22,19 @@ const (
 	ArchX86 CPUArchitecture = "amd64"
 )
 
+// DetectRequiredArchitecturesFromList determines which architectures are needed from a list of architectures
+func DetectRequiredArchitecturesFromList(architectures []CPUArchitecture) (enableARM, enableX86 bool) {
+	for _, arch := range architectures {
+		switch arch {
+		case ArchARM:
+			enableARM = true
+		case ArchX86:
+			enableX86 = true
+		}
+	}
+	return enableARM, enableX86
+}
+
 type ImagesArgs struct {
 	// Hetzner Token is the Hetzner Cloud API token.
 	HetznerToken string
