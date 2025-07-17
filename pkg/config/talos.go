@@ -74,9 +74,6 @@ type TalosConfig struct {
 	// Packer VM sizes for building x86 & ARM images
 	GeneratorSizes ImageGeneratorSizes `json:"generator_sizes"`
 
-	// Talos image build region
-	ImageBuildRegion string `json:"image_build_region" validate:"default=fsn1"`
-
 	// Whether to enable Longhorn CSI support
 	EnableLonghorn bool `json:"enable_longhorn"`
 
