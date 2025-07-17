@@ -3,8 +3,6 @@ config:
     image_version: v1.10.3
     kubernetes_version: "1.33.0"
     enable_longhorn: true
-    # secretbox_encryption_secret:
-    #   secure: AAABAAdOtLY4p9t7B/w/PheN4orhNrnXmwiA+GNArxuK/ufbGqkd5r8E1EZv+NSFoUzEkDt/DC42lQ0IPWN4qQ==
   hcloud-k8s:control_plane:
     node_pools:
       - count: 1

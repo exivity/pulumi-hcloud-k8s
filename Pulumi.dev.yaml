@@ -1,6 +1,6 @@
 config:
   hcloud-k8s:talos:
-    image_version: v1.10.3
+    image_version: v1.10.5
     kubernetes_version: "1.33.0"
   hcloud-k8s:firewall:
     open_talos_api: true
@@ -12,15 +12,7 @@ config:
         region: fsn1
   hcloud-k8s:node_pools:
     node_pools:
-      - name: core-intel
-        count: 1
-        server_size: cx22
-        arch: amd64
-        region: fsn1
-        auto_scaler:
-          min_count: 1
-          max_count: 3
-      - name: core-arm
+      - name: worker
         count: 1
         server_size: cax11
         arch: arm64

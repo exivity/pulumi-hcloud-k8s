@@ -1,12 +1,13 @@
 module github.com/exivity/pulumi-hcloud-k8s
 
-go 1.24.3
+go 1.24.5
 
 require (
 	dario.cat/mergo v1.0.2
 	github.com/exivity/pulumiconfig v0.3.1
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/hetznercloud/cli v1.51.0
+	github.com/linuxluigi/pulumi-hcloud-upload-image v0.0.0-20250716132220-8c4752d68233
 	github.com/pulumi/pulumi-command/sdk v1.1.0
 	github.com/pulumi/pulumi-hcloud/sdk v1.23.0
 	github.com/pulumi/pulumi-kubernetes/sdk/v4 v4.23.0
@@ -63,12 +64,11 @@ require (
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/hcl/v2 v2.23.0 // indirect
-	github.com/hetznercloud/hcloud-go/v2 v2.21.0 // indirect
+	github.com/hetznercloud/hcloud-go/v2 v2.22.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/jedib0t/go-pretty/v6 v6.6.7 // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
-	github.com/klauspost/compress v1.17.11 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
@@ -90,7 +90,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pkg/term v1.1.0 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/prometheus/client_golang v1.21.1 // indirect
+	github.com/prometheus/client_golang v1.22.0 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.62.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
@@ -118,19 +118,20 @@ require (
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/mock v0.5.2 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
-	golang.org/x/crypto v0.39.0 // indirect
+	golang.org/x/crypto v0.40.0 // indirect
 	golang.org/x/exp v0.0.0-20250218142911-aa4b98e5adaa // indirect
 	golang.org/x/mod v0.25.0 // indirect
-	golang.org/x/net v0.40.0 // indirect
-	golang.org/x/sync v0.15.0 // indirect
-	golang.org/x/sys v0.33.0 // indirect
+	golang.org/x/net v0.42.0 // indirect
+	golang.org/x/sync v0.16.0 // indirect
+	golang.org/x/sys v0.34.0 // indirect
 	golang.org/x/telemetry v0.0.0-20240522233618-39ace7a40ae7 // indirect
-	golang.org/x/term v0.32.0 // indirect
-	golang.org/x/text v0.26.0 // indirect
-	golang.org/x/tools v0.33.0 // indirect
+	golang.org/x/term v0.33.0 // indirect
+	golang.org/x/text v0.27.0 // indirect
+	golang.org/x/tools v0.34.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250219182151-9fdb1cabc7b2 // indirect
 	google.golang.org/grpc v1.70.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	lukechampine.com/frand v1.5.1 // indirect
+	pgregory.net/rapid v1.1.0 // indirect
 )
