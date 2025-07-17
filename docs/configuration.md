@@ -4,13 +4,6 @@ All cluster options are configured via Pulumi stack YAML files (e.g., `Pulumi.de
 
 ## Main Configuration Sections
 
-- `hcloud-k8s:hetzner`: Hetzner API token
-- `hcloud-k8s:network`: VPC, CIDRs, nameservers
-- `hcloud-k8s:firewall`: VPN CIDRs, open ports, custom rules
-- `hcloud-k8s:talos`: Talos/Kubernetes versions, image settings
-- `hcloud-k8s:control_plane`: Control plane node pools
-- `hcloud-k8s:node_pools`: Worker node pools
-- `hcloud-k8s:kubernetes`: In-cluster components (CCM, CSI, autoscaler, etc)
 
 ## Example
 
@@ -44,10 +37,3 @@ config:
 
 See [pkg/config](../pkg/config/) for all available fields and validation rules. Each config struct is documented in code.
 
-- [HetznerConfig](../pkg/config/hetzner.go)
-- [NetworkConfig](../pkg/config/network.go)
-- [FirewallConfig](../pkg/config/firewall.go)
-- [TalosConfig](../pkg/config/talos.go)
-- [ControlPlaneConfig](../pkg/config/control_plane.go)
-- [NodePoolsConfig](../pkg/config/node_pool.go)
-- [KubernetesConfig](../pkg/config/kubernetes.go)

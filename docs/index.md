@@ -4,7 +4,7 @@ Welcome to the documentation for deploying and managing Talos Linux Kubernetes c
 
 ## Documentation
 
-- [Quickstart](quickstart.md)
+- [Quickstart](../README.md)
 - [Architecture](architecture.md)
 - [Configuration](configuration.md)
 - [Development](development.md)

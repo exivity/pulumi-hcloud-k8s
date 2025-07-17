@@ -59,5 +59,4 @@ config:
       version: 1.8.1
 ```
 
----
 See [Configuration](configuration.md) for all options.

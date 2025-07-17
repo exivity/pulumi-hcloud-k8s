@@ -12,5 +12,4 @@ A: Edit the `node_pools` section in your stack config.
 **Q: Where can I find example configurations?**
 A: See [Examples](examples.md) and the sample `Pulumi.*.yaml` files in the repo.
 
----
 For more, open an issue or PR on GitHub.
