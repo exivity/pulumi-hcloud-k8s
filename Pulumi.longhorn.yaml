@@ -97,7 +97,7 @@ config:
               effect: "NoSchedule"
     cluster_auto_scaler:
       enabled: true
-      version: 9.46.6
+      version: 9.48.0
       values:
         nodeSelector:
           node-role-system: "true"
