@@ -3,7 +3,6 @@ package image
 import (
 	"errors"
 	"fmt"
-	"sync"
 
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 
@@ -135,21 +134,6 @@ func NewImage(ctx *pulumi.Context, args *ImageArgs, opts ...pulumi.ResourceOptio
 	}
 
 	return &Image{Snapshot: snapshot}, nil
-}
-
-func (i *Image) GetBuildIDString() string {
-	var buildID string
-	var wg sync.WaitGroup
-	wg.Add(1)
-
-	i.Snapshot.ImageId.ApplyT(func(output string) string {
-		buildID = output
-		defer wg.Done()
-		return output
-	})
-
-	wg.Wait()
-	return buildID
 }
 
 func (i *Images) GetImageByArch(arch CPUArchitecture) (*Image, error) {
