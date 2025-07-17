@@ -129,7 +129,7 @@ func NewImage(ctx *pulumi.Context, args *ImageArgs, opts ...pulumi.ResourceOptio
 			"stack":         pulumi.String(ctx.Stack()),
 			"project":       pulumi.String(ctx.Project()),
 		},
-	})
+	}, opts...)
 	if err != nil {
 		return nil, err
 	}
