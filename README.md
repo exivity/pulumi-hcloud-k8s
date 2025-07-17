@@ -38,6 +38,30 @@ This guide helps you get started with a new Hetzner Talos Kubernetes cluster usi
 - [talosctl](https://www.talos.dev/v1.10/talos-guides/install/talosctl/)
 - [Cookiecutter](https://cookiecutter.readthedocs.io/en/latest/README.html#installation)
 
+### Installation Instructions
+
+#### macOS (using Homebrew)
+
+```sh
+# Install all required tools
+brew install go
+brew install pulumi/tap/pulumi
+brew install siderolabs/tap/talosctl
+
+# Verify installations
+go version
+pulumi version
+talosctl version
+```
+
+#### Linux
+
+For Linux users, please refer to the official installation guides:
+
+- [Go](https://go.dev/doc/install)
+- [Pulumi CLI](https://www.pulumi.com/docs/install/)
+- [talosctl](https://www.talos.dev/v1.10/talos-guides/install/talosctl/)
+
 ### Create a New Project
 
 ```sh
