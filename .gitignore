@@ -21,9 +21,6 @@ talosconfig
 # Pulumi temp scripts (see pkg/talos/cli/upgrade.go)
 .pulumi-tmp/
 
-# Ignore generated Packer file in project root
-/hcloud.pkr.hcl
-
 ##########
 # Golang #
 ##########
