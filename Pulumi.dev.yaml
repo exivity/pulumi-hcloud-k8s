@@ -6,7 +6,7 @@ config:
     open_talos_api: true
   hcloud-k8s:control_plane:
     node_pools:
-      - count: 3
+      - count: 1
         server_size: cax11
         arch: arm64
         region: fsn1
