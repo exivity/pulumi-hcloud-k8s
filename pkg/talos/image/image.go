@@ -91,12 +91,13 @@ type ImageArgs struct {
 	ImageBuildRegion string
 }
 
-// Image represents the Packer command to upload a Talos image to Hetzner Cloud
+// Image represents the uploaded Talos image
+// It contains the Hetzner Cloud image snapshot.
 type Image struct {
 	Snapshot *hcloudimages.UploadedImage
 }
 
-// NewImage uploads a Talos image to Hetzner Cloud using Packer.
+// NewImage uploads a Talos image to Hetzner Cloud using the hcloud-upload-image package.
 func NewImage(ctx *pulumi.Context, args *ImageArgs, opts ...pulumi.ResourceOption) (*Image, error) {
 	if args.Arch != ArchARM && args.Arch != ArchX86 {
 		return nil, ErrUnknownArchitecture

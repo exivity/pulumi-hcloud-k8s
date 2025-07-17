@@ -5,7 +5,6 @@
 - `main.go` — Pulumi entrypoint
 - `pkg/` — Go packages for Hetzner, Talos, Kubernetes
 - `Makefile` — Automation for build, lint, test, deploy
-- `hcloud.pkr.hcl` — Packer template for Talos image
 - `docs/` — Documentation
 
 ## Common Tasks
