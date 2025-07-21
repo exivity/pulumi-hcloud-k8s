@@ -7,7 +7,7 @@ require (
 	github.com/exivity/pulumiconfig v0.3.1
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/hetznercloud/cli v1.51.0
-	github.com/linuxluigi/pulumi-hcloud-upload-image v0.0.0-20250716160048-d0310ff3010e
+	github.com/linuxluigi/pulumi-hcloud-upload-image v0.0.1
 	github.com/pulumi/pulumi-command/sdk v1.1.0
 	github.com/pulumi/pulumi-hcloud/sdk v1.23.0
 	github.com/pulumi/pulumi-kubernetes/sdk/v4 v4.23.0
