@@ -38,6 +38,12 @@ tidy: ## Cleans up go.mod and go.sum
 fmt: ## Formats all code with go fmt
 	@go fmt ./...
 
+lint: fmt $(GOLANGCI_LINT) download ## Lints all code with golangci-lint
+	@go tool -modfile=golangci-lint.mod golangci-lint run
+
+test: ## Runs all tests
+	@go test $(ARGS) ./...
+
 clean: ## Cleans up everything
 	@rm -rf bin
 

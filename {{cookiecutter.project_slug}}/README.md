@@ -16,6 +16,7 @@ This project deploys a Kubernetes cluster on Hetzner Cloud using Talos Linux and
 - [Pulumi CLI](https://www.pulumi.com/docs/install/)
 - [kubectl](https://kubernetes.io/docs/tasks/tools/)
 - [talosctl](https://www.talos.dev/v1.10/talos-guides/install/talosctl/)
+- - [golangci-lint](https://golangci-lint.run/) (for linting)
 
 ### Quickstart
 
@@ -90,4 +91,6 @@ For more configuration options, see the [Configuration Documentation](https://gi
 - `make talosconfig` - Export Talos config from Pulumi stack
 - `make k9s` - Run k9s with the current kubeconfig
 - `make talosctl` - Run talosctl with the current config
+- `make lint` - Lint code (requires golangci-lint)
+- `make test` - Run tests
 - `make clean` - Remove build artifacts
