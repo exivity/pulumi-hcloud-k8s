@@ -2,6 +2,7 @@ config:
   hcloud-k8s:talos:
     image_version: v1.10.5
     kubernetes_version: "1.33.0"
+    enable_longhorn: true
   hcloud-k8s:firewall:
     open_talos_api: true
   hcloud-k8s:control_plane:
@@ -9,25 +10,14 @@ config:
       - count: 1
         server_size: cax11
         arch: arm64
-        region: fsn1
-      - count: 1
-        server_size: cax11
-        arch: arm64
-        region: nbg1
-      - count: 1
-        server_size: cax11
-        arch: arm64
         region: hel1
   hcloud-k8s:node_pools:
     node_pools:
       - name: worker
-        count: 1
+        count: 3
         server_size: cax31
         arch: arm64
-        region: hel1
-        auto_scaler:
-          min_count: 1
-          max_count: 3
+        region: fsn1
   hcloud-k8s:kubernetes:
     hetzner_ccm:
       enabled: true
@@ -52,13 +42,8 @@ config:
     kubelet_serving_cert_approver:
       enabled: true
       version: v0.9.1
-    kubernetes_metrics_server:
+    longhorn:
       enabled: true
-      version: 3.12.2
-      values:
-        nodeSelector:
-          node-role.kubernetes.io/control-plane: ""
-        tolerations:
-          - key: "node-role.kubernetes.io/control-plane"
-            operator: "Equal"
-            effect: "NoSchedule"
+      version: 1.8.1
+      is_default_storage_class: true
+      reclaim_policy: Delete

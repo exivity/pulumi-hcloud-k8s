@@ -8,7 +8,6 @@ This guide helps you get started with a new Hetzner Talos Kubernetes cluster usi
 - [Pulumi CLI](www.pulumi.com/docs/iac/download-install/)
 - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/)
 - [talosctl](https://www.talos.dev/v1.10/talos-guides/install/talosctl/)
-- [packer](https://developer.hashicorp.com/packer/install)
 - [Cookiecutter](https://cookiecutter.readthedocs.io/en/latest/README.html#installation)
 
 ## Create a New Project

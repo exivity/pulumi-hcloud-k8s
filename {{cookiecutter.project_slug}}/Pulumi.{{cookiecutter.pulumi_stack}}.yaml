@@ -1,6 +1,6 @@
 config:
   hcloud-k8s:talos:
-    image_version: v1.10.3
+    image_version: v1.10.5
     kubernetes_version: "1.33.0"
   hcloud-k8s:firewall:
     open_talos_api: true
@@ -10,21 +10,21 @@ config:
         server_size: cax11
         arch: arm64
         region: fsn1
-  hcloud-k8s:node_pools:
-    node_pools:
-      - name: core-intel
-        count: 1
-        server_size: cx22
-        arch: amd64
-        region: fsn1
-        auto_scaler:
-          min_count: 1
-          max_count: 3
-      - name: core-arm
-        count: 1
+      - count: 1
         server_size: cax11
         arch: arm64
-        region: fsn1
+        region: nbg1
+      - count: 1
+        server_size: cax11
+        arch: arm64
+        region: hel1
+  hcloud-k8s:node_pools:
+    node_pools:
+      - name: worker
+        count: 1
+        server_size: cax31
+        arch: arm64
+        region: hel1
         auto_scaler:
           min_count: 1
           max_count: 3
@@ -41,7 +41,7 @@ config:
             effect: "NoSchedule"
     cluster_auto_scaler:
       enabled: true
-      version: 9.46.6
+      version: 9.48.0
       values:
         nodeSelector:
           node-role.kubernetes.io/control-plane: ""

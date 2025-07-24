@@ -1,8 +1,6 @@
 package autoscaler
 
 import (
-	"sync"
-
 	"dario.cat/mergo"
 	"github.com/exivity/pulumi-hcloud-k8s/pkg/config"
 	"github.com/exivity/pulumi-hcloud-k8s/pkg/hetzner/meta"
@@ -79,18 +77,8 @@ func NewClusterAutoscaler(ctx *pulumi.Context, args *ClusterAutoscalerArgs, opts
 			},
 		})
 
-		var wg sync.WaitGroup
-		wg.Add(1)
-		var machineConfiguration string
-		workerMachineConfiguration.ApplyT(func(output string) string {
-			machineConfiguration = output
-			defer wg.Done()
-			return output
-		})
-		wg.Wait()
-
 		nodeConfig := HCloudNodeConfig{
-			CloudInit: machineConfiguration,
+			CloudInit: workerMachineConfiguration,
 			Labels:    map[string]string{},
 			Taints:    []Taint{},
 		}
@@ -122,15 +110,13 @@ func NewClusterAutoscaler(ctx *pulumi.Context, args *ClusterAutoscalerArgs, opts
 
 	clusterConfig := HCloudClusterConfig{
 		ImagesForArch: ImagesForArch{
-			ARM64: imgARM.GetBuildIDString(),
-			AMD64: imgX86.GetBuildIDString(),
+			ARM64: imgARM.ImageId(),
+			AMD64: imgX86.ImageId(),
 		},
 		NodeConfigs: nodeConfigs,
 	}
-	clusterConfigBase64JSON, err := clusterConfig.ToBase64JSON()
-	if err != nil {
-		return nil, err
-	}
+	clusterConfigJSON := clusterConfig.ToJSON()
+	clusterConfigJSONHash := hashJSON(clusterConfigJSON)
 
 	autoscalerSecret, err := corev1.NewSecret(ctx, "hcloud-autoscaler", &corev1.SecretArgs{
 		Metadata: &metav1.ObjectMetaArgs{
@@ -138,10 +124,22 @@ func NewClusterAutoscaler(ctx *pulumi.Context, args *ClusterAutoscalerArgs, opts
 			Namespace: pulumi.String("kube-system"),
 		},
 		StringData: pulumi.StringMap{
-			"HCLOUD_TOKEN":          pulumi.String(args.HcloudToken),
-			"HCLOUD_CLUSTER_CONFIG": pulumi.String(clusterConfigBase64JSON),
-			"HCLOUD_NETWORK":        args.Network.Network.ID(),
-			"HCLOUD_FIREWALL":       args.Firewall.ID(),
+			"HCLOUD_TOKEN":    pulumi.String(args.HcloudToken),
+			"HCLOUD_NETWORK":  args.Network.Network.ID(),
+			"HCLOUD_FIREWALL": args.Firewall.ID(),
+		},
+	}, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	autoscalerClusterConfig, err := corev1.NewSecret(ctx, "hcloud-autoscaler-cluster-config", &corev1.SecretArgs{
+		Metadata: &metav1.ObjectMetaArgs{
+			Name:      pulumi.String("hcloud-autoscaler-cluster-config"),
+			Namespace: pulumi.String("kube-system"),
+		},
+		StringData: pulumi.StringMap{
+			"HCLOUD_CLUSTER_CONFIG": clusterConfigJSON,
 		},
 	}, opts...)
 	if err != nil {
@@ -165,6 +163,25 @@ func NewClusterAutoscaler(ctx *pulumi.Context, args *ClusterAutoscalerArgs, opts
 		"autoDiscovery": pulumi.Map{
 			"enabled": pulumi.Bool(false),
 		},
+		"extraEnv": pulumi.StringMap{
+			"HCLOUD_CLUSTER_CONFIG_FILE": pulumi.String("/etc/kubernetes/hcloud_cluster_config/HCLOUD_CLUSTER_CONFIG"),
+			"HCLOUD_CLUSTER_CONFIG_HASH": clusterConfigJSONHash, // Hash of the cluster config to detect changes
+		},
+		"extraVolumes": pulumi.Array{
+			pulumi.Map{
+				"name": pulumi.String("hcloud-config"),
+				"secret": pulumi.Map{
+					"secretName": pulumi.String("hcloud-autoscaler-cluster-config"),
+				},
+			},
+		},
+		"extraVolumeMounts": pulumi.Array{
+			pulumi.Map{
+				"name":      pulumi.String("hcloud-config"),
+				"mountPath": pulumi.String("/etc/kubernetes/hcloud_cluster_config"),
+				"readOnly":  pulumi.Bool(true),
+			},
+		},
 	}
 
 	values := pulumi.Map{}
@@ -187,6 +204,10 @@ func NewClusterAutoscaler(ctx *pulumi.Context, args *ClusterAutoscalerArgs, opts
 		Values:  values,
 	}, append(opts,
 		pulumi.Parent(autoscalerSecret),
+		pulumi.DependsOn([]pulumi.Resource{
+			autoscalerSecret,
+			autoscalerClusterConfig,
+		}),
 	)...)
 	if err != nil {
 		return nil, err

@@ -14,16 +14,12 @@ out/
 my_awesome_project/
 
 # Talos
-# talosctl gen config talos-k8s-hcloud-tutorial https://65.109.222.12:6443 ─--with-examples=false --with-docs=false
 controlplane.yaml
 worker.yaml
 talosconfig
 
 # Pulumi temp scripts (see pkg/talos/cli/upgrade.go)
 .pulumi-tmp/
-
-# Ignore generated Packer file in project root
-/hcloud.pkr.hcl
 
 ##########
 # Golang #

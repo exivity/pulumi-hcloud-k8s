@@ -84,8 +84,8 @@ func UpgradeTalos(ctx *pulumi.Context, name string, args *UpgradeTalosArgs, opts
 			"TALOSCONFIG_VALUE": args.Talosconfig,
 			"TALOS_VERSION":     pulumi.String(args.TalosVersion),
 			"TALOS_IMAGE":       pulumi.String(args.Images.TalosImageID),
-			"ARM_IMAGE":         armImage.GetBuildID(),
-			"X86_IMAGE":         x86Image.GetBuildID(),
+			"ARM_IMAGE":         pulumi.Sprintf("%d", armImage.ImageId()),
+			"X86_IMAGE":         pulumi.Sprintf("%d", x86Image.ImageId()),
 			"NODE_NAME":         pulumi.String(name),
 			"NODE_IP":           args.NodeIpv4Address,
 			"NODE_IMAGE": args.NodeImage.ApplyT(func(image *string) string {
@@ -94,8 +94,8 @@ func UpgradeTalos(ctx *pulumi.Context, name string, args *UpgradeTalosArgs, opts
 		},
 		Triggers: pulumi.Array{
 			pulumi.String(args.TalosVersion),
-			armImage.GetBuildID(),
-			x86Image.GetBuildID(),
+			armImage.ImageId(),
+			x86Image.ImageId(),
 			args.NodeIpv4Address,
 			args.NodeImage,
 		},

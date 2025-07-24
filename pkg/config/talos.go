@@ -1,6 +1,6 @@
 package config
 
-// ImageGeneratorSizes holds the two supported packer VM sizes.
+// ImageGeneratorSizes holds the two supported VM sizes.
 type ImageGeneratorSizes struct {
 	X86 string `json:"x86" validate:"default=cx22"`
 	ARM string `json:"arm" validate:"default=cax11"`
@@ -71,11 +71,8 @@ type TalosConfig struct {
 	// Defaults to "720h" (30 days).
 	K8sCertificateRenewalDuration string `json:"k8s_certificate_renewal_duration" validate:"default=720h"`
 
-	// Packer VM sizes for building x86 & ARM images
+	// VM sizes for building x86 & ARM images
 	GeneratorSizes ImageGeneratorSizes `json:"generator_sizes"`
-
-	// Talos image build region
-	ImageBuildRegion string `json:"image_build_region" validate:"default=fsn1"`
 
 	// Whether to enable Longhorn CSI support
 	EnableLonghorn bool `json:"enable_longhorn"`

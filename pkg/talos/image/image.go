@@ -1,23 +1,14 @@
 package image
 
 import (
-	_ "embed"
 	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
-	"regexp"
-	"sync"
+	"time"
 
-	"github.com/pulumi/pulumi-command/sdk/go/command/local"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
+
+	"github.com/exivity/pulumi-hcloud-upload-image/sdk/go/pulumi-hcloud-upload-image/hcloudimages"
 )
-
-//go:embed hcloud.pkr.hcl
-var hcloudPkrHcl []byte
-
-const packerFileName = "hcloud.pkr.hcl"
-const packerFilePerm = 0o600
 
 var ErrUnknownArchitecture = errors.New("unknown architecture")
 
@@ -34,6 +25,10 @@ const (
 type ImagesArgs struct {
 	// Hetzner Token is the Hetzner Cloud API token.
 	HetznerToken string
+	// EnableARMImageUpload enables the upload of the ARM image.
+	EnableARMImageUpload bool
+	// EnableX86ImageUpload enables the upload of the x86 image.
+	EnableX86ImageUpload bool
 	// TalosVersion is the version of Talos to upload.
 	TalosVersion string
 	// TalosImageID is the ID of the Talos image to upload.
@@ -42,9 +37,6 @@ type ImagesArgs struct {
 	ARMServerSize string
 	// X86ServerSize is the server type to use for the image upload. The size muss match the architecture.
 	X86ServerSize string
-	// ImageBuildRegion is the region to use for the image upload.
-	// This is the region where the server will be created.
-	ImageBuildRegion string
 }
 
 // Images represents the uploaded Talos images for both architectures
@@ -57,28 +49,33 @@ type Images struct {
 
 // NewImages uploads Talos images for both architectures to Hetzner Cloud
 func NewImages(ctx *pulumi.Context, args *ImagesArgs, opts ...pulumi.ResourceOption) (*Images, error) {
-	arm, err := NewImage(ctx, &ImageArgs{
-		HetznerToken:     args.HetznerToken,
-		TalosVersion:     args.TalosVersion,
-		TalosImageID:     args.TalosImageID,
-		Arch:             ArchARM,
-		ServerSize:       args.ARMServerSize,
-		ImageBuildRegion: args.ImageBuildRegion,
-	}, opts...)
-	if err != nil {
-		return nil, err
+	var err error
+	var arm *Image
+	if args.EnableARMImageUpload {
+		arm, err = NewImage(ctx, &ImageArgs{
+			HetznerToken: args.HetznerToken,
+			TalosVersion: args.TalosVersion,
+			TalosImageID: args.TalosImageID,
+			Arch:         ArchARM,
+			ServerSize:   args.ARMServerSize,
+		}, opts...)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	x86, err := NewImage(ctx, &ImageArgs{
-		HetznerToken:     args.HetznerToken,
-		TalosVersion:     args.TalosVersion,
-		TalosImageID:     args.TalosImageID,
-		Arch:             ArchX86,
-		ServerSize:       args.X86ServerSize,
-		ImageBuildRegion: args.ImageBuildRegion,
-	}, opts...)
-	if err != nil {
-		return nil, err
+	var x86 *Image
+	if args.EnableX86ImageUpload {
+		x86, err = NewImage(ctx, &ImageArgs{
+			HetznerToken: args.HetznerToken,
+			TalosVersion: args.TalosVersion,
+			TalosImageID: args.TalosImageID,
+			Arch:         ArchX86,
+			ServerSize:   args.X86ServerSize,
+		}, opts...)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &Images{
@@ -106,84 +103,60 @@ type ImageArgs struct {
 	ImageBuildRegion string
 }
 
-// Image represents the Packer command to upload a Talos image to Hetzner Cloud
+// Image represents the uploaded Talos image
+// It contains the Hetzner Cloud image snapshot.
 type Image struct {
-	Command *local.Command
+	Snapshot *hcloudimages.UploadedImage
 }
 
-// writePackerFileToProjectRoot writes the embedded hcloud.pkr.hcl to the project root
-func writePackerFileToProjectRoot() (string, error) {
-	cwd, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-	file := filepath.Join(cwd, packerFileName)
-	if err := os.WriteFile(file, hcloudPkrHcl, packerFilePerm); err != nil {
-		return "", err
-	}
-	return file, nil
-}
-
-// NewImage uploads a Talos image to Hetzner Cloud using Packer.
+// NewImage uploads a Talos image to Hetzner Cloud using the hcloud-upload-image package.
 func NewImage(ctx *pulumi.Context, args *ImageArgs, opts ...pulumi.ResourceOption) (*Image, error) {
 	if args.Arch != ArchARM && args.Arch != ArchX86 {
 		return nil, ErrUnknownArchitecture
 	}
 
-	if _, err := writePackerFileToProjectRoot(); err != nil {
-		return nil, err
+	// set arch for uploaded image
+	var arch string
+	switch args.Arch {
+	case ArchARM:
+		arch = "arm"
+	case ArchX86:
+		arch = "x86"
+	default:
+		return nil, ErrUnknownArchitecture
 	}
 
-	snapshotName := fmt.Sprintf("talos-%s-%s", args.Arch, args.TalosVersion)
+	name := fmt.Sprintf("talos-%s-%s", arch, args.TalosVersion)
 
-	command, err := local.NewCommand(ctx, snapshotName, &local.CommandArgs{
-		Create: pulumi.String(fmt.Sprintf(`packer init . && packer build -var 'talos_image_id=%s' -var 'talos_version=%s' -var 'arch=%s' -var 'server_type=%s' -var 'server_location=%s' -var 'snapshot_name=%s' .`, args.TalosImageID, args.TalosVersion, args.Arch, args.ServerSize, args.ImageBuildRegion, snapshotName)),
-		Delete: pulumi.String(fmt.Sprintf(`
-IMAGE_ID=$(go run github.com/hetznercloud/cli/cmd/hcloud image list --type snapshot -o json | jq -r '.[] | select(.description=="%s") | .id')
-if [ -n "$IMAGE_ID" ]; then
-    go run github.com/hetznercloud/cli/cmd/hcloud image delete "$IMAGE_ID"
-    echo "Deleted image with ID: $IMAGE_ID"
-else
-    echo "Image not found, skipping delete."
-fi
-`, snapshotName)),
-		Environment: pulumi.StringMap{
-			"HCLOUD_TOKEN": pulumi.String(args.HetznerToken),
+	snapshot, err := hcloudimages.NewUploadedImage(ctx, name, &hcloudimages.UploadedImageArgs{
+		Description:      pulumi.Sprintf("%s - %s", name, time.Now().Format(time.RFC3339)),
+		HcloudToken:      pulumi.String(args.HetznerToken),
+		Architecture:     pulumi.String(arch),
+		ImageUrl:         pulumi.Sprintf("https://factory.talos.dev/image/%s/%s/hcloud-%s.raw.xz", args.TalosImageID, args.TalosVersion, args.Arch),
+		ImageCompression: pulumi.StringPtr("xz"),
+		ServerType:       pulumi.String(args.ServerSize),
+		Labels: pulumi.StringMap{
+			"talos-version": pulumi.String(args.TalosVersion),
+			"arch":          pulumi.String(string(args.Arch)),
+			"stack":         pulumi.String(ctx.Stack()),
+			"project":       pulumi.String(ctx.Project()),
 		},
-	}, append(opts, pulumi.ReplaceOnChanges([]string{"create", "delete"}))...)
+	}, append(opts,
+		pulumi.IgnoreChanges([]string{"description"}))...,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Image{Command: command}, nil
+	return &Image{Snapshot: snapshot}, nil
 }
 
-func (u *Image) GetBuildID() pulumi.StringOutput {
-	return u.Command.Stdout.ApplyT(func(output string) string {
-		// Define a regex pattern to capture the build ID (e.g., "id=217055019")
-		re := regexp.MustCompile(`\(ID:\s*(\d+)\)`)
-		matches := re.FindStringSubmatch(output)
+func (i *Image) ImageId() pulumi.IntOutput {
+	if i != nil {
+		return i.Snapshot.ImageId
+	}
 
-		if len(matches) > 1 {
-			return matches[1] // Return the captured ID
-		}
-		return "" // Return empty if no match
-	}).(pulumi.StringOutput)
-}
-
-func (u *Image) GetBuildIDString() string {
-	var buildID string
-	var wg sync.WaitGroup
-	wg.Add(1)
-
-	u.GetBuildID().ApplyT(func(output string) string {
-		buildID = output
-		defer wg.Done()
-		return output
-	})
-
-	wg.Wait()
-	return buildID
+	return pulumi.Int(0).ToIntOutput()
 }
 
 func (i *Images) GetImageByArch(arch CPUArchitecture) (*Image, error) {
@@ -195,4 +168,17 @@ func (i *Images) GetImageByArch(arch CPUArchitecture) (*Image, error) {
 	default:
 		return nil, ErrUnknownArchitecture
 	}
+}
+
+// DetectRequiredArchitecturesFromList determines which architectures are needed from a list of architectures
+func DetectRequiredArchitecturesFromList(architectures []CPUArchitecture) (enableARM, enableX86 bool) {
+	for _, arch := range architectures {
+		switch arch {
+		case ArchARM:
+			enableARM = true
+		case ArchX86:
+			enableX86 = true
+		}
+	}
+	return enableARM, enableX86
 }

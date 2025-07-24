@@ -27,7 +27,7 @@ type HetznerTalosKubernetesCluster struct {
 // It sets up the necessary Hetzner provider, images, network, control plane load balancer, placement group,
 // machine configuration manager, firewalls, control plane and worker node pools, and Kubernetes provider.
 // It also applies Talos upgrades and exports the kubeconfig and talosconfig.
-func NewHetznerTalosKubernetesCluster(ctx *pulumi.Context, name string, cfg *config.PulumiConfig) (*HetznerTalosKubernetesCluster, error) { //nolint:cyclop,funlen
+func NewHetznerTalosKubernetesCluster(ctx *pulumi.Context, name string, cfg *config.PulumiConfig) (*HetznerTalosKubernetesCluster, error) { //nolint:cyclop,funlen // TODO: refactor
 	out := &HetznerTalosKubernetesCluster{}
 
 	hetznerProvider, err := provider.NewProvider(ctx, "hetzner", &provider.ProviderArgs{
@@ -42,13 +42,24 @@ func NewHetznerTalosKubernetesCluster(ctx *pulumi.Context, name string, cfg *con
 		EnableLonghornSupport: cfg.Talos.EnableLonghorn,
 	})
 
+	// Extract all architectures from both control plane and worker node pools
+	var architectures []image.CPUArchitecture //nolint:prealloc
+	for _, pool := range cfg.ControlPlane.NodePools {
+		architectures = append(architectures, pool.Arch)
+	}
+	for _, pool := range cfg.NodePools.NodePools {
+		architectures = append(architectures, pool.Arch)
+	}
+	enableARMImages, enableX86Images := image.DetectRequiredArchitecturesFromList(architectures)
+
 	images, err := image.NewImages(ctx, &image.ImagesArgs{
-		HetznerToken:     cfg.Hetzner.Token,
-		TalosVersion:     cfg.Talos.ImageVersion,
-		TalosImageID:     imageID,
-		ARMServerSize:    cfg.Talos.GeneratorSizes.ARM,
-		X86ServerSize:    cfg.Talos.GeneratorSizes.X86,
-		ImageBuildRegion: cfg.Talos.ImageBuildRegion,
+		HetznerToken:         cfg.Hetzner.Token,
+		EnableARMImageUpload: enableARMImages,
+		EnableX86ImageUpload: enableX86Images,
+		TalosVersion:         cfg.Talos.ImageVersion,
+		TalosImageID:         imageID,
+		ARMServerSize:        cfg.Talos.GeneratorSizes.ARM,
+		X86ServerSize:        cfg.Talos.GeneratorSizes.X86,
 	}, pulumi.Parent(hetznerProvider))
 	if err != nil {
 		return nil, err

@@ -103,7 +103,7 @@ func NewNodePool(ctx *pulumi.Context, name string, args *NodePoolArgs, opts ...p
 
 		server, err := hcloud.NewServer(ctx, nodeName, &hcloud.ServerArgs{
 			Name:       pulumi.String(nodeName),
-			Image:      img.GetBuildID(),
+			Image:      pulumi.Sprintf("%d", img.ImageId()),
 			ServerType: pulumi.String(args.ServerSize),
 			Location:   pulumi.String(args.Region),
 			Backups:    pulumi.Bool(args.EnableBackup),

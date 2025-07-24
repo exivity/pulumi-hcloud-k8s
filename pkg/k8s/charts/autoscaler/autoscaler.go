@@ -1,8 +1,10 @@
 package autoscaler
 
 import (
-	"encoding/base64"
-	"encoding/json"
+	"crypto/sha256"
+	"fmt"
+
+	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
 // HCloudClusterConfig is the root of the Hetzner cluster‐config.
@@ -14,15 +16,15 @@ type HCloudClusterConfig struct {
 
 // ImagesForArch selects which image to use per CPU architecture.
 type ImagesForArch struct {
-	ARM64 string `json:"arm64"` // e.g. "ubuntu-20.04"
-	AMD64 string `json:"amd64"` // e.g. "ubuntu-20.04"
+	ARM64 pulumi.IntOutput `json:"arm64"`
+	AMD64 pulumi.IntOutput `json:"amd64"`
 }
 
 // HCloudNodeConfig holds the per-pool cloud-init, labels and taints.
 type HCloudNodeConfig struct {
-	CloudInit string            `json:"cloudInit"` // raw cloud-init YAML (not double-base64'd)
-	Labels    map[string]string `json:"labels"`
-	Taints    []Taint           `json:"taints"`
+	CloudInit pulumi.StringOutput `json:"cloudInit"` // raw cloud-init YAML (not double-base64'd)
+	Labels    map[string]string   `json:"labels"`
+	Taints    []Taint             `json:"taints"`
 }
 
 // Taint maps exactly to a Kubernetes taint spec.
@@ -32,16 +34,30 @@ type Taint struct {
 	Effect string `json:"effect"` // e.g. "NoExecute"
 }
 
-// ToBase64JSON marshals the HCloudClusterConfig to JSON and returns
-// a Base64 encoding of that JSON.
-func (c *HCloudClusterConfig) ToBase64JSON() (string, error) {
-	// 1) Marshal to JSON
-	rawJSON, err := json.Marshal(c)
-	if err != nil {
-		return "", err
+// ToJSON marshals the HCloudClusterConfig to JSON for handle pulumi serialization.
+func (c *HCloudClusterConfig) ToJSON() pulumi.StringOutput {
+	nodeConfigs := map[string]interface{}{}
+	for name, config := range c.NodeConfigs {
+		nodeConfigs[name] = map[string]interface{}{
+			"cloudInit": config.CloudInit,
+			"labels":    config.Labels,
+			"taints":    config.Taints,
+		}
 	}
 
-	// 2) Base64-encode the JSON
-	encoded := base64.StdEncoding.EncodeToString(rawJSON)
-	return encoded, nil
+	return pulumi.JSONMarshal(map[string]interface{}{
+		"imagesForArch": map[string]interface{}{
+			"arm64": pulumi.Sprintf("%d", c.ImagesForArch.ARM64),
+			"amd64": pulumi.Sprintf("%d", c.ImagesForArch.AMD64),
+		},
+		"nodeConfigs": nodeConfigs,
+	})
+}
+
+func hashJSON(jsonStr pulumi.StringOutput) pulumi.StringOutput {
+	// Use pulumi.Apply to compute the hash of the JSON string
+	return jsonStr.ApplyT(func(s string) (string, error) {
+		hash := fmt.Sprintf("%x", sha256.Sum256([]byte(s)))
+		return hash, nil
+	}).(pulumi.StringOutput)
 }
