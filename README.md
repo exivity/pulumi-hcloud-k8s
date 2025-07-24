@@ -52,6 +52,8 @@ All Helm chart components are configured with sensible defaults but remain fully
 
 ## Requirements
 
+> **💡 Recommendation:** Create a dedicated Hetzner Cloud project for each cluster deployment to ensure proper resource isolation and billing separation.
+
 Install the following tools before using this project:
 
 - [Go](https://golang.org/) (for Pulumi program)
@@ -103,6 +105,8 @@ For Linux users, please refer to the official installation guides:
 - [talosctl](https://www.talos.dev/v1.10/talos-guides/install/talosctl/)
 
 ### Create a New Project
+
+> **💡 Recommendation:** Use a dedicated Hetzner Cloud project for each cluster deployment to ensure proper resource isolation and billing separation.
 
 ```sh
 cookiecutter https://github.com/exivity/pulumi-hcloud-k8s
