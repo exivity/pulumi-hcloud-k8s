@@ -32,9 +32,6 @@ talosctl: talosconfig ## Run talosctl for the current cluster
 download: ## Downloads the dependencies
 	@go mod download
 
-lint: fmt $(GOLANGCI_LINT) download ## Lints all code with golangci-lint
-	@go tool -modfile=golangci-lint.mod golangci-lint run
-
 fmt: ## Formats all code with go fmt
 	@go fmt ./...
 
