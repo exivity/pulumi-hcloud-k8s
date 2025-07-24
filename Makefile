@@ -39,6 +39,7 @@ download: ## Downloads the dependencies
 
 tidy: ## Cleans up go.mod and go.sum
 	@go mod tidy
+	@go mod tidy -modfile=golangci-lint.mod
 
 fmt: ## Formats all code with go fmt
 	@go fmt ./...
