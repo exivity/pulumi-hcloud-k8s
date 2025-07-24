@@ -6,41 +6,65 @@
 
 {{ cookiecutter.description }}
 
-## Usage
+> **💡 Recommendation:** Use a dedicated Hetzner Cloud project for each cluster deployment to ensure proper resource isolation and billing separation.
 
-This project deploys a Kubernetes cluster on Hetzner Cloud using Talos Linux and Pulumi (Go).
+## 🔋 What's Included
 
-### Prerequisites
+This **experimental** project comes pre-configured with essential Kubernetes components for Hetzner Cloud:
 
-- [Go](https://go.dev/doc/install)
+- **🚀 Cluster Autoscaler:** Auto-scales worker nodes based on demand
+- **☁️ Hetzner Cloud Controller Manager (CCM):** Native Hetzner integration  
+- **💾 Hetzner CSI Driver:** Persistent volume support with encryption
+- **📊 Kubernetes Metrics Server:** For HPA and resource monitoring
+- **🔐 Kubelet Serving Certificate Approver:** Automated certificate management
+- **🔥 Firewall Management:** Automated security rules
+- **📦 Longhorn Storage (Optional):** Distributed block storage
+- **🏗️ Multi-Architecture Support:** ARM64 & AMD64 with automatic image selection
+
+All components can be customized through Helm values and configuration overrides.
+
+## Requirements
+
+Install the following tools to manage this cluster:
+
+- [Go](https://go.dev/doc/install) (for Pulumi program)
 - [Pulumi CLI](https://www.pulumi.com/docs/install/)
 - [kubectl](https://kubernetes.io/docs/tasks/tools/)
 - [talosctl](https://www.talos.dev/v1.10/talos-guides/install/talosctl/)
-- - [golangci-lint](https://golangci-lint.run/) (for linting)
+- [golangci-lint](https://golangci-lint.run/) (for linting)
 
-### Quickstart
+Optional but recommended:
 
-1. Initialize Go module (done automatically by the template):
+- [k9s](https://k9scli.io/) (Kubernetes CLI UI)
+- [helm](https://helm.sh/) (for Helm chart management)
+
+### Installation Instructions
+
+#### macOS & Linux (using Homebrew)
+
+```sh
+# Install all required tools
+brew install go pulumi kubectl k9s helm
+brew install pulumi/tap/pulumi
+brew install siderolabs/tap/talosctl
+
+# Verify installations
+go version && pulumi version && kubectl version --client && talosctl version
+```
+
+## Cluster Management
+
+This section covers how to manage your Kubernetes cluster deployment.
+
+### Initial Setup
+
+1. Select your Pulumi stack:
 
    ```sh
-   go mod init {{ cookiecutter.go_module_path }}
+   pulumi stack select {{ cookiecutter.pulumi_stack }}
    ```
 
-2. Download dependencies:
-
-   ```sh
-   make download
-   ```
-
-3. Set up your Pulumi stack:
-
-   ```sh
-   pulumi stack init {{ cookiecutter.pulumi_stack }}
-   ```
-
-4. Configure your secrets and settings:
-
-   Add your Hetzner Cloud API token:
+2. Configure your Hetzner Cloud API tokens:
 
    ```sh
    # Set the Hetzner Cloud API token for managing resources
@@ -49,23 +73,27 @@ This project deploys a Kubernetes cluster on Hetzner Cloud using Talos Linux and
    pulumi config set --path hcloud-k8s:kubernetes.hcloud_token --secret
    ```
 
-   Then edit `Pulumi.{{ cookiecutter.pulumi_stack }}.yaml` for additional configuration.
+3. Review and customize your configuration in `Pulumi.{{ cookiecutter.pulumi_stack }}.yaml`.
 
-5. Deploy (requires two steps):
+### Deploy Your Cluster
 
-   ```sh
-   pulumi up --yes
-   ```
+Deploy the cluster (requires two steps):
 
-   This first deployment creates the Kubernetes cluster, node pools, and Talos configuration. It will not install applications or Helm charts on the first run since the cluster must be up and running first.
+```sh
+pulumi up --yes
+```
 
-   After the first deployment completes, run again to install the applications:
+This first deployment creates the Kubernetes cluster, node pools, and Talos configuration. It will not install applications or Helm charts on the first run since the cluster must be up and running first.
 
-   ```sh
-   pulumi up --yes
-   ```
+After the first deployment completes, run again to install the applications:
+
+```sh
+pulumi up --yes
+```
 
 ### Access Your Cluster
+
+#### Get Cluster Credentials
 
 Export kubeconfig and talosconfig:
 
@@ -74,11 +102,61 @@ make kubeconfig
 make talosconfig
 ```
 
-Access the cluster using `k9s`:
+The kubeconfig will be saved as `{{ cookiecutter.pulumi_stack }}.kubeconfig.yml` and talosconfig as `{{ cookiecutter.pulumi_stack }}.talosconfig.json`.
+
+#### Access with kubectl
+
+```sh
+kubectl --kubeconfig ./{{ cookiecutter.pulumi_stack }}.kubeconfig.yml get nodes
+```
+
+#### Access with k9s (Recommended)
+
+Launch k9s to manage your cluster:
 
 ```sh
 make k9s
 ```
+
+#### Access with Talos
+
+Use talosctl to manage Talos nodes:
+
+```sh
+make talosctl dashboard
+```
+
+### Common Operations
+
+#### Update Cluster Configuration
+
+1. Edit `Pulumi.{{ cookiecutter.pulumi_stack }}.yaml`
+2. Run `pulumi up` to apply changes
+
+#### Scale Node Pools
+
+Edit the node pool configuration in your Pulumi YAML file and run:
+
+```sh
+pulumi up
+```
+
+#### Update Kubernetes/Talos Versions
+
+1. Update versions in `Pulumi.{{ cookiecutter.pulumi_stack }}.yaml`
+2. Run `pulumi up` to apply updates
+
+#### Monitor Cluster
+
+- **k9s**: `make k9s` (recommended)
+- **kubectl**: `kubectl --kubeconfig ./{{ cookiecutter.pulumi_stack }}.kubeconfig.yml get pods -A`
+- **Talos Dashboard**: `make talosctl dashboard`
+
+#### Troubleshooting
+
+- **Check cluster status**: `make talosctl health`
+- **View cluster logs**: `make talosctl logs`
+- **Check Pulumi state**: `pulumi stack`
 
 For more configuration options, see the [Configuration Documentation](https://github.com/exivity/pulumi-hcloud-k8s/blob/main/docs/configuration.md).
 
