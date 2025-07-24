@@ -4,13 +4,11 @@
 [![Made with Go](https://img.shields.io/badge/Made%20with-Go-00ADD8?logo=go&logoColor=white)](https://golang.org/)
 [![exivity/pulumi-hcloud-k8s](https://img.shields.io/github/stars/exivity/pulumi-hcloud-k8s?style=social&label=exivity%2Fpulumi-hcloud-k8s)](https://github.com/exivity/pulumi-hcloud-k8s)
 
-> This template uses the [exivity/pulumi-hcloud-k8s](https://github.com/exivity/pulumi-hcloud-k8s) library for Hetzner Kubernetes deployments with Pulumi and Talos.
-
 {{ cookiecutter.description }}
 
 ## Usage
 
-This project is generated from a Cookiecutter template for a Pulumi Go deployment on Hetzner using Talos.
+This project deploys a Kubernetes cluster on Hetzner Cloud using Talos Linux and Pulumi (Go).
 
 ### Prerequisites
 
