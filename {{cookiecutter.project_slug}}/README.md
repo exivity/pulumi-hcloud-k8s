@@ -139,7 +139,14 @@ make k9s
 Use talosctl to manage Talos nodes:
 
 ```sh
-make talosctl dashboard
+# Get cluster information
+make talosctl cluster show
+
+# Check cluster health  
+make talosctl health --server=false
+
+# View cluster resources
+make talosctl get members
 ```
 
 ### Common Operations
@@ -166,12 +173,16 @@ pulumi up
 
 - **k9s**: `make k9s` (recommended)
 - **kubectl**: `kubectl --kubeconfig ./{{ cookiecutter.pulumi_stack }}.kubeconfig.yml get pods -A`
-- **Talos Dashboard**: `make talosctl dashboard`
+- **Talos services**: `make talosctl services`
+- **Talos cluster info**: `make talosctl cluster show`
 
 #### Troubleshooting
 
-- **Check cluster status**: `make talosctl health`
-- **View cluster logs**: `make talosctl logs`
+- **Check cluster health**: `make talosctl health --server=false`
+- **Get cluster members**: `make talosctl get members`
+- **View system services**: `make talosctl services`
+- **Check node status**: `make talosctl get nodes`
+- **View cluster logs**: `make talosctl logs controller-runtime`
 - **Check Pulumi state**: `pulumi stack`
 
 For more configuration options, see the [Configuration Documentation](https://github.com/exivity/pulumi-hcloud-k8s/blob/main/docs/configuration.md).
