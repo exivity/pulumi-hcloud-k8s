@@ -58,10 +58,26 @@ This section covers how to manage your Kubernetes cluster deployment.
 
 ### Initial Setup
 
-1. Select your Pulumi stack:
+1. Initialize or select your Pulumi stack:
+
+   **For a new local stack:**
+
+   ```sh
+   pulumi stack init {{ cookiecutter.pulumi_stack }}
+   ```
+
+   **For a new organization stack:**
+
+   ```sh
+   pulumi stack init <org-name>/{{ cookiecutter.pulumi_stack }}
+   ```
+
+   **If the stack already exists, select it:**
 
    ```sh
    pulumi stack select {{ cookiecutter.pulumi_stack }}
+   # or for organization stacks:
+   pulumi stack select <org-name>/{{ cookiecutter.pulumi_stack }}
    ```
 
 2. Configure your Hetzner Cloud API tokens:
