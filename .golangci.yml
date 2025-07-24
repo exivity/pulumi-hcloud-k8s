@@ -36,7 +36,7 @@ linters:
           allow:
             - $gostd
             - github.com/exivity/pulumi-hcloud-k8s
-            - github.com/linuxluigi/pulumi-hcloud-upload-image/sdk/go/pulumi-hcloud-upload-image/hcloudimages
+            - github.com/exivity/pulumi-hcloud-upload-image/sdk/go/pulumi-hcloud-upload-image/hcloudimages
             - github.com/pulumi/pulumi/sdk/v3/go
             - github.com/pulumi/pulumi-hcloud/sdk/go/hcloud
             - github.com/pulumi/pulumi-command/sdk/go/command
