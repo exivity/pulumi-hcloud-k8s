@@ -225,8 +225,8 @@ github.com/pulumi/pulumi-hcloud/sdk v1.23.0 h1:gS4YSVraagSk0+DGCRjfquTsWFQaIJpa8
 github.com/pulumi/pulumi-hcloud/sdk v1.23.0/go.mod h1:gPa9cOVdVe2dCW+PcCNdm+RqYAJ0R7eRIPOkHh3ObGY=
 github.com/pulumi/pulumi-kubernetes/sdk/v4 v4.23.0 h1:TZ/XhzF+3/jRiGsjlJHCWhXcU5E5tbXU8O0DKnPmFic=
 github.com/pulumi/pulumi-kubernetes/sdk/v4 v4.23.0/go.mod h1:jOdpeNeRvY4iN+W8aDP5+HyqrM7hXsxa9paPsmjQFfY=
-github.com/pulumi/pulumi/sdk/v3 v3.182.0 h1:teTMWVU4CbBHOA7a844ySL5TcgIcMhbWtg8xARaK0LA=
-github.com/pulumi/pulumi/sdk/v3 v3.182.0/go.mod h1:YS7uQ+eoIV/Fco804Upv3jmz5pwo/MkLYmbGH3VgA9c=
+github.com/pulumi/pulumi/sdk/v3 v3.185.0 h1:+pEMQxo2VvZFjSNw5EkpOdEUu87WflApTK9X/Zej8/Y=
+github.com/pulumi/pulumi/sdk/v3 v3.185.0/go.mod h1:YS7uQ+eoIV/Fco804Upv3jmz5pwo/MkLYmbGH3VgA9c=
 github.com/pulumiverse/pulumi-talos/sdk v0.6.0 h1:GDtmwwM9zb8QlnWrr7PMeq3d7ytF/dPBgrSelGTSR/c=
 github.com/pulumiverse/pulumi-talos/sdk v0.6.0/go.mod h1:yKCISM6xsQL1ChJAisNqGXQFteT3YyeFc16Uq2H5eOk=
 github.com/rivo/uniseg v0.2.0/go.mod h1:J6wj4VEh+S6ZtnVlnTBMWIodfgj8LQOQFoIToxlJtxc=
