@@ -14,6 +14,7 @@ import (
 	"github.com/exivity/pulumi-hcloud-k8s/pkg/talos/core"
 	"github.com/exivity/pulumi-hcloud-k8s/pkg/talos/image"
 
+	"github.com/pulumi/pulumi-hcloud/sdk/go/hcloud"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
@@ -116,7 +117,101 @@ func NewHetznerTalosKubernetesCluster(ctx *pulumi.Context, name string, cfg *con
 		return nil, err
 	}
 
+	cpPools, err := deployControlPlanePools(ctx, cfg, images, net, cpPg, machineConfigurationManager, firewallCp, hetznerProvider)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: remove bootstrap creation from k8s package
+	out.Kubeconfig, err = core.NewKubeconfig(ctx, &core.KubeconfigArgs{
+		CertificateRenewalDuration: cfg.Talos.K8sCertificateRenewalDuration,
+		FirstControlPlane:          cpPools[0].Nodes[0],
+		Secrets:                    machineConfigurationManager.Secrets,
+	},
+		pulumi.DependsOn([]pulumi.Resource{
+			cpPools[0].Nodes[0],
+			cpLb.LoadBalancer,
+			cpLb.Service,
+			cpLb.Target,
+			cpLb.LoadBalancerNetwork,
+		}),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	workerPools, err := deployWorkerPools(ctx, cfg, images, net, machineConfigurationManager, firewallWorker, hetznerProvider)
+	if err != nil {
+		return nil, err
+	}
+
+	endpoints := []pulumi.StringOutput{}
+	nodes := []pulumi.StringOutput{}
+	for _, cpPool := range cpPools {
+		for _, node := range cpPool.Nodes {
+			endpoints = append(endpoints, node.Ipv4Address)
+			nodes = append(nodes, node.Ipv4Address)
+		}
+	}
+
+	for _, workerPool := range workerPools {
+		for _, node := range workerPool.Nodes {
+			nodes = append(nodes, node.Ipv4Address)
+		}
+	}
+
+	out.TalosConfig = cli.NewTalosConfiguration(&cli.TalosConfigurationArgs{
+		Context:           machineConfigurationManager.ClusterName,
+		Endpoints:         endpoints,
+		Nodes:             nodes,
+		CACertificate:     out.Kubeconfig.Bootstrap.ClientConfiguration.CaCertificate(),
+		ClientCertificate: out.Kubeconfig.Bootstrap.ClientConfiguration.ClientCertificate(),
+		ClientKey:         out.Kubeconfig.Bootstrap.ClientConfiguration.ClientKey(),
+	})
+
+	// Apply configuration patches to all nodes
+	err = applyConfigPatchesToAllPools(ctx, cpPools, workerPools, hetznerProvider)
+	if err != nil {
+		return nil, err
+	}
+
+	// Upgrade Talos on all nodes
+	err = upgradeTalosOnAllPools(ctx, cpPools, workerPools, cfg.Talos.ImageVersion, images, out.TalosConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	out.ClusterApplications, err = NewClusterApplications(ctx, name, &ClusterApplicationsArgs{
+		Cfg:                         cfg,
+		Kubeconfig:                  out.Kubeconfig.Kubeconfig,
+		Network:                     net,
+		Images:                      images,
+		MachineConfigurationManager: machineConfigurationManager,
+		FirewallWorker:              firewallWorker,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return out, nil
+}
+
+// toCustomFirewallRuleArgs converts config.FirewallRuleConfig to firewall.CustomFirewallRuleArg
+func toCustomFirewallRuleArgs(rules []config.FirewallRuleConfig) []firewall.CustomFirewallRuleArg {
+	out := make([]firewall.CustomFirewallRuleArg, 0, len(rules))
+	for _, r := range rules {
+		out = append(out, firewall.CustomFirewallRuleArg{
+			Port:  r.Port,
+			CIDRs: r.CIDRs,
+		})
+	}
+	return out
+}
+
+// deployControlPlanePools deploys all control plane node pools
+func deployControlPlanePools(ctx *pulumi.Context, cfg *config.PulumiConfig, images *image.Images, net *network.Network, cpPg *hcloud.PlacementGroup, machineConfigurationManager *core.MachineConfigurationManager, firewallCp *hcloud.Firewall, hetznerProvider *hcloud.Provider) ([]*compute.NodePool, error) {
 	cpPools := []*compute.NodePool{}
+
 	for _, pool := range cfg.ControlPlane.NodePools {
 		cpNodeConfigurationBootstrap, err := core.NewNodeConfiguration(&core.NodeConfigurationArgs{
 			ServerNodeType:                 meta.ControlPlaneNode,
@@ -180,50 +275,15 @@ func NewHetznerTalosKubernetesCluster(ctx *pulumi.Context, name string, cfg *con
 			return nil, err
 		}
 
-		err = cpPool.ApplyConfigPatches(ctx, pulumi.Provider(hetznerProvider))
-		if err != nil {
-			return nil, err
-		}
-
 		cpPools = append(cpPools, cpPool)
 	}
 
-	// TODO: remove bootstrap creation from k8s package
-	out.Kubeconfig, err = core.NewKubeconfig(ctx, &core.KubeconfigArgs{
-		CertificateRenewalDuration: cfg.Talos.K8sCertificateRenewalDuration,
-		FirstControlPlane:          cpPools[0].Nodes[0],
-		Secrets:                    machineConfigurationManager.Secrets,
-	},
-		pulumi.DependsOn([]pulumi.Resource{
-			cpPools[0].Nodes[0],
-			cpLb.LoadBalancer,
-			cpLb.Service,
-			cpLb.Target,
-			cpLb.LoadBalancerNetwork,
-		}),
-	)
-	if err != nil {
-		return nil, err
-	}
+	return cpPools, nil
+}
 
-	out.TalosConfig = cli.NewTalosConfiguration(&cli.TalosConfigurationArgs{
-		Context:           machineConfigurationManager.ClusterName,
-		Endpoint:          cpPools[0].Nodes[0].Ipv4Address,
-		CACertificate:     out.Kubeconfig.Bootstrap.ClientConfiguration.CaCertificate(),
-		ClientCertificate: out.Kubeconfig.Bootstrap.ClientConfiguration.ClientCertificate(),
-		ClientKey:         out.Kubeconfig.Bootstrap.ClientConfiguration.ClientKey(),
-	})
-
-	for _, cpPool := range cpPools {
-		err = cpPool.UpgradeTalos(ctx, &compute.UpgradeTalosArgs{
-			Talosconfig:  out.TalosConfig,
-			TalosVersion: cfg.Talos.ImageVersion,
-			Images:       images,
-		})
-		if err != nil {
-			return nil, err
-		}
-	}
+// deployWorkerPools deploys all worker node pools
+func deployWorkerPools(ctx *pulumi.Context, cfg *config.PulumiConfig, images *image.Images, net *network.Network, machineConfigurationManager *core.MachineConfigurationManager, firewallWorker *hcloud.Firewall, hetznerProvider *hcloud.Provider) ([]*compute.NodePool, error) {
+	workerPools := []*compute.NodePool{}
 
 	for _, pool := range cfg.NodePools.NodePools {
 		if pool.Labels == nil {
@@ -294,44 +354,58 @@ func NewHetznerTalosKubernetesCluster(ctx *pulumi.Context, name string, cfg *con
 			return nil, err
 		}
 
-		err = workerPool.ApplyConfigPatches(ctx, pulumi.Provider(hetznerProvider))
-		if err != nil {
-			return nil, err
-		}
+		workerPools = append(workerPools, workerPool)
+	}
 
-		err = workerPool.UpgradeTalos(ctx, &compute.UpgradeTalosArgs{
-			Talosconfig:  out.TalosConfig,
-			TalosVersion: cfg.Talos.ImageVersion,
+	return workerPools, nil
+}
+
+// applyConfigPatchesToAllPools applies configuration patches to all node pools
+func applyConfigPatchesToAllPools(ctx *pulumi.Context, cpPools []*compute.NodePool, workerPools []*compute.NodePool, hetznerProvider *hcloud.Provider) error {
+	// Apply config patches to control plane pools
+	for _, cpPool := range cpPools {
+		err := cpPool.ApplyConfigPatches(ctx, pulumi.Provider(hetznerProvider))
+		if err != nil {
+			return err
+		}
+	}
+
+	// Apply config patches to worker pools
+	for _, workerPool := range workerPools {
+		err := workerPool.ApplyConfigPatches(ctx, pulumi.Provider(hetznerProvider))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// upgradeTalosOnAllPools upgrades Talos on all node pools
+func upgradeTalosOnAllPools(ctx *pulumi.Context, cpPools []*compute.NodePool, workerPools []*compute.NodePool, talosVersion string, images *image.Images, talosConfig pulumi.StringOutput) error {
+	// Upgrade control plane pools
+	for _, cpPool := range cpPools {
+		err := cpPool.UpgradeTalos(ctx, &compute.UpgradeTalosArgs{
+			Talosconfig:  talosConfig,
+			TalosVersion: talosVersion,
 			Images:       images,
 		})
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
 
-	out.ClusterApplications, err = NewClusterApplications(ctx, name, &ClusterApplicationsArgs{
-		Cfg:                         cfg,
-		Kubeconfig:                  out.Kubeconfig.Kubeconfig,
-		Network:                     net,
-		Images:                      images,
-		MachineConfigurationManager: machineConfigurationManager,
-		FirewallWorker:              firewallWorker,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return out, nil
-}
-
-// toCustomFirewallRuleArgs converts config.FirewallRuleConfig to firewall.CustomFirewallRuleArg
-func toCustomFirewallRuleArgs(rules []config.FirewallRuleConfig) []firewall.CustomFirewallRuleArg {
-	out := make([]firewall.CustomFirewallRuleArg, 0, len(rules))
-	for _, r := range rules {
-		out = append(out, firewall.CustomFirewallRuleArg{
-			Port:  r.Port,
-			CIDRs: r.CIDRs,
+	// Upgrade worker pools
+	for _, workerPool := range workerPools {
+		err := workerPool.UpgradeTalos(ctx, &compute.UpgradeTalosArgs{
+			Talosconfig:  talosConfig,
+			TalosVersion: talosVersion,
+			Images:       images,
 		})
+		if err != nil {
+			return err
+		}
 	}
-	return out
+
+	return nil
 }
