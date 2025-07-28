@@ -1,4 +1,4 @@
-package deploy
+package cluster
 
 import (
 	"github.com/exivity/pulumi-hcloud-k8s/pkg/config"
@@ -20,7 +20,7 @@ import (
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
-type ClusterApplicationsArgs struct {
+type ApplicationsArgs struct {
 	Cfg                         *config.PulumiConfig
 	Kubeconfig                  *cluster.Kubeconfig
 	Network                     *network.Network
@@ -28,7 +28,8 @@ type ClusterApplicationsArgs struct {
 	MachineConfigurationManager *core.MachineConfigurationManager
 	FirewallWorker              *hcloud.Firewall
 }
-type ClusterApplications struct {
+
+type Applications struct {
 	Provider                   *kubernetes.Provider
 	HcloudSecret               *corev1.Secret
 	Longhorn                   *longhorn.Longhorn
@@ -39,8 +40,8 @@ type ClusterApplications struct {
 	MetricServer               *metricsserver.MetricServer
 }
 
-func NewClusterApplications(ctx *pulumi.Context, name string, args *ClusterApplicationsArgs) (*ClusterApplications, error) { //nolint:cyclop,funlen
-	out := &ClusterApplications{}
+func NewApplications(ctx *pulumi.Context, name string, args *ApplicationsArgs) (*Applications, error) { //nolint:cyclop,funlen
+	out := &Applications{}
 	var err error
 
 	out.Provider, err = kubernetes.NewProvider(ctx, "k8s", &kubernetes.ProviderArgs{

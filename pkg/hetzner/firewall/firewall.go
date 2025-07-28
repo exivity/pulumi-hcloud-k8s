@@ -1,6 +1,7 @@
 package firewall
 
 import (
+	"github.com/exivity/pulumi-hcloud-k8s/pkg/config"
 	"github.com/exivity/pulumi-hcloud-k8s/pkg/hetzner/meta"
 	"github.com/pulumi/pulumi-hcloud/sdk/go/hcloud"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
@@ -143,6 +144,18 @@ func NewWorkerFirewall(ctx *pulumi.Context, name string, args *WorkerFirewallArg
 type CustomFirewallRuleArg struct {
 	Port  string
 	CIDRs []string
+}
+
+// ToCustomFirewallRuleArgs converts config.FirewallRuleConfig to CustomFirewallRuleArg
+func ToCustomFirewallRuleArgs(rules []config.FirewallRuleConfig) []CustomFirewallRuleArg {
+	out := make([]CustomFirewallRuleArg, 0, len(rules))
+	for _, r := range rules {
+		out = append(out, CustomFirewallRuleArg{
+			Port:  r.Port,
+			CIDRs: r.CIDRs,
+		})
+	}
+	return out
 }
 
 // toPulumiIPList converts a slice of CIDRs to pulumi.StringArray.
