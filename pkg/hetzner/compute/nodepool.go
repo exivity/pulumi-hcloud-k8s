@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/exivity/pulumi-hcloud-k8s/pkg/config"
 	"github.com/exivity/pulumi-hcloud-k8s/pkg/hetzner/meta"
 	"github.com/exivity/pulumi-hcloud-k8s/pkg/hetzner/network"
 	"github.com/exivity/pulumi-hcloud-k8s/pkg/talos/cli"
@@ -260,6 +261,208 @@ func (n *NodePool) UpgradeTalos(ctx *pulumi.Context, args *UpgradeTalosArgs) err
 			return err
 		}
 		talosUpgradeQueue = append(talosUpgradeQueue, upgradeTalos)
+	}
+
+	return nil
+}
+
+// DeployControlPlanePools deploys all control plane node pools
+func DeployControlPlanePools(ctx *pulumi.Context, cfg *config.PulumiConfig, images *image.Images, net *network.Network, cpPg *hcloud.PlacementGroup, machineConfigurationManager *core.MachineConfigurationManager, firewallCp *hcloud.Firewall, hetznerProvider *hcloud.Provider) ([]*NodePool, error) {
+	cpPools := []*NodePool{}
+
+	for _, pool := range cfg.ControlPlane.NodePools {
+		cpNodeConfigurationBootstrap, err := core.NewNodeConfiguration(&core.NodeConfigurationArgs{
+			ServerNodeType:                 meta.ControlPlaneNode,
+			Subnet:                         cfg.Network.Subnet,
+			PodSubnets:                     cfg.Network.PodSubnets,
+			EnableLonghornSupport:          cfg.Talos.EnableLonghorn,
+			EnableLocalStorage:             cfg.Talos.EnableLocalStorage,
+			SecretboxEncryptionSecret:      cfg.Talos.SecretboxEncryptionSecret,
+			AllowSchedulingOnControlPlanes: cfg.Talos.AllowSchedulingOnControlPlanes,
+			BootstrapEnable:                true,
+			NodeLabels:                     pool.Labels,
+			NodeTaints:                     pool.Taints,
+			NodeAnnotations:                pool.Annotations,
+			Registries:                     cfg.Talos.Registries,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		cpNodeConfiguration, err := core.NewNodeConfiguration(&core.NodeConfigurationArgs{
+			ServerNodeType:                 meta.ControlPlaneNode,
+			Subnet:                         cfg.Network.Subnet,
+			PodSubnets:                     cfg.Network.PodSubnets,
+			EnableLonghornSupport:          cfg.Talos.EnableLonghorn,
+			EnableLocalStorage:             cfg.Talos.EnableLocalStorage,
+			SecretboxEncryptionSecret:      cfg.Talos.SecretboxEncryptionSecret,
+			AllowSchedulingOnControlPlanes: cfg.Talos.AllowSchedulingOnControlPlanes,
+			NodeLabels:                     pool.Labels,
+			NodeTaints:                     pool.Taints,
+			NodeAnnotations:                pool.Annotations,
+			Registries:                     cfg.Talos.Registries,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		cpPool, err := NewNodePool(ctx, fmt.Sprintf("controlplane-%s-%s", pool.Region, pool.ServerSize), &NodePoolArgs{
+			Count:                       pool.Count,
+			ServerSize:                  pool.ServerSize,
+			Images:                      images,
+			Arch:                        pool.Arch,
+			Region:                      pool.Region,
+			ServerNodeType:              meta.ControlPlaneNode,
+			PlacementGroup:              cpPg,
+			Network:                     net,
+			EnableBackup:                pool.EnableBackup,
+			MachineConfigurationManager: machineConfigurationManager,
+			ConfigPatchesBootstrap: pulumi.StringArray{
+				pulumi.String(cpNodeConfigurationBootstrap),
+			},
+			ConfigPatches: pulumi.StringArray{
+				pulumi.String(cpNodeConfiguration),
+			},
+			Firewall: firewallCp,
+		},
+			pulumi.Parent(cpPg),
+			pulumi.Provider(hetznerProvider),
+			pulumi.DependsOn([]pulumi.Resource{firewallCp}),
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		cpPools = append(cpPools, cpPool)
+	}
+
+	return cpPools, nil
+}
+
+// DeployWorkerPools deploys all worker node pools
+func DeployWorkerPools(ctx *pulumi.Context, cfg *config.PulumiConfig, images *image.Images, net *network.Network, machineConfigurationManager *core.MachineConfigurationManager, firewallWorker *hcloud.Firewall, hetznerProvider *hcloud.Provider) ([]*NodePool, error) {
+	workerPools := []*NodePool{}
+
+	for _, pool := range cfg.NodePools.NodePools {
+		if pool.Labels == nil {
+			pool.Labels = map[string]string{}
+		}
+		if pool.Annotations == nil {
+			pool.Annotations = map[string]string{}
+		}
+
+		workerNodeConfigurationBootstrap, err := core.NewNodeConfiguration(&core.NodeConfigurationArgs{
+			ServerNodeType:        meta.WorkerNode,
+			Subnet:                cfg.Network.Subnet,
+			PodSubnets:            cfg.Network.PodSubnets,
+			NodeLabels:            pool.Labels,
+			NodeTaints:            pool.Taints,
+			NodeAnnotations:       pool.Annotations,
+			EnableLonghornSupport: cfg.Talos.EnableLonghorn,
+			EnableLocalStorage:    cfg.Talos.EnableLocalStorage,
+			BootstrapEnable:       true,
+			Registries:            cfg.Talos.Registries,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		workerNodeConfiguration, err := core.NewNodeConfiguration(&core.NodeConfigurationArgs{
+			ServerNodeType:        meta.WorkerNode,
+			Subnet:                cfg.Network.Subnet,
+			PodSubnets:            cfg.Network.PodSubnets,
+			NodeLabels:            pool.Labels,
+			NodeTaints:            pool.Taints,
+			NodeAnnotations:       pool.Annotations,
+			EnableLonghornSupport: cfg.Talos.EnableLonghorn,
+			EnableLocalStorage:    cfg.Talos.EnableLocalStorage,
+			Registries:            cfg.Talos.Registries,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		workerPool, err := NewNodePool(ctx, pool.Name, &NodePoolArgs{
+			Count:                       pool.Count,
+			ServerSize:                  pool.ServerSize,
+			Images:                      images,
+			Arch:                        pool.Arch,
+			Region:                      pool.Region,
+			NodePoolName:                &pool.Name,
+			ServerNodeType:              meta.WorkerNode,
+			Network:                     net,
+			MachineConfigurationManager: machineConfigurationManager,
+			ConfigPatchesBootstrap: pulumi.StringArray{
+				pulumi.String(workerNodeConfigurationBootstrap),
+			},
+			ConfigPatches: pulumi.StringArray{
+				pulumi.String(workerNodeConfiguration),
+			},
+			Firewall: firewallWorker,
+		},
+			pulumi.Provider(hetznerProvider),
+			pulumi.DependsOn([]pulumi.Resource{firewallWorker}),
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		err = workerPool.FindNodePoolAutoScalerNodes(ctx, pulumi.Provider(hetznerProvider))
+		if err != nil {
+			return nil, err
+		}
+
+		workerPools = append(workerPools, workerPool)
+	}
+
+	return workerPools, nil
+}
+
+// ApplyConfigPatchesToAllPools applies configuration patches to all node pools
+func ApplyConfigPatchesToAllPools(ctx *pulumi.Context, cpPools []*NodePool, workerPools []*NodePool, hetznerProvider *hcloud.Provider) error {
+	// Apply config patches to control plane pools
+	for _, cpPool := range cpPools {
+		err := cpPool.ApplyConfigPatches(ctx, pulumi.Provider(hetznerProvider))
+		if err != nil {
+			return err
+		}
+	}
+
+	// Apply config patches to worker pools
+	for _, workerPool := range workerPools {
+		err := workerPool.ApplyConfigPatches(ctx, pulumi.Provider(hetznerProvider))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// UpgradeTalosOnAllPools upgrades Talos on all node pools
+func UpgradeTalosOnAllPools(ctx *pulumi.Context, cpPools []*NodePool, workerPools []*NodePool, talosVersion string, images *image.Images, talosConfig pulumi.StringOutput) error {
+	// Upgrade control plane pools
+	for _, cpPool := range cpPools {
+		err := cpPool.UpgradeTalos(ctx, &UpgradeTalosArgs{
+			Talosconfig:  talosConfig,
+			TalosVersion: talosVersion,
+			Images:       images,
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	// Upgrade worker pools
+	for _, workerPool := range workerPools {
+		err := workerPool.UpgradeTalos(ctx, &UpgradeTalosArgs{
+			Talosconfig:  talosConfig,
+			TalosVersion: talosVersion,
+			Images:       images,
+		})
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
