@@ -92,6 +92,39 @@ def main():
             check=True,
         )
 
+    # Set the Talos API allowed CIDRs if provided
+    if "{{cookiecutter.talos_api_allowed_cidrs}}":
+        print("Setting Talos API allowed CIDRs...")
+        cidrs = "{{cookiecutter.talos_api_allowed_cidrs}}".split(",")
+        for id in range(len(cidrs)):
+            subprocess.run(
+                [
+                    "pulumi",
+                    "config",
+                    "set",
+                    "--path",
+                    # '"hcloud-k8s:firewall.vpn_cidrs[' + str(id) + ']"',
+                    f"hcloud-k8s:firewall.vpn_cidrs[{id}]",
+                    cidrs[id].strip(),
+                ],
+                check=True,
+            )
+    else:
+        print(
+            "No Talos API allowed CIDRs provided. Allowing Talos API access from all IPs."
+        )
+        subprocess.run(
+            [
+                "pulumi",
+                "config",
+                "set",
+                "--path",
+                "hcloud-k8s:firewall.open_talos_api",
+                "true",
+            ],
+            check=True,
+        )
+
 
 if __name__ == "__main__":
     main()
