@@ -37,7 +37,7 @@ def check_command_exists(command: str) -> Tuple[bool, str]:
                 )
             elif command == "talosctl":
                 version_result = subprocess.run(
-                    [command, "version", "--client"],
+                    [command, "version", "--client", "--short"],
                     capture_output=True,
                     text=True,
                     check=True,
@@ -50,7 +50,16 @@ def check_command_exists(command: str) -> Tuple[bool, str]:
             version_info = (
                 version_result.stdout.strip() or version_result.stderr.strip()
             )
-            return True, version_info.split("\n")[0]  # Return first line only
+
+            # For talosctl, we want the second line which contains the actual version
+            if command == "talosctl":
+                lines = version_info.split("\n")
+                if len(lines) > 1:
+                    return True, lines[1].strip()
+                else:
+                    return True, lines[0].strip()
+            else:
+                return True, version_info.split("\n")[0]  # Return first line only
 
         except subprocess.CalledProcessError:
             # Command exists but version check failed
