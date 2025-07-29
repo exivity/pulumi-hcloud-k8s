@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/exivity/pulumi-hcloud-k8s/pkg/validators"
 	"github.com/exivity/pulumiconfig/pkg/pulumiconfig"
 	"github.com/go-playground/validator/v10"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
@@ -36,11 +37,11 @@ func GetCustomValidations() []pulumiconfig.Validator {
 		},
 		pulumiconfig.StructValidation{
 			Struct:   ControlPlaneConfig{},
-			Validate: ValidateAndSetArchForControlPlane,
+			Validate: validators.ValidateAndSetArchForControlPlane,
 		},
 		pulumiconfig.StructValidation{
 			Struct:   NodePoolConfig{},
-			Validate: ValidateAndSetArchForNodePool,
+			Validate: validators.ValidateAndSetArchForNodePool,
 		},
 	}
 }
