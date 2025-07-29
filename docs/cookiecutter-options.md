@@ -24,6 +24,8 @@ This document describes all the available options when using the cookiecutter te
 **Default:** `"github.com/my-org/{{ cookiecutter.project_slug }}"`
 **Description:** The Go module path for your project. Update the organization name as needed.
 
+## Pulumi Configuration
+
 ### `pulumi_project_name`
 
 **Default:** `"{{ cookiecutter.project_slug }}"`
@@ -51,12 +53,12 @@ This document describes all the available options when using the cookiecutter te
 **Default:** `""` (empty string)
 **Description:** Your Hetzner Cloud API token for deploying Kubernetes resources. If not set it will try to use the value from hetzner_token and when this is not set it will use the env var `K8S_HCLOUD_TOKEN`. Can be updated after project creation.
 
+## Talos & Kubernetes Configuration
+
 ### `talos_api_allowed_cidrs`
 
 **Default:** `""` (empty string)
 **Description:** Comma-separated list of CIDR blocks allowed to access the Talos API. If empty, Talos API will be open to all IPs. Example: `"10.0.0.0/8,192.168.1.0/24"`. Can be updated after project creation.
-
-## Talos & Kubernetes Configuration
 
 ### `talos_version`
 
