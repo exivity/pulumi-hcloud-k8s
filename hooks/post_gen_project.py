@@ -1,4 +1,6 @@
 import subprocess
+import random
+import string
 
 
 def main():
@@ -124,6 +126,24 @@ def main():
             ],
             check=True,
         )
+
+    # Set the secretbox encryption secret if not already set
+    print("Setting secretbox encryption secret...")
+    secretbox_encryption_secret = "".join(
+        random.choices(string.ascii_letters + string.digits, k=32)
+    )
+    subprocess.run(
+        [
+            "pulumi",
+            "config",
+            "set",
+            "--path",
+            "hcloud-k8s:talos.secretbox_encryption_secret",
+            "--secret",
+            secretbox_encryption_secret,
+        ],
+        check=True,
+    )
 
 
 if __name__ == "__main__":
