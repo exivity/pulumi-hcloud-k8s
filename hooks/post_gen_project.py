@@ -13,7 +13,7 @@ def main():
     # Create a Go module with the specified module path
     module_path = "{{cookiecutter.go_module_path}}"
     subprocess.run(["go", "mod", "init", module_path], check=True)
-    subprocess.run(["go", "mod", "tidy"], check=True)
+    # subprocess.run(["go", "mod", "tidy"], check=True)
 
     # Initialize golangci-lint with a separate mod file
     subprocess.run(
@@ -26,16 +26,16 @@ def main():
         ],
         check=True,
     )
-    subprocess.run(
-        [
-            "go",
-            "get",
-            "-tool",
-            "-modfile=golangci-lint.mod",
-            "github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest",
-        ],
-        check=True,
-    )
+    # subprocess.run(
+    #     [
+    #         "go",
+    #         "get",
+    #         "-tool",
+    #         "-modfile=golangci-lint.mod",
+    #         "github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest",
+    #     ],
+    #     check=True,
+    # )
     print("Golangci-lint initialized with separate mod file.")
 
     # initialize the Pulumi project and select stack
@@ -145,20 +145,8 @@ def main():
         check=True,
     )
 
-    # configure Longhorn if enabled
-    if "{{cookiecutter.enable_longhorn}}" is "True":
-        subprocess.run(
-            [
-                "pulumi",
-                "config",
-                "set",
-                "--path",
-                "hcloud-k8s:talos.enable_longhorn",
-                "true",
-            ],
-            check=True,
-        )
-    else:
+    # remove the longhorn configuration if not enabled
+    if "{{cookiecutter.enable_longhorn}}" is "False":
         subprocess.run(
             [
                 "pulumi",
@@ -166,6 +154,25 @@ def main():
                 "rm",
                 "--path",
                 "hcloud-k8s:kubernetes.longhorn",
+            ],
+            check=True,
+        )
+
+    # encrypt storage if hetzner CSI is enabled
+    if "{{cookiecutter.enable_hetzner_csi}}" is "True":
+        print("Hetzner CSI is enabled. Encrypting storage...")
+        secretbox_encryption_secret = "".join(
+            random.choices(string.ascii_letters + string.digits, k=32)
+        )
+        subprocess.run(
+            [
+                "pulumi",
+                "config",
+                "set",
+                "--path",
+                "hcloud-k8s:kubernetes.csi.encrypted_secret",
+                "--secret",
+                secretbox_encryption_secret,
             ],
             check=True,
         )
