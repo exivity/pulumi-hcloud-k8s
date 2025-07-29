@@ -64,6 +64,34 @@ def main():
         f"Pulumi stack '{{cookiecutter.pulumi_org}}/{{cookiecutter.pulumi_stack}}' selected."
     )
 
+    # Set the Pulumi configuration for the Hetzner token
+    if "{{cookiecutter.hetzner_token}}":
+        subprocess.run(
+            [
+                "pulumi",
+                "config",
+                "set",
+                "--path",
+                "hcloud-k8s:hetzner.token",
+                "--secret",
+                "{{cookiecutter.hetzner_token}}",
+            ],
+            check=True,
+        )
+    if "{{cookiecutter.hetzner_cluster_token}}":
+        subprocess.run(
+            [
+                "pulumi",
+                "config",
+                "set",
+                "--path",
+                "hcloud-k8s:kubernetes.hcloud_token",
+                "--secret",
+                "{{cookiecutter.hetzner_cluster_token}}",
+            ],
+            check=True,
+        )
+
 
 if __name__ == "__main__":
     main()

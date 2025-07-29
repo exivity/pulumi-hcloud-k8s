@@ -6,6 +6,8 @@
   "pulumi_project_name": "{{ cookiecutter.project_slug }}",
   "pulumi_org": "",
   "pulumi_stack": "dev",
+  "hetzner_token": "",
+  "hetzner_cluster_token": "",
 
   "_template": "https://github.com/exivity/pulumi-hcloud-k8s"
 }
