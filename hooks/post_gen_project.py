@@ -145,6 +145,31 @@ def main():
         check=True,
     )
 
+    # configure Longhorn if enabled
+    if "{{cookiecutter.enable_longhorn}}" is "True":
+        subprocess.run(
+            [
+                "pulumi",
+                "config",
+                "set",
+                "--path",
+                "hcloud-k8s:talos.enable_longhorn",
+                "true",
+            ],
+            check=True,
+        )
+    else:
+        subprocess.run(
+            [
+                "pulumi",
+                "config",
+                "rm",
+                "--path",
+                "hcloud-k8s:kubernetes.longhorn",
+            ],
+            check=True,
+        )
+
 
 if __name__ == "__main__":
     main()

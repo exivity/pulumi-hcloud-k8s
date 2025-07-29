@@ -70,3 +70,7 @@ config:
           - key: "node-role.kubernetes.io/control-plane"
             operator: "Equal"
             effect: "NoSchedule"
+    longhorn:
+      enabled: true
+      version: 1.8.1
+      is_default_storage_class: true

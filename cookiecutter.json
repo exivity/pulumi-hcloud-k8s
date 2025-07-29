@@ -9,6 +9,7 @@
   "hetzner_token": "",
   "hetzner_cluster_token": "",
   "talos_api_allowed_cidrs": "",
+  "enable_longhorn": false,
 
   "_template": "https://github.com/exivity/pulumi-hcloud-k8s"
 }
