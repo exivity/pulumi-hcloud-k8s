@@ -34,6 +34,14 @@ func GetCustomValidations() []pulumiconfig.Validator {
 			Struct:   PulumiConfig{},
 			Validate: ValidateHcloudToken,
 		},
+		pulumiconfig.StructValidation{
+			Struct:   ControlPlaneConfig{},
+			Validate: ValidateAndSetArchForControlPlane,
+		},
+		pulumiconfig.StructValidation{
+			Struct:   NodePoolConfig{},
+			Validate: ValidateAndSetArchForNodePool,
+		},
 	}
 }
 

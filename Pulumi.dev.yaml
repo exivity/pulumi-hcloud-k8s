@@ -8,22 +8,18 @@ config:
     node_pools:
       - count: 1
         server_size: cax11
-        arch: arm64
         region: fsn1
       - count: 1
         server_size: cax11
-        arch: arm64
         region: nbg1
       - count: 1
         server_size: cax11
-        arch: arm64
         region: hel1
   hcloud-k8s:node_pools:
     node_pools:
       - name: worker
         count: 1
         server_size: cax31
-        arch: arm64
         region: hel1
         auto_scaler:
           min_count: 1
