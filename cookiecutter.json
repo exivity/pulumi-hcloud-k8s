@@ -4,5 +4,8 @@
   "description": "Behold My Awesome Project!",
   "go_module_path": "github.com/my-org/{{ cookiecutter.project_slug }}",
   "pulumi_project_name": "{{ cookiecutter.project_slug }}",
-  "pulumi_stack": "dev"
+  "pulumi_org": "",
+  "pulumi_stack": "dev",
+
+  "_template": "https://github.com/exivity/pulumi-hcloud-k8s"
 }

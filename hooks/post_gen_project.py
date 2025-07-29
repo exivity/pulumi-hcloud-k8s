@@ -35,6 +35,26 @@ def main():
         check=True,
     )
 
+    # initialize the Pulumi project and select stack
+    subprocess.run(
+        [
+            "pulumi",
+            "stack",
+            "init",
+            "{{cookiecutter.pulumi_org}}/{{cookiecutter.pulumi_stack}}",
+        ],
+        check=False,
+    )
+    subprocess.run(
+        [
+            "pulumi",
+            "stack",
+            "select",
+            "{{cookiecutter.pulumi_org}}/{{cookiecutter.pulumi_stack}}",
+        ],
+        check=True,
+    )
+
 
 if __name__ == "__main__":
     main()
