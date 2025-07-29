@@ -34,17 +34,23 @@ def main():
         ],
         check=True,
     )
+    print("Golangci-lint initialized with separate mod file.")
 
     # initialize the Pulumi project and select stack
-    subprocess.run(
-        [
-            "pulumi",
-            "stack",
-            "init",
-            "{{cookiecutter.pulumi_org}}/{{cookiecutter.pulumi_stack}}",
-        ],
-        check=False,
-    )
+    try:
+        subprocess.run(
+            [
+                "pulumi",
+                "stack",
+                "init",
+                "{{cookiecutter.pulumi_org}}/{{cookiecutter.pulumi_stack}}",
+            ],
+            check=True,
+        )
+    except subprocess.CalledProcessError:
+        print(
+            "Warning: Pulumi stack '{{cookiecutter.pulumi_org}}/{{cookiecutter.pulumi_stack}}' already exists. Continuing with existing stack."
+        )
     subprocess.run(
         [
             "pulumi",
@@ -53,6 +59,9 @@ def main():
             "{{cookiecutter.pulumi_org}}/{{cookiecutter.pulumi_stack}}",
         ],
         check=True,
+    )
+    print(
+        f"Pulumi stack '{{cookiecutter.pulumi_org}}/{{cookiecutter.pulumi_stack}}' selected."
     )
 
 
