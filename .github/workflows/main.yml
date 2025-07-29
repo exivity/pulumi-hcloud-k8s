@@ -38,5 +38,8 @@ jobs:
       - name: Install Cookiecutter
         run: pip install cookiecutter
 
+      - name: Login to Pulumi local backend
+        run: pulumi login --local
+
       - name: Cookiecutter test
         run: make test-cookiecutter
