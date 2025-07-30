@@ -116,7 +116,7 @@ def main():
     if "{{cookiecutter.enable_longhorn}}" == "True":
         pulumi_config_set("hcloud-k8s:talos.enable_longhorn", "true")
     else:
-        pulumi_config_remove("hcloud-k8s:kubernetes.csi")
+        pulumi_config_remove("hcloud-k8s:kubernetes.longhorn")
 
     # setup hetzner CSI configuration
     if "{{cookiecutter.enable_hetzner_csi}}" == "True":
@@ -132,9 +132,24 @@ def main():
     else:
         pulumi_config_remove("hcloud-k8s:kubernetes.csi")
 
-    # remove the cluster autoscaler configuration if not enabled
-    if "{{cookiecutter.enable_cluster_autoscaler}}" == "False":
+    # enable autoscaling if enabled
+    if "{{cookiecutter.enable_cluster_autoscaler}}" == "True":
+        pulumi_config_set(
+            "hcloud-k8s:node_pools.node_pools[0].auto_scaler.min_count",
+            "{{cookiecutter.worker_pool_count}}",
+        )
+        pulumi_config_set(
+            "hcloud-k8s:node_pools.node_pools[0].auto_scaler.max_count",
+            "{{cookiecutter.worker_pool_auto_scale_max}}",
+        )
+    else:
         pulumi_config_remove("hcloud-k8s:kubernetes.cluster_auto_scaler")
+
+    # set the worker node pool count
+    pulumi_config_set(
+        "hcloud-k8s:node_pools.node_pools[0].count",
+        "{{cookiecutter.worker_pool_count}}",
+    )
 
     # remove the hetzner kubelet cert approver configuration if not enabled
     if "{{cookiecutter.enable_kubelet_cert_approver}}" == "False":

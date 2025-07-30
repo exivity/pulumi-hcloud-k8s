@@ -24,12 +24,8 @@ config:
   hcloud-k8s:node_pools:
     node_pools:
       - name: "{{cookiecutter.worker_pool_name}}"
-        count: "{{cookiecutter.worker_pool_count}}"
         server_size: "{{cookiecutter.worker_pool_server_size}}"
         region: "{{cookiecutter.worker_pool_region}}"
-        auto_scaler:
-          min_count: "{{cookiecutter.worker_pool_count}}"
-          max_count: "{{cookiecutter.worker_pool_auto_scale_max}}"
   hcloud-k8s:kubernetes:
     hetzner_ccm:
       enabled: true
