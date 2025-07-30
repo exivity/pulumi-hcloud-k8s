@@ -71,9 +71,14 @@ Deploy the cluster (requires two steps):
 pulumi up --yes
 ```
 
-This first deployment creates the Kubernetes cluster, node pools, and Talos configuration. It will not install applications or Helm charts on the first run since the cluster must be up and running first.
+**Note:** The deployment consists of two phases:
 
-After the first deployment completes, run again to install the applications:
+1. **Infrastructure Phase:** Creates Hetzner Cloud resources, Talos cluster, and node pools
+2. **Kubernetes Phase:** Installs applications and Helm charts on the cluster
+
+The first deployment will fail during the Kubernetes phase because the cluster needs time to fully boot and become ready. This is expected behavior since there's no built-in check to wait for cluster readiness.
+
+After the first deployment completes (with failures), wait a few minutes for the cluster to fully initialize, then run the deployment again to install the Kubernetes applications:
 
 ```sh
 pulumi up --yes
