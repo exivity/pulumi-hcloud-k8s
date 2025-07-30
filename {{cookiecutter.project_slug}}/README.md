@@ -148,7 +148,12 @@ make talosctl health --server=false
 
 # View cluster resources
 make talosctl get members
+
+# Launch Talos dashboard (web UI)
+make talosctl dashboard
 ```
+
+For more Talos commands, see the [talosctl CLI reference](https://www.talos.dev/v1.10/reference/cli/#talosctl-dashboard).
 
 ### Common Operations
 

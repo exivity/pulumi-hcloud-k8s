@@ -96,36 +96,38 @@ For Linux users, please refer to the official installation guides:
 > **💡 Recommendation:** Use a dedicated Hetzner Cloud project for each cluster deployment to ensure proper resource isolation.
 
 ```sh
+# Navigate to your desired parent directory (e.g., ~/projects or ~/dev)
+cd ~/projects
+
+# Generate the new project using cookiecutter
+# This will execute a configuration wizard where you can customize your cluster setup
 cookiecutter https://github.com/exivity/pulumi-hcloud-k8s
-cd <your-project-slug>
-make download
 ```
 
-### Configure Your Stack
-
-1. Initialize your Pulumi stack:
-
-   ```sh
-   pulumi stack init dev
-   ```
-
-2. Add your Hetzner Cloud API token:
-
-   ```sh
-   # Set the Hetzner Cloud API token for managing resources
-   pulumi config set --path hcloud-k8s:hetzner.token --secret
-   # Set the Hetzner Cloud API token for deploying on Kubernetes
-   pulumi config set --path hcloud-k8s:kubernetes.hcloud_token --secret
-   ```
+The cookiecutter command will launch an interactive wizard that guides you through configuring your cluster. You'll be prompted to set options like project name, Kubernetes version, node pool configuration, and enabled components. For a complete list of all available options and their descriptions, see the [Cookiecutter Template Options](docs/cookiecutter-options.md) documentation.
 
 ### Deploy
+
+Navigate into the newly created project directory:
+
+```sh
+cd <your-project-slug>
+```
+
+Execute the initial deployment to create the Kubernetes cluster and node pools:
 
 ```sh
 pulumi up --yes
 ```
 
-This first deployment will create the Kubernetes cluster, node pools, and Talos configuration. But it will not install any applications or Helm charts.
-For that the cluster must be up and running first. So wait for the deployment to finish (failed) and then proceed with installing applications.
+**Note:** The deployment consists of two phases:
+
+1. **Infrastructure Phase:** Creates Hetzner Cloud resources, Talos cluster, and node pools
+2. **Kubernetes Phase:** Installs applications and Helm charts on the cluster
+
+The first deployment will fail during the Kubernetes phase because the cluster needs time to fully boot and become ready. This is expected behavior since there's no built-in check to wait for cluster readiness.
+
+After the first deployment completes (with failures), wait a few minutes for the cluster to fully initialize, then run the deployment again to install the Kubernetes applications:
 
 ```sh
 pulumi up --yes
