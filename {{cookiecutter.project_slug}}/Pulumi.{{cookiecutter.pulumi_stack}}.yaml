@@ -2,7 +2,6 @@ config:
   hcloud-k8s:talos:
     image_version: "{{cookiecutter.talos_version}}"
     kubernetes_version: "{{cookiecutter.kubernetes_version}}"
-    enable_longhorn: {% if cookiecutter.enable_longhorn %}true{% else %}false{% endif %}
   hcloud-k8s:network:
     nameservers:
       # Quad9 DNS
@@ -14,24 +13,23 @@ config:
   hcloud-k8s:control_plane:
     node_pools:
       - count: 1
-        server_size: {{cookiecutter.controlplane_server_size}}
-        region: hel1 {% if cookiecutter.controlplane_enable_ha %}
+        server_size: "{{cookiecutter.controlplane_server_size}}"
+        region: hel1
       - count: 1
-        server_size: {{cookiecutter.controlplane_server_size}}
+        server_size: "{{cookiecutter.controlplane_server_size}}"
         region: fsn1
       - count: 1
-        server_size: {{cookiecutter.controlplane_server_size}}
-        region: nbg1 {% endif %}
+        server_size: "{{cookiecutter.controlplane_server_size}}"
+        region: nbg1
   hcloud-k8s:node_pools:
     node_pools:
-      - name: {{cookiecutter.worker_pool_name}}
-        count: {{cookiecutter.worker_pool_count}}
-        server_size: {{cookiecutter.worker_pool_server_size}}
-        region: {{cookiecutter.worker_pool_region}}
-          {% if cookiecutter.enable_cluster_autoscaler %} auto_scaler:
-          min_count: {{cookiecutter.worker_pool_count}}
-          max_count: {{cookiecutter.worker_pool_auto_scale_max}}
-          {% endif %}
+      - name: "{{cookiecutter.worker_pool_name}}"
+        count: "{{cookiecutter.worker_pool_count}}"
+        server_size: "{{cookiecutter.worker_pool_server_size}}"
+        region: "{{cookiecutter.worker_pool_region}}"
+        auto_scaler:
+          min_count: "{{cookiecutter.worker_pool_count}}"
+          max_count: "{{cookiecutter.worker_pool_auto_scale_max}}"
   hcloud-k8s:kubernetes:
     hetzner_ccm:
       enabled: true
@@ -44,7 +42,7 @@ config:
             operator: "Equal"
             effect: "NoSchedule"
     csi:
-      enabled: {% if cookiecutter.enable_hetzner_csi %}true{% else %}false{% endif %}
+      enabled: true
       version: 2.16.0
       is_default_storage_class: true
       reclaim_policy: Delete
@@ -64,7 +62,7 @@ config:
               operator: "Equal"
               effect: "NoSchedule"
     cluster_auto_scaler:
-      enabled: {% if cookiecutter.enable_cluster_autoscaler %}true{% else %}false{% endif %}
+      enabled: true
       version: 9.48.0
       values:
         nodeSelector:
@@ -74,10 +72,10 @@ config:
             operator: "Equal"
             effect: "NoSchedule"
     kubelet_serving_cert_approver:
-      enabled: {% if cookiecutter.enable_kubelet_cert_approver %}true{% else %}false{% endif %}
+      enabled: true
       version: v0.9.1
     kubernetes_metrics_server:
-      enabled: {% if cookiecutter.enable_metrics_server %}true{% else %}false{% endif %}
+      enabled: true
       version: 3.12.2
       values:
         nodeSelector:
@@ -87,6 +85,6 @@ config:
             operator: "Equal"
             effect: "NoSchedule"
     longhorn:
-      enabled: {% if cookiecutter.enable_longhorn %}true{% else %}false{% endif %}
+      enabled: true
       version: 1.8.1
       is_default_storage_class: true
