@@ -110,7 +110,7 @@ def main():
 
     if "{{cookiecutter.controlplane_enable_ha}}" == "False":
         pulumi_config_remove("hcloud-k8s:control_plane.node_pools[1]")
-        pulumi_config_remove("hcloud-k8s:control_plane.node_pools[2]")
+        pulumi_config_remove("hcloud-k8s:control_plane.node_pools[1]")
 
     # setup longhorn configuration
     if "{{cookiecutter.enable_longhorn}}" == "True":
