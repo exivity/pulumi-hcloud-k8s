@@ -22,6 +22,9 @@ kubeconfig: pulumi-vars ## Get the kubeconfig for the current cluster
 	@pulumi stack output kubeconfig --show-secrets > $(KUBECONFIG)
 	@chmod 600 $(KUBECONFIG)
 
+kubectl: kubeconfig ## Run kubectl for the current cluster
+	@$(KUBECTL) $(filter-out $@,$(MAKECMDGOALS))
+
 talosconfig: pulumi-vars ## Get the Talos config for the current cluster
 	@pulumi stack output talosconfig --show-secrets > $(TALOSCONFIG)
 	@chmod 600 $(TALOSCONFIG)

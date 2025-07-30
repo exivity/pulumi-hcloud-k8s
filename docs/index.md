@@ -9,7 +9,7 @@ Welcome to the documentation for deploying and managing Talos Linux Kubernetes c
 - [Configuration](configuration.md)
 - [Development](development.md)
 - [Examples](examples.md)
-- [Advanced Usage](advanced.md)
+- [Cookiecutter Template Options](cookiecutter-options.md)
 - [FAQ](faq.md)
 
 ---

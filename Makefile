@@ -31,6 +31,9 @@ talosconfig: pulumi-vars ## Get the Talos config for the current cluster
 talosctl: talosconfig ## Run talosctl for the current cluster
 	@$(TALOSCTL) $(filter-out $@,$(MAKECMDGOALS))
 
+kubectl: kubeconfig ## Run kubectl for the current cluster
+	@$(KUBECTL) $(filter-out $@,$(MAKECMDGOALS))
+
 out:
 	@mkdir -p out/build
 

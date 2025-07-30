@@ -57,40 +57,11 @@ go version && pulumi version && kubectl version --client && talosctl version
 
 This section covers how to manage your Kubernetes cluster deployment.
 
-### Initial Setup
+### Configuration
 
-1. Initialize or select your Pulumi stack:
+To modify your cluster configuration after initial setup, edit `Pulumi.{{ cookiecutter.pulumi_stack }}.yaml` and run `pulumi up` to apply changes.
 
-   **For a new local stack:**
-
-   ```sh
-   pulumi stack init {{ cookiecutter.pulumi_stack }}
-   ```
-
-   **For a new organization stack:**
-
-   ```sh
-   pulumi stack init <org-name>/{{ cookiecutter.pulumi_stack }}
-   ```
-
-   **If the stack already exists, select it:**
-
-   ```sh
-   pulumi stack select {{ cookiecutter.pulumi_stack }}
-   # or for organization stacks:
-   pulumi stack select <org-name>/{{ cookiecutter.pulumi_stack }}
-   ```
-
-2. Configure your Hetzner Cloud API tokens:
-
-   ```sh
-   # Set the Hetzner Cloud API token for managing resources
-   pulumi config set --path hcloud-k8s:hetzner.token --secret
-   # Set the Hetzner Cloud API token for deploying on Kubernetes
-   pulumi config set --path hcloud-k8s:kubernetes.hcloud_token --secret
-   ```
-
-3. Review and customize your configuration in `Pulumi.{{ cookiecutter.pulumi_stack }}.yaml`.
+For detailed configuration options and advanced setup, see the [Configuration Documentation](https://github.com/exivity/pulumi-hcloud-k8s/blob/main/docs/configuration.md).
 
 ### Deploy Your Cluster
 
@@ -100,9 +71,14 @@ Deploy the cluster (requires two steps):
 pulumi up --yes
 ```
 
-This first deployment creates the Kubernetes cluster, node pools, and Talos configuration. It will not install applications or Helm charts on the first run since the cluster must be up and running first.
+**Note:** The deployment consists of two phases:
 
-After the first deployment completes, run again to install the applications:
+1. **Infrastructure Phase:** Creates Hetzner Cloud resources, Talos cluster, and node pools
+2. **Kubernetes Phase:** Installs applications and Helm charts on the cluster
+
+The first deployment will fail during the Kubernetes phase because the cluster needs time to fully boot and become ready. This is expected behavior since there's no built-in check to wait for cluster readiness.
+
+After the first deployment completes (with failures), wait a few minutes for the cluster to fully initialize, then run the deployment again to install the Kubernetes applications:
 
 ```sh
 pulumi up --yes
@@ -124,7 +100,7 @@ The kubeconfig will be saved as `{{ cookiecutter.pulumi_stack }}.kubeconfig.yml`
 #### Access with kubectl
 
 ```sh
-kubectl --kubeconfig ./{{ cookiecutter.pulumi_stack }}.kubeconfig.yml get nodes
+make kubectl get nodes
 ```
 
 #### Access with k9s (Recommended)
@@ -148,7 +124,12 @@ make talosctl health --server=false
 
 # View cluster resources
 make talosctl get members
+
+# Launch Talos dashboard (web UI)
+make talosctl dashboard
 ```
+
+For more Talos commands, see the [talosctl CLI reference](https://www.talos.dev/v1.10/reference/cli/#talosctl-dashboard).
 
 ### Common Operations
 
@@ -173,7 +154,7 @@ pulumi up
 #### Monitor Cluster
 
 - **k9s**: `make k9s` (recommended)
-- **kubectl**: `kubectl --kubeconfig ./{{ cookiecutter.pulumi_stack }}.kubeconfig.yml get pods -A`
+- **kubectl**: `make kubectl get pods -A`
 - **Talos services**: `make talosctl services`
 - **Talos cluster info**: `make talosctl cluster show`
 
@@ -186,7 +167,7 @@ pulumi up
 - **View cluster logs**: `make talosctl logs controller-runtime`
 - **Check Pulumi state**: `pulumi stack`
 
-For more configuration options, see the [Configuration Documentation](https://github.com/exivity/pulumi-hcloud-k8s/blob/main/docs/configuration.md).
+For more configuration options, see the [Configuration Documentation](https://github.com/exivity/pulumi-hcloud-k8s/blob/main/docs/configuration.md). Since this project is experimental, configuration options may change between versions - refer to the [pkg/config](https://github.com/exivity/pulumi-hcloud-k8s/tree/main/pkg/config) source code for the most up-to-date options.
 
 ### Makefile Targets
 
@@ -195,6 +176,7 @@ For more configuration options, see the [Configuration Documentation](https://gi
 - `make fmt` - Format code
 - `make kubeconfig` - Export kubeconfig from Pulumi stack
 - `make talosconfig` - Export Talos config from Pulumi stack
+- `make kubectl` - Run kubectl with the current kubeconfig
 - `make k9s` - Run k9s with the current kubeconfig
 - `make talosctl` - Run talosctl with the current config
 - `make lint` - Lint code (requires golangci-lint)

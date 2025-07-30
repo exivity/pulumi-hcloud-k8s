@@ -51,24 +51,6 @@ This **experimental** project comes with pre-configured Kubernetes components th
 
 All Helm chart components are configured with sensible defaults but remain fully customizable through Helm values and configuration overrides.
 
-## Requirements
-
-> **💡 Recommendation:** Create a dedicated Hetzner Cloud project for each cluster deployment to ensure proper resource isolation and billing separation.
-
-Install the following tools before using this project:
-
-- [Go](https://golang.org/) (for Pulumi program)
-- [Pulumi CLI](https://www.pulumi.com/docs/get-started/install/)
-- [Talosctl](https://www.talos.dev/docs/latest/introduction/installation/)
-- [kubectl](https://kubernetes.io/docs/tasks/tools/)
-- [Cookiecutter](https://cookiecutter.readthedocs.io/en/latest/) (for project scaffolding)
-- [golangci-lint](https://golangci-lint.run/) (for linting)
-
-Optional:
-
-- [k9s](https://k9scli.io/) (Kubernetes CLI UI)
-- [helm](https://helm.sh/) (for Helm chart management)
-
 ## Quickstart
 
 This guide helps you get started with a new Hetzner Talos Kubernetes cluster using the Cookiecutter template.
@@ -77,9 +59,12 @@ This guide helps you get started with a new Hetzner Talos Kubernetes cluster usi
 
 - [Go](https://go.dev/doc/install)
 - [Pulumi CLI](www.pulumi.com/docs/iac/download-install/)
-- [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/)
 - [talosctl](https://www.talos.dev/v1.10/talos-guides/install/talosctl/)
 - [Cookiecutter](https://cookiecutter.readthedocs.io/en/latest/README.html#installation)
+  
+Optional:
+
+- [k9s](https://k9scli.io/) (Kubernetes CLI UI)
 
 ### Installation Instructions
 
@@ -87,6 +72,7 @@ This guide helps you get started with a new Hetzner Talos Kubernetes cluster usi
 
 ```sh
 # Install all required tools
+brew install cookiecutter
 brew install go
 brew install pulumi/tap/pulumi
 brew install siderolabs/tap/talosctl
@@ -94,7 +80,7 @@ brew install siderolabs/tap/talosctl
 # Verify installations
 go version
 pulumi version
-talosctl version
+talosctl version --client
 ```
 
 #### Linux
@@ -107,39 +93,41 @@ For Linux users, please refer to the official installation guides:
 
 ### Create a New Project
 
-> **💡 Recommendation:** Use a dedicated Hetzner Cloud project for each cluster deployment to ensure proper resource isolation and billing separation.
+> **💡 Recommendation:** Use a dedicated Hetzner Cloud project for each cluster deployment to ensure proper resource isolation.
 
 ```sh
+# Navigate to your desired parent directory (e.g., ~/projects or ~/dev)
+cd ~/projects
+
+# Generate the new project using cookiecutter
+# This will execute a configuration wizard where you can customize your cluster setup
 cookiecutter https://github.com/exivity/pulumi-hcloud-k8s
-cd <your-project-slug>
-make download
 ```
 
-### Configure Your Stack
-
-1. Initialize your Pulumi stack:
-
-   ```sh
-   pulumi stack init dev
-   ```
-
-2. Add your Hetzner Cloud API token:
-
-   ```sh
-   # Set the Hetzner Cloud API token for managing resources
-   pulumi config set --path hcloud-k8s:hetzner.token --secret
-   # Set the Hetzner Cloud API token for deploying on Kubernetes
-   pulumi config set --path hcloud-k8s:kubernetes.hcloud_token --secret
-   ```
+The cookiecutter command will launch an interactive wizard that guides you through configuring your cluster. You'll be prompted to set options like project name, Kubernetes version, node pool configuration, and enabled components. For a complete list of all available options and their descriptions, see the [Cookiecutter Template Options](docs/cookiecutter-options.md) documentation.
 
 ### Deploy
+
+Navigate into the newly created project directory:
+
+```sh
+cd <your-project-slug>
+```
+
+Execute the initial deployment to create the Kubernetes cluster and node pools:
 
 ```sh
 pulumi up --yes
 ```
 
-This first deployment will create the Kubernetes cluster, node pools, and Talos configuration. But it will not install any applications or Helm charts.
-For that the cluster must be up and running first. So wait for the deployment to finish (failed) and then proceed with installing applications.
+**Note:** The deployment consists of two phases:
+
+1. **Infrastructure Phase:** Creates Hetzner Cloud resources, Talos cluster, and node pools
+2. **Kubernetes Phase:** Installs applications and Helm charts on the cluster
+
+The first deployment will fail during the Kubernetes phase because the cluster needs time to fully boot and become ready. This is expected behavior since there's no built-in check to wait for cluster readiness.
+
+After the first deployment completes (with failures), wait a few minutes for the cluster to fully initialize, then run the deployment again to install the Kubernetes applications:
 
 ```sh
 pulumi up --yes
@@ -161,7 +149,7 @@ make k9s
 ```
 
 ---
-See [Configuration](docs/configuration.md) for all available options.
+See [Configuration](docs/configuration.md) for all available configuration options and [Architecture](docs/architecture.md) for system design details.
 
 ## Project Structure
 
