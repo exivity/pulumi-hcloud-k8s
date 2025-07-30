@@ -38,5 +38,10 @@ jobs:
       - name: Install Cookiecutter
         run: pip install cookiecutter
 
+      - name: Login to Pulumi local backend
+        run: pulumi login --local
+
       - name: Cookiecutter test
+        env:
+          PULUMI_CONFIG_PASSPHRASE: k8s-on-hetzner-with-talos-rockz
         run: make test-cookiecutter

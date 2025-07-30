@@ -2,28 +2,32 @@ config:
   hcloud-k8s:talos:
     image_version: v1.10.5
     kubernetes_version: "1.33.0"
+  hcloud-k8s:network:
+    nameservers:
+      # Quad9 DNS
+      - "9.9.9.9"
+      - "2620:fe::fe"
+      # Google Public DNS
+      - "8.8.8.8"
+      - "2001:4860:4860::8888"
   hcloud-k8s:firewall:
     open_talos_api: true
   hcloud-k8s:control_plane:
     node_pools:
       - count: 1
         server_size: cax11
-        arch: arm64
         region: fsn1
       - count: 1
         server_size: cax11
-        arch: arm64
         region: nbg1
       - count: 1
         server_size: cax11
-        arch: arm64
         region: hel1
   hcloud-k8s:node_pools:
     node_pools:
       - name: worker
         count: 1
         server_size: cax31
-        arch: arm64
         region: hel1
         auto_scaler:
           min_count: 1

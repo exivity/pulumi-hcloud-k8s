@@ -3,6 +3,32 @@
   "project_slug": "{{ cookiecutter.project_name.lower()|replace(' ', '_')|replace('-', '_')|replace('.', '_')|trim() }}",
   "description": "Behold My Awesome Project!",
   "go_module_path": "github.com/my-org/{{ cookiecutter.project_slug }}",
+
   "pulumi_project_name": "{{ cookiecutter.project_slug }}",
-  "pulumi_stack": "dev"
+  "pulumi_org": "",
+  "pulumi_stack": "dev",
+
+  "hetzner_token": "",
+  "hetzner_cluster_token": "",
+
+  "talos_api_allowed_cidrs": "",
+  "talos_version": "v1.10.5",
+  "kubernetes_version": "1.33.0",
+
+  "controlplane_enable_ha": false,
+  "controlplane_server_size": "cax11",
+
+  "worker_pool_name": "worker",
+  "worker_pool_count": 2,
+  "worker_pool_server_size": "cax31",
+  "worker_pool_region": "hel1",
+  "worker_pool_auto_scale_max": 3,
+
+  "enable_longhorn": false,
+  "enable_hetzner_csi": true,
+  "enable_cluster_autoscaler": true,
+  "enable_kubelet_cert_approver": true,
+  "enable_metrics_server": true,
+
+  "_template": "https://github.com/exivity/pulumi-hcloud-k8s"
 }

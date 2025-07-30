@@ -7,6 +7,7 @@ Deploy and manage Kubernetes clusters on Hetzner Cloud using Talos Linux, powere
 - **Automated Cluster Provisioning:** Use Pulumi (in Go) to declaratively manage Hetzner resources and Talos-based Kubernetes clusters.
 - **Customizable Node Pools:** Define control plane and worker node pools with flexible sizing and configuration.
 - **Infrastructure as Code:** All cluster resources, networking, and firewall rules are managed in code.
+- **Go Package Distribution:** This project is distributed as a Go library that can be updated via `go mod` commands, with automated dependency management through tools like Dependabot or Renovate Bot.
 - **Makefile Automation:** Common tasks (build, lint, test, deploy) are automated via `make`.
 - **Talos Image Creation:** Uses [hcloud-upload-image](https://github.com/apricote/hcloud-upload-image) to create and upload Talos images to Hetzner Cloud.
 

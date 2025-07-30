@@ -1,33 +1,31 @@
 config:
   hcloud-k8s:talos:
-    image_version: v1.10.5
-    kubernetes_version: "1.33.0"
-  hcloud-k8s:firewall:
-    open_talos_api: true
+    image_version: "{{cookiecutter.talos_version}}"
+    kubernetes_version: "{{cookiecutter.kubernetes_version}}"
+  hcloud-k8s:network:
+    nameservers:
+      # Quad9 DNS
+      - "9.9.9.9"
+      - "2620:fe::fe"
+      # Google Public DNS
+      - "8.8.8.8"
+      - "2001:4860:4860::8888"
   hcloud-k8s:control_plane:
     node_pools:
       - count: 1
-        server_size: cax11
-        arch: arm64
+        server_size: "{{cookiecutter.controlplane_server_size}}"
+        region: hel1
+      - count: 1
+        server_size: "{{cookiecutter.controlplane_server_size}}"
         region: fsn1
       - count: 1
-        server_size: cax11
-        arch: arm64
+        server_size: "{{cookiecutter.controlplane_server_size}}"
         region: nbg1
-      - count: 1
-        server_size: cax11
-        arch: arm64
-        region: hel1
   hcloud-k8s:node_pools:
     node_pools:
-      - name: worker
-        count: 1
-        server_size: cax31
-        arch: arm64
-        region: hel1
-        auto_scaler:
-          min_count: 1
-          max_count: 3
+      - name: "{{cookiecutter.worker_pool_name}}"
+        server_size: "{{cookiecutter.worker_pool_server_size}}"
+        region: "{{cookiecutter.worker_pool_region}}"
   hcloud-k8s:kubernetes:
     hetzner_ccm:
       enabled: true
@@ -39,6 +37,26 @@ config:
           - key: "node-role.kubernetes.io/control-plane"
             operator: "Equal"
             effect: "NoSchedule"
+    csi:
+      enabled: true
+      version: 2.16.0
+      is_default_storage_class: true
+      reclaim_policy: Delete
+      values:
+        controller:
+          nodeSelector:
+            node-role.kubernetes.io/control-plane: ""
+          additionalTolerations:
+            - key: "node-role.kubernetes.io/control-plane"
+              operator: "Equal"
+              effect: "NoSchedule"
+        node:
+          nodeSelector:
+            node-role.kubernetes.io/control-plane: ""
+          additionalTolerations:
+            - key: "node-role.kubernetes.io/control-plane"
+              operator: "Equal"
+              effect: "NoSchedule"
     cluster_auto_scaler:
       enabled: true
       version: 9.48.0
@@ -62,3 +80,7 @@ config:
           - key: "node-role.kubernetes.io/control-plane"
             operator: "Equal"
             effect: "NoSchedule"
+    longhorn:
+      enabled: true
+      version: 1.8.1
+      is_default_storage_class: true

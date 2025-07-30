@@ -20,6 +20,7 @@ This **experimental** project comes pre-configured with essential Kubernetes com
 - **🔥 Firewall Management:** Automated security rules
 - **📦 Longhorn Storage (Optional):** Distributed block storage
 - **🏗️ Multi-Architecture Support:** ARM64 & AMD64 with automatic image selection
+- **� Go Package Distribution:** Built as a Go library that can be updated via `go mod` commands, with automated dependency management through tools like Dependabot or Renovate Bot
 
 All components can be customized through Helm values and configuration overrides.
 

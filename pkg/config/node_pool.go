@@ -25,7 +25,7 @@ type NodePoolConfig struct {
 	AutoScaler *AutoScalerConfig `json:"auto_scaler"`
 
 	ServerSize string                `json:"server_size" validate:"required"`
-	Arch       image.CPUArchitecture `json:"arch" validate:"required,oneof=amd64 arm64"`
+	Arch       image.CPUArchitecture `json:"arch" validate:"omitempty,oneof=amd64 arm64"`
 	Region     string                `json:"region" validate:"required"`
 
 	Labels      map[string]string `json:"labels" validate:"dive,keys,excludes=/"`

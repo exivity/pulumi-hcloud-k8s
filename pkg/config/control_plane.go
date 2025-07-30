@@ -19,7 +19,7 @@ type ControlPlaneNodePoolConfig struct {
 	ServerSize string `json:"server_size" validate:"required"`
 
 	// CPU architecture
-	Arch image.CPUArchitecture `json:"arch" validate:"required,oneof=amd64 arm64"`
+	Arch image.CPUArchitecture `json:"arch" validate:"omitempty,oneof=amd64 arm64"`
 
 	// Hetzner region
 	Region string `json:"region" validate:"required"`

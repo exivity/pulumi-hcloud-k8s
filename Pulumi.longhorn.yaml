@@ -3,6 +3,14 @@ config:
     image_version: v1.10.5
     kubernetes_version: "1.33.0"
     enable_longhorn: true
+  hcloud-k8s:network:
+    nameservers:
+      # Quad9 DNS
+      - "9.9.9.9"
+      - "2620:fe::fe"
+      # Google Public DNS
+      - "8.8.8.8"
+      - "2001:4860:4860::8888"
   hcloud-k8s:firewall:
     open_talos_api: true
   hcloud-k8s:control_plane:
