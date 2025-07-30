@@ -4,7 +4,6 @@ All cluster options are configured via Pulumi stack YAML files (e.g., `Pulumi.de
 
 ## Main Configuration Sections
 
-
 ## Example
 
 ```yaml
@@ -36,4 +35,3 @@ config:
 ## All Options
 
 See [pkg/config](../pkg/config/) for all available fields and validation rules. Each config struct is documented in code.
-
