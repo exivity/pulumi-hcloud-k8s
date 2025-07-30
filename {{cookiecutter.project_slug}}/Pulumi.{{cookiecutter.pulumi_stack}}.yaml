@@ -46,14 +46,7 @@ config:
         controller:
           nodeSelector:
             node-role.kubernetes.io/control-plane: ""
-          additionalTolerations:
-            - key: "node-role.kubernetes.io/control-plane"
-              operator: "Equal"
-              effect: "NoSchedule"
-        node:
-          nodeSelector:
-            node-role.kubernetes.io/control-plane: ""
-          additionalTolerations:
+          tolerations:
             - key: "node-role.kubernetes.io/control-plane"
               operator: "Equal"
               effect: "NoSchedule"

@@ -43,6 +43,20 @@ config:
           - key: "node-role.kubernetes.io/control-plane"
             operator: "Equal"
             effect: "NoSchedule"
+    csi:
+      enabled: true
+      version: 2.16.0
+      is_default_storage_class: true
+      reclaim_policy: Delete
+      encrypted_secret: randomString
+      values:
+        controller:
+          nodeSelector:
+            node-role.kubernetes.io/control-plane: ""
+          tolerations:
+            - key: "node-role.kubernetes.io/control-plane"
+              operator: "Equal"
+              effect: "NoSchedule"
     cluster_auto_scaler:
       enabled: true
       version: 9.48.0
