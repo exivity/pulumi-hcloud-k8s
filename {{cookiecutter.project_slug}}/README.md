@@ -124,7 +124,7 @@ The kubeconfig will be saved as `{{ cookiecutter.pulumi_stack }}.kubeconfig.yml`
 #### Access with kubectl
 
 ```sh
-kubectl --kubeconfig ./{{ cookiecutter.pulumi_stack }}.kubeconfig.yml get nodes
+make kubectl get nodes
 ```
 
 #### Access with k9s (Recommended)
@@ -178,7 +178,7 @@ pulumi up
 #### Monitor Cluster
 
 - **k9s**: `make k9s` (recommended)
-- **kubectl**: `kubectl --kubeconfig ./{{ cookiecutter.pulumi_stack }}.kubeconfig.yml get pods -A`
+- **kubectl**: `make kubectl get pods -A`
 - **Talos services**: `make talosctl services`
 - **Talos cluster info**: `make talosctl cluster show`
 
