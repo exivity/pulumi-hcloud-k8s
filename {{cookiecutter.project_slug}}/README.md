@@ -57,40 +57,11 @@ go version && pulumi version && kubectl version --client && talosctl version
 
 This section covers how to manage your Kubernetes cluster deployment.
 
-### Initial Setup
+### Configuration
 
-1. Initialize or select your Pulumi stack:
+To modify your cluster configuration after initial setup, edit `Pulumi.{{ cookiecutter.pulumi_stack }}.yaml` and run `pulumi up` to apply changes.
 
-   **For a new local stack:**
-
-   ```sh
-   pulumi stack init {{ cookiecutter.pulumi_stack }}
-   ```
-
-   **For a new organization stack:**
-
-   ```sh
-   pulumi stack init <org-name>/{{ cookiecutter.pulumi_stack }}
-   ```
-
-   **If the stack already exists, select it:**
-
-   ```sh
-   pulumi stack select {{ cookiecutter.pulumi_stack }}
-   # or for organization stacks:
-   pulumi stack select <org-name>/{{ cookiecutter.pulumi_stack }}
-   ```
-
-2. Configure your Hetzner Cloud API tokens:
-
-   ```sh
-   # Set the Hetzner Cloud API token for managing resources
-   pulumi config set --path hcloud-k8s:hetzner.token --secret
-   # Set the Hetzner Cloud API token for deploying on Kubernetes
-   pulumi config set --path hcloud-k8s:kubernetes.hcloud_token --secret
-   ```
-
-3. Review and customize your configuration in `Pulumi.{{ cookiecutter.pulumi_stack }}.yaml`.
+For detailed configuration options and advanced setup, see the [Configuration Documentation](https://github.com/exivity/pulumi-hcloud-k8s/blob/main/docs/configuration.md).
 
 ### Deploy Your Cluster
 
@@ -200,6 +171,7 @@ For more configuration options, see the [Configuration Documentation](https://gi
 - `make fmt` - Format code
 - `make kubeconfig` - Export kubeconfig from Pulumi stack
 - `make talosconfig` - Export Talos config from Pulumi stack
+- `make kubectl` - Run kubectl with the current kubeconfig
 - `make k9s` - Run k9s with the current kubeconfig
 - `make talosctl` - Run talosctl with the current config
 - `make lint` - Lint code (requires golangci-lint)
