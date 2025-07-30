@@ -149,7 +149,7 @@ make k9s
 ```
 
 ---
-See [Configuration](docs/configuration.md) for all available options.
+See [Configuration](docs/configuration.md) for all available configuration options and [Architecture](docs/architecture.md) for system design details.
 
 ## Project Structure
 

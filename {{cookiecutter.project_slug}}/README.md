@@ -167,7 +167,7 @@ pulumi up
 - **View cluster logs**: `make talosctl logs controller-runtime`
 - **Check Pulumi state**: `pulumi stack`
 
-For more configuration options, see the [Configuration Documentation](https://github.com/exivity/pulumi-hcloud-k8s/blob/main/docs/configuration.md).
+For more configuration options, see the [Configuration Documentation](https://github.com/exivity/pulumi-hcloud-k8s/blob/main/docs/configuration.md). Since this project is experimental, configuration options may change between versions - refer to the [pkg/config](https://github.com/exivity/pulumi-hcloud-k8s/tree/main/pkg/config) source code for the most up-to-date options.
 
 ### Makefile Targets
 
