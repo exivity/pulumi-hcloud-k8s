@@ -49,6 +49,6 @@ jobs:
       - name: Test execute pulumi commands
         env:
           PULUMI_CONFIG_PASSPHRASE: k8s-on-hetzner-with-talos-rockz
-          HCLOUD_TOKEN: dummy-token
-          K8S_HCLOUD_TOKEN: dummy-token
+          HCLOUD_TOKEN: oooooooooooo-hetzner-dummy-token-with-64-characters-oooooooooooo
+          K8S_HCLOUD_TOKEN: oooooooooooo-hetzner-dummy-token-with-64-characters-oooooooooooo
         run: pulumi preview --cwd ./my_awesome_project
