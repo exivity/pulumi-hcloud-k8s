@@ -19,8 +19,7 @@ type PulumiConfig struct {
 }
 
 // LoadConfig loads the config from the pulumi stack.
-func LoadConfig(ctx *pulumi.Context) (*PulumiConfig, error) {
-	cfg := &PulumiConfig{}
+func LoadConfig(ctx *pulumi.Context, cfg *PulumiConfig) (*PulumiConfig, error) {
 	err := pulumiconfig.GetConfig(ctx, cfg, GetCustomValidations()...)
 	if err != nil {
 		return nil, err
