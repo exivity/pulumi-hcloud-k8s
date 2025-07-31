@@ -1,6 +1,9 @@
 package config
 
 import (
+	"fmt"
+	"reflect"
+
 	"github.com/exivity/pulumi-hcloud-k8s/pkg/validators"
 	"github.com/exivity/pulumiconfig/pkg/pulumiconfig"
 	"github.com/go-playground/validator/v10"
@@ -21,12 +24,41 @@ type PulumiConfig struct {
 // LoadConfig loads the config from the pulumi stack.
 // T must be a struct that embeds PulumiConfig.
 func LoadConfig[T any](ctx *pulumi.Context, cfg *T) (*T, error) {
+	// Validate that T embeds PulumiConfig using reflection
+	if err := validateEmbeddedPulumiConfig(cfg); err != nil {
+		return nil, err
+	}
+
 	err := pulumiconfig.GetConfig(ctx, cfg, GetCustomValidations()...)
 	if err != nil {
 		return nil, err
 	}
 
 	return cfg, nil
+}
+
+// validateEmbeddedPulumiConfig checks if the given struct embeds PulumiConfig
+func validateEmbeddedPulumiConfig(cfg interface{}) error {
+	cfgType := reflect.TypeOf(cfg)
+	if cfgType.Kind() == reflect.Ptr {
+		cfgType = cfgType.Elem()
+	}
+
+	if cfgType.Kind() != reflect.Struct {
+		return fmt.Errorf("config must be a struct, got %s", cfgType.Kind())
+	}
+
+	// Look for an embedded PulumiConfig field
+	for i := 0; i < cfgType.NumField(); i++ {
+		field := cfgType.Field(i)
+
+		// Check if field is embedded (Anonymous) and is of type PulumiConfig
+		if field.Anonymous && field.Type == reflect.TypeOf(PulumiConfig{}) {
+			return nil // Found embedded PulumiConfig
+		}
+	}
+
+	return fmt.Errorf("struct %s must embed config.PulumiConfig", cfgType.Name())
 }
 
 func GetCustomValidations() []pulumiconfig.Validator {
