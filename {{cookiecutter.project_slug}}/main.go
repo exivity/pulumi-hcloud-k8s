@@ -8,27 +8,55 @@ import (
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
-// PulumiConfig wraps the base configuration structure for the Pulumi stack.
+// ExtendedConfig contains additional configuration fields beyond the base PulumiConfig.
 //
-// It embeds config.PulumiConfig to provide a consistent configuration interface
-// across the application while allowing for future extensibility.
+// This struct holds extended configuration that's specific to this deployment.
+// The base infrastructure configuration is handled separately via config.PulumiConfig.
 //
 // To extend the configuration, add new fields to this struct.
 // See: github.com/exivity/pulumiconfig
-type PulumiConfig struct {
-	config.PulumiConfig
+type ExtendedConfig struct {
+	// Add your extended configuration fields here
+	// Example: MyCustomField MyCustomConfig `json:"my_custom_field" pulumiConfigNamespace:"hcloud-k8s-esc" overrideConfigNamespace:"hcloud-k8s"`
 }
 
 func main() {
 	pulumi.Run(func(ctx *pulumi.Context) error {
 		stackName := fmt.Sprintf("%s-%s", ctx.Project(), ctx.Stack())
 
-		cfg, err := config.LoadConfig(ctx, &PulumiConfig{})
+		// Load base infrastructure configuration
+		baseCfg, err := config.LoadConfig(ctx)
 		if err != nil {
 			return err
 		}
 
-		cluster, err := deploy.NewHetznerTalosKubernetesCluster(ctx, stackName, &cfg.PulumiConfig)
+		// Optional: Modify baseCfg after loading from Pulumi stack
+		// This allows you to override or extend configuration programmatically
+		// Examples:
+		// 1. Override specific values:
+		//    baseCfg.Talos.ImageVersion = "v1.10.6"
+		//    baseCfg.ControlPlane.NodePools[0].Count = 5
+		//
+		// 2. Add conditional logic:
+		//    if ctx.Stack() == "production" {
+		//        baseCfg.ControlPlane.LoadBalancerType = "lb31"
+		//    }
+		//
+		// 3. Alternative: Skip pulumiconfig entirely and build config programmatically:
+		//    baseCfg := &config.PulumiConfig{
+		//        Hetzner: config.HetznerConfig{Token: "your-token"},
+		//        Talos: config.TalosConfig{ImageVersion: "v1.10.5"},
+		//        // ... other fields
+		//    }
+
+		// Load extended configuration (uncomment and modify when you add extended fields)
+		// extendedCfg := &ExtendedConfig{}
+		// err = pulumiconfig.GetConfig(ctx, extendedCfg)
+		// if err != nil {
+		//     return err
+		// }
+
+		cluster, err := deploy.NewHetznerTalosKubernetesCluster(ctx, stackName, baseCfg)
 		if err != nil {
 			return err
 		}

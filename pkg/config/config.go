@@ -1,12 +1,8 @@
 package config
 
 import (
-	"fmt"
-	"reflect"
-
 	"github.com/exivity/pulumi-hcloud-k8s/pkg/validators"
 	"github.com/exivity/pulumiconfig/pkg/pulumiconfig"
-	"github.com/go-playground/validator/v10"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
@@ -22,13 +18,8 @@ type PulumiConfig struct {
 }
 
 // LoadConfig loads the config from the pulumi stack.
-// T must be a struct that embeds PulumiConfig.
-func LoadConfig[T any](ctx *pulumi.Context, cfg *T) (*T, error) {
-	// Validate that T embeds PulumiConfig using reflection
-	if err := validateEmbeddedPulumiConfig(cfg); err != nil {
-		return nil, err
-	}
-
+func LoadConfig(ctx *pulumi.Context) (*PulumiConfig, error) {
+	cfg := &PulumiConfig{}
 	err := pulumiconfig.GetConfig(ctx, cfg, GetCustomValidations()...)
 	if err != nil {
 		return nil, err
@@ -37,35 +28,11 @@ func LoadConfig[T any](ctx *pulumi.Context, cfg *T) (*T, error) {
 	return cfg, nil
 }
 
-// validateEmbeddedPulumiConfig checks if the given struct embeds PulumiConfig
-func validateEmbeddedPulumiConfig(cfg interface{}) error {
-	cfgType := reflect.TypeOf(cfg)
-	if cfgType.Kind() == reflect.Ptr {
-		cfgType = cfgType.Elem()
-	}
-
-	if cfgType.Kind() != reflect.Struct {
-		return fmt.Errorf("config must be a struct, got %s", cfgType.Kind())
-	}
-
-	// Look for an embedded PulumiConfig field
-	for i := 0; i < cfgType.NumField(); i++ {
-		field := cfgType.Field(i)
-
-		// Check if field is embedded (Anonymous) and is of type PulumiConfig
-		if field.Anonymous && field.Type == reflect.TypeOf(PulumiConfig{}) {
-			return nil // Found embedded PulumiConfig
-		}
-	}
-
-	return fmt.Errorf("struct %s must embed config.PulumiConfig", cfgType.Name())
-}
-
 func GetCustomValidations() []pulumiconfig.Validator {
 	return []pulumiconfig.Validator{
 		pulumiconfig.StructValidation{
 			Struct:   PulumiConfig{},
-			Validate: ValidateHcloudToken,
+			Validate: validators.ValidateHcloudToken,
 		},
 		pulumiconfig.StructValidation{
 			Struct:   ControlPlaneConfig{},
@@ -75,32 +42,5 @@ func GetCustomValidations() []pulumiconfig.Validator {
 			Struct:   NodePoolConfig{},
 			Validate: validators.ValidateAndSetArchForNodePool,
 		},
-	}
-}
-
-// ValidateHcloudToken checks if HCloudToken is set when required by enabled features.
-func ValidateHcloudToken(sl validator.StructLevel) {
-	// Attempt to type assert the struct being validated to *PulumiConfig
-	cfg, ok := sl.Current().Interface().(PulumiConfig)
-	if !ok {
-		// If the type assertion fails, report a validation error and return
-		sl.ReportError(nil, "", "", "pulumiconfig_type_assertion_failed", "")
-		return
-	}
-
-	// Only check for HCloudToken if it is nil
-	if cfg.Kubernetes.HCloudToken == "" {
-		// If HetznerCCM is enabled, HCloudToken is required
-		if cfg.Kubernetes.HetznerCCM != nil && cfg.Kubernetes.HetznerCCM.Enabled {
-			sl.ReportError(cfg.Kubernetes.HCloudToken, "HCloudToken", "HCloudToken", "required_with_hetznerccm", "")
-		}
-		// If CSI is enabled, HCloudToken is required
-		if cfg.Kubernetes.CSI != nil && cfg.Kubernetes.CSI.Enabled {
-			sl.ReportError(cfg.Kubernetes.HCloudToken, "HCloudToken", "HCloudToken", "required_with_csi", "")
-		}
-		// If ClusterAutoScaler is enabled, HCloudToken is required
-		if cfg.Kubernetes.ClusterAutoScaler != nil && cfg.Kubernetes.ClusterAutoScaler.Enabled {
-			sl.ReportError(cfg.Kubernetes.HCloudToken, "HCloudToken", "HCloudToken", "required_with_clusterautoscaler", "")
-		}
 	}
 }
