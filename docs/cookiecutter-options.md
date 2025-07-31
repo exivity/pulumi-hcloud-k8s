@@ -51,7 +51,7 @@ This document describes all the available options when using the cookiecutter te
 ### `hetzner_cluster_token`
 
 **Default:** `""` (empty string)
-**Description:** Your Hetzner Cloud API token for deploying Kubernetes resources. If not set it will try to use the value from hetzner_token and when this is not set it will use the env var `K8S_HCLOUD_TOKEN`. Can be updated after project creation.
+**Description:** Your Hetzner Cloud API token for deploying Kubernetes resources (CCM, CSI, Cluster Autoscaler). This is required when enabling any Kubernetes features that integrate with Hetzner Cloud. You can use the same token as `hetzner_token`. If not set, you must configure it after project creation using `pulumi config set --path hcloud-k8s:kubernetes.hcloud_token --secret`.
 
 ## Talos & Kubernetes Configuration
 

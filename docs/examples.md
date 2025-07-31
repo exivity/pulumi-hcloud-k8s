@@ -3,11 +3,13 @@
 > **🔐 Security Note:** All examples show realistic YAML configuration files. Hetzner tokens must be set separately as secrets using:
 >
 > ```sh
+> # Infrastructure token for managing Hetzner Cloud resources
 > pulumi config set --path hcloud-k8s:hetzner.token --secret
+> # Kubernetes token for CCM, CSI, and Cluster Autoscaler (can be the same token)
 > pulumi config set --path hcloud-k8s:kubernetes.hcloud_token --secret
 > ```
 >
-> These commands will prompt you to enter the token values securely.
+> These commands will prompt you to enter the token values securely. Both tokens are required when using Kubernetes features.
 
 ## Minimal Stack Configuration
 
@@ -119,6 +121,7 @@ config:
 ## Notes
 
 - **Security**: Always use `pulumi config set --path <path> --secret` to set Hetzner tokens. Never store tokens in plain text YAML files
+- **Token Requirements**: Both `hetzner.token` and `kubernetes.hcloud_token` must be set when using Kubernetes features. You can use the same token value for both
 - **Versions**: Always check the [Talos Support Matrix](https://www.talos.dev/v1.10/introduction/support-matrix/) for compatible Kubernetes versions
 - **Architecture**: ARM64 instances (cax series) are generally more cost-effective
 - **Longhorn**: Requires at least 3 worker nodes for proper replication
