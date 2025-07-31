@@ -66,8 +66,8 @@ github.com/emirpasic/gods v1.18.1 h1:FXtiHYKDGKCW2KzwZKx0iC0PQmdlorYgdFG9jPXJ1Bc
 github.com/emirpasic/gods v1.18.1/go.mod h1:8tpGGwCnJ5H4r6BWwaV6OrWmMoPhUl5jm/FMNAnJvWQ=
 github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f h1:Y/CXytFA4m6baUTXGLOoWe4PQhGxaX0KpnayAqC48p4=
 github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f/go.mod h1:vw97MGsxSvLiUE2X8qFplwetxpGLQrlU1Q9AUEIzCaM=
-github.com/exivity/pulumi-hcloud-upload-image v0.0.2 h1:oy7EysNWn1goUiYkf0YSg4vUuFQ9A23u8oprU3yJvb4=
-github.com/exivity/pulumi-hcloud-upload-image v0.0.2/go.mod h1:dNNdVD93Jnu2CHhK/m2b4jzYppUgBuO91Q51+XFUV+E=
+github.com/exivity/pulumi-hcloud-upload-image v0.0.3 h1:r++S4zIs37z8k80UTgz67R3XtidcTPFKlT2Ndphfgmc=
+github.com/exivity/pulumi-hcloud-upload-image v0.0.3/go.mod h1:dNNdVD93Jnu2CHhK/m2b4jzYppUgBuO91Q51+XFUV+E=
 github.com/exivity/pulumiconfig v0.3.1 h1:YfvkcAmucr3x06zpLm2LWYCx1vFxFIQP3DY1HSn8MLg=
 github.com/exivity/pulumiconfig v0.3.1/go.mod h1:tzqIeQFSWG8WFm/cXTRgUehHyrJYJR/vwndWOIgWW4w=
 github.com/fatih/color v1.9.0/go.mod h1:eQcE1qtQxscV5RaZvpXrrb8Drkc3/DdQ+uUYCNjL+zU=
