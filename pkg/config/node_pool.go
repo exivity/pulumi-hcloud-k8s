@@ -43,5 +43,5 @@ type NodePoolsConfig struct {
 	// or when testing without a full cluster setup.
 	// WARNING: This should NEVER be enabled in production as it will prevent
 	// proper management of auto-scaler created nodes.
-	SkipAutoScalerDiscovery bool `json:"skip_auto_scaler_discovery" validate:"env=SKIP_AUTO_SCALER_DISCOVERY"`
+	SkipAutoScalerDiscovery bool `json:"skip_auto_scaler_discovery"`
 }
