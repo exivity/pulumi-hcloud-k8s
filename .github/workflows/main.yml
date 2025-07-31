@@ -45,3 +45,8 @@ jobs:
         env:
           PULUMI_CONFIG_PASSPHRASE: k8s-on-hetzner-with-talos-rockz
         run: make test-cookiecutter
+
+      - name: Test execute pulumi commands
+        env:
+          PULUMI_CONFIG_PASSPHRASE: k8s-on-hetzner-with-talos-rockz
+        run: pulumi preview --cwd ./my_awesome_project
