@@ -37,4 +37,11 @@ type NodePoolConfig struct {
 // NodePoolsConfig holds a list of worker node pools.
 type NodePoolsConfig struct {
 	NodePools []NodePoolConfig `json:"node_pools" validate:"dive,required"`
+
+	// SkipAutoScalerDiscovery skips the FindNodePoolAutoScalerNodes call for all node pools.
+	// This is useful for development environments where auto-scaler nodes may not exist
+	// or when testing without a full cluster setup.
+	// WARNING: This should NEVER be enabled in production as it will prevent
+	// proper management of auto-scaler created nodes.
+	SkipAutoScalerDiscovery bool `json:"skip_auto_scaler_discovery"`
 }

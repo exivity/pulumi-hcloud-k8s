@@ -407,9 +407,12 @@ func DeployWorkerPools(ctx *pulumi.Context, cfg *config.PulumiConfig, images *im
 			return nil, err
 		}
 
-		err = workerPool.FindNodePoolAutoScalerNodes(ctx, pulumi.Provider(hetznerProvider))
-		if err != nil {
-			return nil, err
+		// Skip auto-scaler node discovery if configured for all node pools
+		if !cfg.NodePools.SkipAutoScalerDiscovery {
+			err = workerPool.FindNodePoolAutoScalerNodes(ctx, pulumi.Provider(hetznerProvider))
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		workerPools = append(workerPools, workerPool)

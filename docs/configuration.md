@@ -9,14 +9,17 @@ All cluster options are configured via Pulumi stack YAML files (e.g., `Pulumi.de
 Configure your Hetzner Cloud API tokens using the Pulumi CLI (recommended for security):
 
 ```sh
-# Set the Hetzner Cloud API token for managing resources
+# Set the Hetzner Cloud API token for managing infrastructure resources
 pulumi config set --path hcloud-k8s:hetzner.token --secret
 
-# Set the Hetzner Cloud API token for deploying on Kubernetes (can be same as above)
+# Set the Hetzner Cloud API token for Kubernetes components (CCM, CSI, Cluster Autoscaler)
+# This is required when enabling any Kubernetes features that integrate with Hetzner Cloud
 pulumi config set --path hcloud-k8s:kubernetes.hcloud_token --secret
 ```
 
 These commands will prompt you to enter the token values securely without exposing them in your shell history.
+
+> **⚠️ Important:** Both tokens are required if you plan to use Kubernetes features like Hetzner CCM, CSI, or Cluster Autoscaler. You can use the same token value for both fields, but both must be explicitly set.
 
 **Alternative (not recommended for production):** You can also set tokens directly in YAML, but this should only be done for local development when you understand the security implications:
 
@@ -25,7 +28,7 @@ config:
   hcloud-k8s:hetzner:
     token: <your-hcloud-token>
   hcloud-k8s:kubernetes:
-    hcloud_token: <your-hcloud-token>
+    hcloud_token: <your-hcloud-token>  # Can be the same token as above
 ```
 
 > **⚠️ Security Warning:** Never commit plain text tokens to version control. Always use `pulumi config set --secret` for sensitive values.
@@ -100,7 +103,7 @@ config:
 
 ## Complete Example
 
-> **Note:** This example shows configuration structure. Hetzner tokens are set as secrets via CLI and won't appear in the YAML file.
+> **Note:** This example shows configuration structure. Hetzner tokens are set as secrets via CLI and won't appear in the YAML file. Both tokens are required when using Kubernetes features.
 
 ```yaml
 config:

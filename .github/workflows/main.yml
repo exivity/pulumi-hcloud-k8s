@@ -45,3 +45,12 @@ jobs:
         env:
           PULUMI_CONFIG_PASSPHRASE: k8s-on-hetzner-with-talos-rockz
         run: make test-cookiecutter
+
+      - name: Test execute pulumi commands
+        env:
+          PULUMI_CONFIG_PASSPHRASE: k8s-on-hetzner-with-talos-rockz
+          HCLOUD_TOKEN: oooooooooooo-hetzner-dummy-token-with-64-characters-oooooooooooo
+          K8S_HCLOUD_TOKEN: oooooooooooo-hetzner-dummy-token-with-64-characters-oooooooooooo
+        run: |
+          pulumi --cwd ./my_awesome_project config set --type bool --path hcloud-k8s:node_pools.skip_auto_scaler_discovery true
+          pulumi --cwd ./my_awesome_project preview

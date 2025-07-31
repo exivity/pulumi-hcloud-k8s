@@ -12,12 +12,13 @@ func main() {
 	pulumi.Run(func(ctx *pulumi.Context) error {
 		stackName := fmt.Sprintf("%s-%s", ctx.Project(), ctx.Stack())
 
-		cfg, err := config.LoadConfig(ctx)
+		// Load base infrastructure configuration
+		baseCfg, err := config.LoadConfig(ctx)
 		if err != nil {
 			return err
 		}
 
-		cluster, err := deploy.NewHetznerTalosKubernetesCluster(ctx, stackName, cfg)
+		cluster, err := deploy.NewHetznerTalosKubernetesCluster(ctx, stackName, baseCfg)
 		if err != nil {
 			return err
 		}

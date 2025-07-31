@@ -61,6 +61,15 @@ This section covers how to manage your Kubernetes cluster deployment.
 
 To modify your cluster configuration after initial setup, edit `Pulumi.{{ cookiecutter.pulumi_stack }}.yaml` and run `pulumi up` to apply changes.
 
+> **⚠️ Token Configuration:** If you're using Kubernetes features (CCM, CSI, Cluster Autoscaler), ensure both tokens are set:
+>
+> ```sh
+> pulumi config set --path hcloud-k8s:hetzner.token --secret
+> pulumi config set --path hcloud-k8s:kubernetes.hcloud_token --secret
+> ```
+>
+> You can use the same token value for both. See the [Configuration Documentation](https://github.com/exivity/pulumi-hcloud-k8s/blob/main/docs/configuration.md) for details.
+
 For detailed configuration options and advanced setup, see the [Configuration Documentation](https://github.com/exivity/pulumi-hcloud-k8s/blob/main/docs/configuration.md).
 
 ### Deploy Your Cluster

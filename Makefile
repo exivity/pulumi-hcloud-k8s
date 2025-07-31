@@ -57,6 +57,8 @@ test-cookiecutter: ## Test cookiecutter template by generating a project and run
 	@rm -rf $(COOKIECUTTER_TEST_OUTPUT) && \
 	cookiecutter . --no-input && \
 	cd $(COOKIECUTTER_TEST_OUTPUT) && \
+	go mod edit -replace github.com/exivity/pulumi-hcloud-k8s=../ && \
+    go mod tidy && \
 	make lint && \
 	rm -rf $(COOKIECUTTER_TEST_OUTPUT)
 
