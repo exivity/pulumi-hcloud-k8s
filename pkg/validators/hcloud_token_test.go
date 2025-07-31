@@ -8,6 +8,10 @@ import (
 )
 
 // Test structs that mimic the config structs without validation tags to avoid validation issues
+type testHetznerConfig struct {
+	Token string `json:"token"`
+}
+
 type testChartConfig struct {
 	Enabled bool `json:"enabled"`
 }
@@ -24,6 +28,7 @@ type testKubernetesConfig struct {
 }
 
 type testPulumiConfig struct {
+	Hetzner    testHetznerConfig    `json:"hetzner"`
 	Kubernetes testKubernetesConfig `json:"kubernetes"`
 }
 
@@ -85,6 +90,23 @@ func TestValidateHcloudToken(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "valid - fallback to hetzner token when kubernetes token is empty",
+			args: args{
+				cfg: &testPulumiConfig{
+					Hetzner: testHetznerConfig{
+						Token: "hetzner-token",
+					},
+					Kubernetes: testKubernetesConfig{
+						HCloudToken: "",
+						HetznerCCM: &testChartConfig{
+							Enabled: true,
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
 			name: "valid - no token needed when no features enabled",
 			args: args{
 				cfg: &testPulumiConfig{
@@ -118,9 +140,12 @@ func TestValidateHcloudToken(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "invalid - hcloud token required for HetznerCCM",
+			name: "invalid - no tokens available but HetznerCCM enabled",
 			args: args{
 				cfg: &testPulumiConfig{
+					Hetzner: testHetznerConfig{
+						Token: "",
+					},
 					Kubernetes: testKubernetesConfig{
 						HCloudToken: "",
 						HetznerCCM: &testChartConfig{
@@ -132,7 +157,7 @@ func TestValidateHcloudToken(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "invalid - hcloud token required for CSI",
+			name: "invalid - no tokens available but CSI enabled",
 			args: args{
 				cfg: &testPulumiConfig{
 					Kubernetes: testKubernetesConfig{
@@ -148,7 +173,7 @@ func TestValidateHcloudToken(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "invalid - hcloud token required for ClusterAutoScaler",
+			name: "invalid - no tokens available but ClusterAutoScaler enabled",
 			args: args{
 				cfg: &testPulumiConfig{
 					Kubernetes: testKubernetesConfig{
@@ -162,7 +187,7 @@ func TestValidateHcloudToken(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "invalid - hcloud token required for multiple features",
+			name: "invalid - no tokens available but multiple features enabled",
 			args: args{
 				cfg: &testPulumiConfig{
 					Kubernetes: testKubernetesConfig{
@@ -212,6 +237,84 @@ func TestValidateHcloudToken(t *testing.T) {
 			hasError := mock.errorCount > 0
 			if tt.wantErr != hasError {
 				t.Errorf("ValidateHcloudToken() error = %v, wantErr %v", hasError, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_hasValidHetznerToken(t *testing.T) {
+	type args struct {
+		current reflect.Value
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "valid - hetzner token exists",
+			args: args{
+				current: reflect.ValueOf(testPulumiConfig{
+					Hetzner: testHetznerConfig{
+						Token: "valid-token",
+					},
+				}),
+			},
+			want: true,
+		},
+		{
+			name: "invalid - hetzner token is empty",
+			args: args{
+				current: reflect.ValueOf(testPulumiConfig{
+					Hetzner: testHetznerConfig{
+						Token: "",
+					},
+				}),
+			},
+			want: false,
+		},
+		{
+			name: "invalid - hetzner field missing",
+			args: args{
+				current: reflect.ValueOf(struct {
+					Kubernetes testKubernetesConfig `json:"kubernetes"`
+				}{
+					Kubernetes: testKubernetesConfig{
+						HCloudToken: "test-token",
+					},
+				}),
+			},
+			want: false,
+		},
+		{
+			name: "invalid - hetzner token field missing",
+			args: args{
+				current: reflect.ValueOf(struct {
+					Hetzner struct {
+						SomeOtherField string `json:"other"`
+					} `json:"hetzner"`
+				}{
+					Hetzner: struct {
+						SomeOtherField string `json:"other"`
+					}{
+						SomeOtherField: "value",
+					},
+				}),
+			},
+			want: false,
+		},
+		{
+			name: "invalid - empty struct",
+			args: args{
+				current: reflect.ValueOf(struct{}{}),
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := hasValidHetznerToken(tt.args.current); got != tt.want {
+				t.Errorf("hasValidHetznerToken() = %v, want %v", got, tt.want)
 			}
 		})
 	}
