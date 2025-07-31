@@ -51,4 +51,5 @@ jobs:
           PULUMI_CONFIG_PASSPHRASE: k8s-on-hetzner-with-talos-rockz
           HCLOUD_TOKEN: oooooooooooo-hetzner-dummy-token-with-64-characters-oooooooooooo
           K8S_HCLOUD_TOKEN: oooooooooooo-hetzner-dummy-token-with-64-characters-oooooooooooo
+          SKIP_AUTO_SCALER_DISCOVERY: true
         run: pulumi preview --cwd ./my_awesome_project
