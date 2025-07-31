@@ -46,11 +46,6 @@ jobs:
           PULUMI_CONFIG_PASSPHRASE: k8s-on-hetzner-with-talos-rockz
         run: make test-cookiecutter
 
-      - name: Use the branch version of the Pulumi provider
-        run: |
-          cd my_awesome_project
-          go get github.com/exivity/pulumi-hcloud-k8s@${{ github.head_ref || github.ref_name }}
-
       - name: Test execute pulumi commands
         env:
           PULUMI_CONFIG_PASSPHRASE: k8s-on-hetzner-with-talos-rockz
