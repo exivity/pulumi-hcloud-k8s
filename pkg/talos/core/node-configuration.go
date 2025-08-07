@@ -29,6 +29,8 @@ type NodeConfigurationArgs struct {
 	EnableLonghornSupport bool
 	// SecretboxEncryptionSecret is a base64-encoded 32-byte key used to encrypt Kubernetes secrets at rest in etcd
 	SecretboxEncryptionSecret *string
+	// CertLifetime is the admin kubeconfig certificate lifetime
+	CertLifetime *string
 	// AllowSchedulingOnControlPlanes is true if scheduling on control planes is allowed
 	AllowSchedulingOnControlPlanes bool
 	// Nameservers is the list of DNS servers to use for the cluster
@@ -41,6 +43,13 @@ type NodeConfigurationArgs struct {
 }
 
 func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) {
+	var adminKubeconfig *config.AdminKubeconfigConfig
+	if args.CertLifetime != nil {
+		adminKubeconfig = &config.AdminKubeconfigConfig{
+			CertLifetime: *args.CertLifetime,
+		}
+	}
+
 	configPatch := config.TalosConfig{
 		Cluster: &config.ClusterConfig{
 			ExternalCloudProvider: &config.ExternalCloudProviderConfig{
@@ -53,6 +62,7 @@ func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) {
 				Enabled: true, // Enable discovery, required for network encryption via kube span
 			},
 			AllowSchedulingOnControlPlanes: args.AllowSchedulingOnControlPlanes,
+			AdminKubeconfig:                adminKubeconfig,
 		},
 		Machine: &config.MachineConfig{
 			Type:            string(args.ServerNodeType),
