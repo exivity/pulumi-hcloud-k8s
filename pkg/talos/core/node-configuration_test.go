@@ -275,3 +275,195 @@ func Test_toRegistriesConfig(t *testing.T) {
 		})
 	}
 }
+
+func Test_toInlineManifests(t *testing.T) {
+	type args struct {
+		manifests []core_config.ClusterInlineManifest
+	}
+	tests := []struct {
+		name string
+		args args
+		want []config.ClusterInlineManifest
+	}{
+		{
+			name: "empty manifests",
+			args: args{
+				manifests: []core_config.ClusterInlineManifest{},
+			},
+			want: []config.ClusterInlineManifest{},
+		},
+		{
+			name: "single manifest",
+			args: args{
+				manifests: []core_config.ClusterInlineManifest{
+					{
+						Name: "namespace-ci",
+						Contents: `apiVersion: v1
+kind: Namespace
+metadata:
+  name: ci`,
+					},
+				},
+			},
+			want: []config.ClusterInlineManifest{
+				{
+					Name: "namespace-ci",
+					Contents: `apiVersion: v1
+kind: Namespace
+metadata:
+  name: ci`,
+				},
+			},
+		},
+		{
+			name: "multiple manifests",
+			args: args{
+				manifests: []core_config.ClusterInlineManifest{
+					{
+						Name: "namespace-prod",
+						Contents: `apiVersion: v1
+kind: Namespace
+metadata:
+  name: production`,
+					},
+					{
+						Name: "configmap-app",
+						Contents: `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: production
+data:
+  config.yaml: |
+    app:
+      name: myapp
+      port: 8080`,
+					},
+				},
+			},
+			want: []config.ClusterInlineManifest{
+				{
+					Name: "namespace-prod",
+					Contents: `apiVersion: v1
+kind: Namespace
+metadata:
+  name: production`,
+				},
+				{
+					Name: "configmap-app",
+					Contents: `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: production
+data:
+  config.yaml: |
+    app:
+      name: myapp
+      port: 8080`,
+				},
+			},
+		},
+		{
+			name: "manifest with complex yaml",
+			args: args{
+				manifests: []core_config.ClusterInlineManifest{
+					{
+						Name: "deployment-app",
+						Contents: `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.21
+        ports:
+        - containerPort: 80
+        env:
+        - name: ENV_VAR
+          value: "production"`,
+					},
+				},
+			},
+			want: []config.ClusterInlineManifest{
+				{
+					Name: "deployment-app",
+					Contents: `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.21
+        ports:
+        - containerPort: 80
+        env:
+        - name: ENV_VAR
+          value: "production"`,
+				},
+			},
+		},
+		{
+			name: "manifest with special characters",
+			args: args{
+				manifests: []core_config.ClusterInlineManifest{
+					{
+						Name: "secret-config",
+						Contents: `apiVersion: v1
+kind: Secret
+metadata:
+  name: mysecret
+type: Opaque
+data:
+  username: YWRtaW4=
+  password: MWYyZDFlMmU2N2Rm`,
+					},
+				},
+			},
+			want: []config.ClusterInlineManifest{
+				{
+					Name: "secret-config",
+					Contents: `apiVersion: v1
+kind: Secret
+metadata:
+  name: mysecret
+type: Opaque
+data:
+  username: YWRtaW4=
+  password: MWYyZDFlMmU2N2Rm`,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := toInlineManifests(tt.args.manifests); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("toInlineManifests() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
