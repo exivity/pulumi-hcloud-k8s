@@ -92,4 +92,18 @@ type TalosConfig struct {
 	// When set, Talos will enable encryption of Secret objects in etcd
 	// example creation: pulumi config set --path hcloud-k8s:talos.secretbox_encryption_secret --secret $(pwgen 32 1)
 	SecretboxEncryptionSecret *string `json:"secretbox_encryption_secret" validate:"omitempty,len=32"`
+
+	// CertLifetime is the admin kubeconfig certificate lifetime (default is 1 year).
+	// Field format accepts any Go time.Duration format ('1h' for one hour, '10m' for ten minutes).
+	// Examples:
+	//
+	//	"24h"         - 24 hours (1 day)
+	//	"168h"        - 168 hours (7 days)
+	//	"720h"        - 720 hours (30 days)
+	//	"8760h"       - 8760 hours (1 year, default)
+	//
+	// Defaults to "8760h" (1 year).
+	// Note: When modifying this value, it is recommended to also update K8sCertificateRenewalDuration
+	// to ensure certificates are renewed well before the kubeconfig expires.
+	CertLifetime *string `json:"cert_lifetime" validate:"omitempty,duration"`
 }
