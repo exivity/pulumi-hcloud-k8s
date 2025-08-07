@@ -2,9 +2,6 @@ config:
   hcloud-k8s:talos:
     image_version: v1.10.5
     kubernetes_version: "1.33.0"
-    extra_manifests:
-      # Install Argocd from https://github.com/argoproj/argo-cd/tree/stable/manifests
-      - "https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/namespace-install.yaml"
   hcloud-k8s:network:
     nameservers:
       # Quad9 DNS
