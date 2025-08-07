@@ -40,6 +40,14 @@ type NodeConfigurationArgs struct {
 	EnableLocalStorage bool
 	// Registries is the registries configuration for the Talos image
 	Registries *core_config.RegistriesConfig
+	// ExtraManifests is a list of URLs that point to additional manifests
+	// These will get automatically deployed as part of the bootstrap
+	ExtraManifests []string
+	// ExtraManifestHeaders is a map of key value pairs that will be added while fetching the ExtraManifests
+	ExtraManifestHeaders map[string]string
+	// InlineManifests is a list of inline Kubernetes manifests
+	// These will get automatically deployed as part of the bootstrap
+	InlineManifests []core_config.ClusterInlineManifest
 }
 
 func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) {
@@ -63,6 +71,9 @@ func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) {
 			},
 			AllowSchedulingOnControlPlanes: args.AllowSchedulingOnControlPlanes,
 			AdminKubeconfig:                adminKubeconfig,
+			ExtraManifests:                 args.ExtraManifests,
+			ExtraManifestHeaders:           args.ExtraManifestHeaders,
+			InlineManifests:                toInlineManifests(args.InlineManifests),
 		},
 		Machine: &config.MachineConfig{
 			Type:            string(args.ServerNodeType),
@@ -219,5 +230,16 @@ func toRegistriesConfig(args *core_config.RegistriesConfig) *config.RegistriesCo
 		}
 	}
 
+	return out
+}
+
+func toInlineManifests(manifests []core_config.ClusterInlineManifest) []config.ClusterInlineManifest {
+	out := make([]config.ClusterInlineManifest, len(manifests))
+	for i, manifest := range manifests {
+		out[i] = config.ClusterInlineManifest{
+			Name:     manifest.Name,
+			Contents: manifest.Contents,
+		}
+	}
 	return out
 }
