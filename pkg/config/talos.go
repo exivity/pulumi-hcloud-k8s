@@ -105,5 +105,5 @@ type TalosConfig struct {
 	// Defaults to "8760h" (1 year).
 	// Note: When modifying this value, it is recommended to also update K8sCertificateRenewalDuration
 	// to ensure certificates are renewed well before the kubeconfig expires.
-	CertLifetime *string `json:"cert_lifetime" validate:"omitempty,duration"`
+	CertLifetime *string `json:"cert_lifetime" validate:"omitempty"`
 }
