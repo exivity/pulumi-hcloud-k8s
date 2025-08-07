@@ -284,6 +284,10 @@ func DeployControlPlanePools(ctx *pulumi.Context, cfg *config.PulumiConfig, imag
 			NodeTaints:                     pool.Taints,
 			NodeAnnotations:                pool.Annotations,
 			Registries:                     cfg.Talos.Registries,
+			CertLifetime:                   cfg.Talos.CertLifetime,
+			ExtraManifests:                 cfg.Talos.ExtraManifests,
+			ExtraManifestHeaders:           cfg.Talos.ExtraManifestHeaders,
+			InlineManifests:                cfg.Talos.InlineManifests,
 		})
 		if err != nil {
 			return nil, err
@@ -301,6 +305,10 @@ func DeployControlPlanePools(ctx *pulumi.Context, cfg *config.PulumiConfig, imag
 			NodeTaints:                     pool.Taints,
 			NodeAnnotations:                pool.Annotations,
 			Registries:                     cfg.Talos.Registries,
+			CertLifetime:                   cfg.Talos.CertLifetime,
+			ExtraManifests:                 cfg.Talos.ExtraManifests,
+			ExtraManifestHeaders:           cfg.Talos.ExtraManifestHeaders,
+			InlineManifests:                cfg.Talos.InlineManifests,
 		})
 		if err != nil {
 			return nil, err

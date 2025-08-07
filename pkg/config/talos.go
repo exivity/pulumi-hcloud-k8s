@@ -46,6 +46,14 @@ type PEMEncodedCertificateAndKey struct {
 	Key string `json:"key"`
 }
 
+// ClusterInlineManifest represents an inline Kubernetes manifest.
+type ClusterInlineManifest struct {
+	// Name of the manifest.
+	Name string `json:"name" validate:"required"`
+	// Manifest contents as a string.
+	Contents string `json:"contents" validate:"required"`
+}
+
 // TalosConfig contains all Talos Linux image & version settings.
 type TalosConfig struct {
 	// If set, overrides the ID of the Talos image on Hetzner
@@ -106,4 +114,23 @@ type TalosConfig struct {
 	// Note: When modifying this value, it is recommended to also update K8sCertificateRenewalDuration
 	// to ensure certificates are renewed well before the kubeconfig expires.
 	CertLifetime *string `json:"cert_lifetime" validate:"omitempty"`
+
+	// ExtraManifests is a list of URLs that point to additional manifests.
+	// These will get automatically deployed as part of the bootstrap.
+	// Examples:
+	//
+	//	- "https://www.example.com/manifest1.yaml"
+	//	- "https://www.example.com/manifest2.yaml"
+	ExtraManifests []string `json:"extra_manifests"`
+
+	// ExtraManifestHeaders is a map of key value pairs that will be added while fetching the ExtraManifests.
+	// Examples:
+	//
+	//	Token: "1234567"
+	//	X-ExtraInfo: "info"
+	ExtraManifestHeaders map[string]string `json:"extra_manifest_headers"`
+
+	// InlineManifests is a list of inline Kubernetes manifests.
+	// These will get automatically deployed as part of the bootstrap.
+	InlineManifests []ClusterInlineManifest `json:"inline_manifests"`
 }
