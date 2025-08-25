@@ -11,7 +11,6 @@ import (
 
 type NodeConfigurationArgs struct {
 	// BootstrapEnable is true if bootstrap is enabled
-	// this is used to enable the bootstrap service like encryption. This can only use once and should not be apply for updates
 	BootstrapEnable bool
 	// ServerNodeType is the type of the server node
 	ServerNodeType meta.ServerNodeType
@@ -34,20 +33,19 @@ type NodeConfigurationArgs struct {
 	// AllowSchedulingOnControlPlanes is true if scheduling on control planes is allowed
 	AllowSchedulingOnControlPlanes bool
 	// Nameservers is the list of DNS servers to use for the cluster
-	// If not provided, defaults are used
 	Nameservers []string
 	// EnableLocalStorage is true if local storage support is enabled
 	EnableLocalStorage bool
 	// Registries is the registries configuration for the Talos image
 	Registries *core_config.RegistriesConfig
-	// ExtraManifests is a list of URLs that point to additional manifests
-	// These will get automatically deployed as part of the bootstrap
-	ExtraManifests []string
-	// ExtraManifestHeaders is a map of key value pairs that will be added while fetching the ExtraManifests
-	ExtraManifestHeaders map[string]string
-	// InlineManifests is a list of inline Kubernetes manifests
-	// These will get automatically deployed as part of the bootstrap
-	InlineManifests []core_config.ClusterInlineManifest
+	// Bootstrap phase manifests/headers/inline
+	BootstrapExtraManifests       []string
+	BootstrapExtraManifestHeaders map[string]string
+	BootstrapInlineManifests      []core_config.ClusterInlineManifest
+	// Update phase manifests/headers/inline
+	UpdateExtraManifests       []string
+	UpdateExtraManifestHeaders map[string]string
+	UpdateInlineManifests      []core_config.ClusterInlineManifest
 }
 
 func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) {
@@ -56,6 +54,19 @@ func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) {
 		adminKubeconfig = &config.AdminKubeconfigConfig{
 			CertLifetime: *args.CertLifetime,
 		}
+	}
+
+	var extraManifests []string
+	var extraManifestHeaders map[string]string
+	var inlineManifests []core_config.ClusterInlineManifest
+	if args.BootstrapEnable {
+		extraManifests = args.BootstrapExtraManifests
+		extraManifestHeaders = args.BootstrapExtraManifestHeaders
+		inlineManifests = args.BootstrapInlineManifests
+	} else {
+		extraManifests = args.UpdateExtraManifests
+		extraManifestHeaders = args.UpdateExtraManifestHeaders
+		inlineManifests = args.UpdateInlineManifests
 	}
 
 	configPatch := config.TalosConfig{
@@ -71,9 +82,9 @@ func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) {
 			},
 			AllowSchedulingOnControlPlanes: args.AllowSchedulingOnControlPlanes,
 			AdminKubeconfig:                adminKubeconfig,
-			ExtraManifests:                 args.ExtraManifests,
-			ExtraManifestHeaders:           args.ExtraManifestHeaders,
-			InlineManifests:                toInlineManifests(args.InlineManifests),
+			ExtraManifests:                 extraManifests,
+			ExtraManifestHeaders:           extraManifestHeaders,
+			InlineManifests:                toInlineManifests(inlineManifests),
 		},
 		Machine: &config.MachineConfig{
 			Type:            string(args.ServerNodeType),
@@ -88,7 +99,7 @@ func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) {
 				},
 				Nameservers: args.Nameservers,
 				KubeSpan: &config.NetworkKubeSpan{
-					Enabled: true, // Enable kube span (wireguard)
+					Enabled: true,
 				},
 			},
 			Kubelet: &config.KubeletConfig{
@@ -98,10 +109,7 @@ func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) {
 					},
 				},
 				ExtraArgs: map[string]string{
-					"register-with-taints": toTalosTaints(args.NodeTaints),
-					// enable kubelet certificate rotation
-					// This is required for deploying a metric server
-					// See: https://www.talos.dev/v1.11/kubernetes-guides/configuration/deploy-metrics-server/
+					"register-with-taints":       toTalosTaints(args.NodeTaints),
 					"rotate-server-certificates": "true",
 				},
 				ExtraMounts: []config.ExtraMount{},
@@ -119,9 +127,6 @@ func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) {
 	}
 
 	if args.BootstrapEnable {
-		// Enable encryption by default
-		// TODO: add options to configure more secure encryption
-		// See: https://www.talos.dev/v1.9/talos-guides/configuration/disk-encryption/#luks2
 		configPatch.Machine.SystemDiskEncryption = &config.SystemDiskEncryptionConfig{
 			State: &config.EncryptionConfig{
 				Provider: "luks2",

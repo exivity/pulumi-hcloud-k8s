@@ -266,12 +266,13 @@ func (n *NodePool) UpgradeTalos(ctx *pulumi.Context, args *UpgradeTalosArgs) err
 	return nil
 }
 
-// DeployControlPlanePools deploys all control plane node pools
 func DeployControlPlanePools(ctx *pulumi.Context, cfg *config.PulumiConfig, images *image.Images, net *network.Network, cpPg *hcloud.PlacementGroup, machineConfigurationManager *core.MachineConfigurationManager, firewallCp *hcloud.Firewall, hetznerProvider *hcloud.Provider) ([]*NodePool, error) {
 	cpPools := []*NodePool{}
 
-	for _, pool := range cfg.ControlPlane.NodePools {
-		cpNodeConfigurationBootstrap, err := core.NewNodeConfiguration(&core.NodeConfigurationArgs{
+	for poolIdx, pool := range cfg.ControlPlane.NodePools {
+		isControlPlaneZero := poolIdx == 0
+
+		nodeConfigurationArgs := core.NodeConfigurationArgs{
 			ServerNodeType:                 meta.ControlPlaneNode,
 			Subnet:                         cfg.Network.Subnet,
 			PodSubnets:                     cfg.Network.PodSubnets,
@@ -284,31 +285,25 @@ func DeployControlPlanePools(ctx *pulumi.Context, cfg *config.PulumiConfig, imag
 			NodeAnnotations:                pool.Annotations,
 			Registries:                     cfg.Talos.Registries,
 			CertLifetime:                   cfg.Talos.CertLifetime,
+		}
 
-			// Bootstrap specific settings
-			BootstrapEnable:      true,
-			ExtraManifests:       cfg.Talos.ExtraManifests,
-			ExtraManifestHeaders: cfg.Talos.ExtraManifestHeaders,
-			InlineManifests:      cfg.Talos.InlineManifests,
-		})
+		if isControlPlaneZero {
+			nodeConfigurationArgs.BootstrapExtraManifests = cfg.Talos.BootstrapExtraManifests
+			nodeConfigurationArgs.BootstrapExtraManifestHeaders = cfg.Talos.BootstrapExtraManifestHeaders
+			nodeConfigurationArgs.BootstrapInlineManifests = cfg.Talos.BootstrapInlineManifests
+			nodeConfigurationArgs.UpdateExtraManifests = cfg.Talos.UpdateExtraManifests
+			nodeConfigurationArgs.UpdateExtraManifestHeaders = cfg.Talos.UpdateExtraManifestHeaders
+			nodeConfigurationArgs.UpdateInlineManifests = cfg.Talos.UpdateInlineManifests
+		}
+
+		nodeConfigurationArgsBootstrap := nodeConfigurationArgs
+		nodeConfigurationArgsBootstrap.BootstrapEnable = true
+		cpNodeConfigurationBootstrap, err := core.NewNodeConfiguration(&nodeConfigurationArgsBootstrap)
 		if err != nil {
 			return nil, err
 		}
 
-		cpNodeConfiguration, err := core.NewNodeConfiguration(&core.NodeConfigurationArgs{
-			ServerNodeType:                 meta.ControlPlaneNode,
-			Subnet:                         cfg.Network.Subnet,
-			PodSubnets:                     cfg.Network.PodSubnets,
-			EnableLonghornSupport:          cfg.Talos.EnableLonghorn,
-			EnableLocalStorage:             cfg.Talos.EnableLocalStorage,
-			SecretboxEncryptionSecret:      cfg.Talos.SecretboxEncryptionSecret,
-			AllowSchedulingOnControlPlanes: cfg.Talos.AllowSchedulingOnControlPlanes,
-			NodeLabels:                     pool.Labels,
-			NodeTaints:                     pool.Taints,
-			NodeAnnotations:                pool.Annotations,
-			Registries:                     cfg.Talos.Registries,
-			CertLifetime:                   cfg.Talos.CertLifetime,
-		})
+		cpNodeConfiguration, err := core.NewNodeConfiguration(&nodeConfigurationArgs)
 		if err != nil {
 			return nil, err
 		}
@@ -358,7 +353,7 @@ func DeployWorkerPools(ctx *pulumi.Context, cfg *config.PulumiConfig, images *im
 			pool.Annotations = map[string]string{}
 		}
 
-		workerNodeConfigurationBootstrap, err := core.NewNodeConfiguration(&core.NodeConfigurationArgs{
+		nodeConfigurationArgs := core.NodeConfigurationArgs{
 			ServerNodeType:        meta.WorkerNode,
 			Subnet:                cfg.Network.Subnet,
 			PodSubnets:            cfg.Network.PodSubnets,
@@ -367,24 +362,18 @@ func DeployWorkerPools(ctx *pulumi.Context, cfg *config.PulumiConfig, images *im
 			NodeAnnotations:       pool.Annotations,
 			EnableLonghornSupport: cfg.Talos.EnableLonghorn,
 			EnableLocalStorage:    cfg.Talos.EnableLocalStorage,
-			BootstrapEnable:       true,
 			Registries:            cfg.Talos.Registries,
-		})
+		}
+
+		nodeConfigurationArgsBootstrap := nodeConfigurationArgs
+		nodeConfigurationArgsBootstrap.BootstrapEnable = true
+
+		workerNodeConfigurationBootstrap, err := core.NewNodeConfiguration(&nodeConfigurationArgsBootstrap)
 		if err != nil {
 			return nil, err
 		}
 
-		workerNodeConfiguration, err := core.NewNodeConfiguration(&core.NodeConfigurationArgs{
-			ServerNodeType:        meta.WorkerNode,
-			Subnet:                cfg.Network.Subnet,
-			PodSubnets:            cfg.Network.PodSubnets,
-			NodeLabels:            pool.Labels,
-			NodeTaints:            pool.Taints,
-			NodeAnnotations:       pool.Annotations,
-			EnableLonghornSupport: cfg.Talos.EnableLonghorn,
-			EnableLocalStorage:    cfg.Talos.EnableLocalStorage,
-			Registries:            cfg.Talos.Registries,
-		})
+		workerNodeConfiguration, err := core.NewNodeConfiguration(&nodeConfigurationArgs)
 		if err != nil {
 			return nil, err
 		}
@@ -414,7 +403,6 @@ func DeployWorkerPools(ctx *pulumi.Context, cfg *config.PulumiConfig, images *im
 			return nil, err
 		}
 
-		// Skip auto-scaler node discovery if configured for all node pools
 		if !cfg.NodePools.SkipAutoScalerDiscovery {
 			err = workerPool.FindNodePoolAutoScalerNodes(ctx, pulumi.Provider(hetznerProvider))
 			if err != nil {
