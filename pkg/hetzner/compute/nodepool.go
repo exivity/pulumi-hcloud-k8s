@@ -288,6 +288,7 @@ func DeployControlPlanePools(ctx *pulumi.Context, cfg *config.PulumiConfig, imag
 			ExtraManifests:                 cfg.Talos.ExtraManifests,
 			ExtraManifestHeaders:           cfg.Talos.ExtraManifestHeaders,
 			InlineManifests:                cfg.Talos.InlineManifests,
+			EnableHetznerCCMExtraManifest:  cfg.Talos.EnableHetznerCCMExtraManifest,
 		})
 		if err != nil {
 			return nil, err
@@ -309,6 +310,7 @@ func DeployControlPlanePools(ctx *pulumi.Context, cfg *config.PulumiConfig, imag
 			ExtraManifests:                 cfg.Talos.ExtraManifests,
 			ExtraManifestHeaders:           cfg.Talos.ExtraManifestHeaders,
 			InlineManifests:                cfg.Talos.InlineManifests,
+			EnableHetznerCCMExtraManifest:  cfg.Talos.EnableHetznerCCMExtraManifest,
 		})
 		if err != nil {
 			return nil, err

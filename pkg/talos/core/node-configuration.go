@@ -48,6 +48,8 @@ type NodeConfigurationArgs struct {
 	// InlineManifests is a list of inline Kubernetes manifests
 	// These will get automatically deployed as part of the bootstrap
 	InlineManifests []core_config.ClusterInlineManifest
+	// EnableHetznerCCMExtraManifest enables installation of Hetzner CCM via Talos extra manifests
+	EnableHetznerCCMExtraManifest bool
 }
 
 func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) {
@@ -58,10 +60,19 @@ func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) {
 		}
 	}
 
+	ccmExtraManifests := []string{}
+	if args.EnableHetznerCCMExtraManifest {
+		ccmExtraManifests = []string{
+			"https://raw.githubusercontent.com/hetznercloud/hcloud-cloud-controller-manager/refs/heads/main/deploy/ccm-networks.yaml",
+			"https://raw.githubusercontent.com/hetznercloud/hcloud-cloud-controller-manager/refs/heads/main/deploy/ccm.yaml",
+		}
+	}
+
 	configPatch := config.TalosConfig{
 		Cluster: &config.ClusterConfig{
 			ExternalCloudProvider: &config.ExternalCloudProviderConfig{
-				Enabled: true,
+				Enabled:   true,
+				Manifests: ccmExtraManifests,
 			},
 			Network: &config.ClusterNetworkConfig{
 				PodSubnets: []string{args.PodSubnets},
