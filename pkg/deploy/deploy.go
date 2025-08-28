@@ -76,6 +76,7 @@ func NewHetznerTalosKubernetesCluster(ctx *pulumi.Context, name string, cfg *con
 	cpLb, err := lb.NewControlplane(ctx, "controlplane-lb", &lb.ControlplaneArgs{
 		LoadBalancerType: cfg.ControlPlane.LoadBalancerType,
 		Network:          net,
+		Location:         cfg.ControlPlane.LoadBalancerLocation,
 	}, pulumi.Parent(net.Network), pulumi.Provider(hetznerProvider))
 	if err != nil {
 		return nil, err

@@ -7,6 +7,10 @@ type ControlPlaneConfig struct {
 	// Hetzner load‑balancer type (e.g. "lb11")
 	LoadBalancerType string `json:"load_balancer_type" validate:"default=lb11"`
 
+	// Location to create the load balancer in (e.g. "nbg1", "fsn1", "hel1").
+	// If not set, the location of the network will be used.
+	LoadBalancerLocation *string `json:"load_balancer_location"`
+
 	// Node pool settings
 	NodePools []ControlPlaneNodePoolConfig `json:"node_pools" validate:"required"`
 }
