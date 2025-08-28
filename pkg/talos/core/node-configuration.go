@@ -62,7 +62,6 @@ func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) {
 
 	ccmExtraManifests := []string{}
 	if args.EnableHetznerCCMExtraManifest {
-		fmt.Println("Enabling Hetzner Cloud Controller Manager extra manifests in Talos configuration")
 		ccmExtraManifests = []string{
 			"https://raw.githubusercontent.com/hetznercloud/hcloud-cloud-controller-manager/refs/heads/main/deploy/ccm-networks.yaml",
 			"https://raw.githubusercontent.com/hetznercloud/hcloud-cloud-controller-manager/refs/heads/main/deploy/ccm.yaml",
