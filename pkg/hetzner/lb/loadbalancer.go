@@ -46,13 +46,17 @@ type Controlplane struct {
 func NewControlplane(ctx *pulumi.Context, name string, args *ControlplaneArgs, opts ...pulumi.ResourceOption) (*Controlplane, error) {
 	resourceName := fmt.Sprintf("%s-controlplane", name)
 
-	loadBalancer, err := hcloud.NewLoadBalancer(ctx, resourceName, &hcloud.LoadBalancerArgs{
+	lbArgs := &hcloud.LoadBalancerArgs{
 		Name:             pulumi.String(resourceName),
 		LoadBalancerType: pulumi.String(args.LoadBalancerType),
-		NetworkZone:      args.Network.NetworkSubnet.NetworkZone,
-		Location:         pulumi.StringPtrFromPtr(args.Location),
 		Labels:           meta.NewLabels(ctx, &meta.ServerLabelsArgs{ServerNodeType: meta.ControlPlaneNode}),
-	}, opts...)
+	}
+	if args.Location != nil {
+		lbArgs.Location = pulumi.StringPtrFromPtr(args.Location)
+	} else {
+		lbArgs.NetworkZone = args.Network.NetworkSubnet.NetworkZone
+	}
+	loadBalancer, err := hcloud.NewLoadBalancer(ctx, resourceName, lbArgs, opts...)
 	if err != nil {
 		return nil, err
 	}
