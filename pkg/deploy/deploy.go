@@ -121,25 +121,32 @@ func NewHetznerTalosKubernetesCluster(ctx *pulumi.Context, name string, cfg *con
 		return nil, err
 	}
 
+	workerPools, err := compute.DeployWorkerPools(ctx, cfg, images, net, machineConfigurationManager, firewallWorker, hetznerProvider)
+	if err != nil {
+		return nil, err
+	}
+
+	woerkPoolDependsOn := []pulumi.Resource{}
+	for _, cpPool := range cpPools {
+		for _, node := range cpPool.Nodes {
+			woerkPoolDependsOn = append(woerkPoolDependsOn, node)
+		}
+	}
+
 	// TODO: remove bootstrap creation from k8s package
 	out.Kubeconfig, err = core.NewKubeconfig(ctx, &core.KubeconfigArgs{
 		CertificateRenewalDuration: cfg.Talos.K8sCertificateRenewalDuration,
 		FirstControlPlane:          cpPools[0].Nodes[0],
 		Secrets:                    machineConfigurationManager.Secrets,
 	},
-		pulumi.DependsOn([]pulumi.Resource{
+		pulumi.DependsOn(append(woerkPoolDependsOn,
 			cpPools[0].Nodes[0],
 			cpLb.LoadBalancer,
 			cpLb.Service,
 			cpLb.Target,
 			cpLb.LoadBalancerNetwork,
-		}),
+		)),
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	workerPools, err := compute.DeployWorkerPools(ctx, cfg, images, net, machineConfigurationManager, firewallWorker, hetznerProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -168,14 +175,18 @@ func NewHetznerTalosKubernetesCluster(ctx *pulumi.Context, name string, cfg *con
 		ClientKey:         out.Kubeconfig.Bootstrap.ClientConfiguration.ClientKey(),
 	})
 
-	// Apply configuration patches to all nodes
-	err = compute.ApplyConfigPatchesToAllPools(ctx, cpPools, workerPools, hetznerProvider)
+	// Upgrade Talos on all nodes
+	upgradedNodes, err := compute.UpgradeTalosOnAllPools(ctx, cpPools, workerPools, cfg.Talos.ImageVersion, images, out.TalosConfig,
+		pulumi.DependsOn(append(woerkPoolDependsOn, out.Kubeconfig.Bootstrap)),
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	// Upgrade Talos on all nodes
-	err = compute.UpgradeTalosOnAllPools(ctx, cpPools, workerPools, cfg.Talos.ImageVersion, images, out.TalosConfig)
+	// Apply configuration patches to all nodes
+	err = compute.ApplyConfigPatchesToAllPools(ctx, cpPools, workerPools, hetznerProvider,
+		pulumi.DependsOn(upgradedNodes),
+	)
 	if err != nil {
 		return nil, err
 	}
