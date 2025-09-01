@@ -193,36 +193,40 @@ func (n *NodePool) FindNodePoolAutoScalerNodes(ctx *pulumi.Context, opts ...pulu
 }
 
 // ApplyConfigPatches applies the config patches to the nodes in the node pool.
-func (n *NodePool) ApplyConfigPatches(ctx *pulumi.Context, opts ...pulumi.ResourceOption) error {
+func (n *NodePool) ApplyConfigPatches(ctx *pulumi.Context, opts ...pulumi.ResourceOption) ([]*machine.ConfigurationApply, error) {
 	machineConfiguration := n.MachineConfigurationManager.NewMachineConfiguration(ctx, &core.MachineConfigurationArgs{
 		ServerNodeType: n.ServerNodeType,
 		ConfigPatches:  n.ConfigPatches,
 	})
 
+	configurationApplies := []*machine.ConfigurationApply{}
+
 	for i, node := range n.Nodes {
-		_, err := machine.NewConfigurationApply(ctx, fmt.Sprintf("%s-%d", n.NodePoolName, i), &machine.ConfigurationApplyArgs{
+		configurationApply, err := machine.NewConfigurationApply(ctx, fmt.Sprintf("%s-%d", n.NodePoolName, i), &machine.ConfigurationApplyArgs{
 			ClientConfiguration:       n.MachineConfigurationManager.Secrets.ClientConfiguration,
 			MachineConfigurationInput: machineConfiguration,
 			Node:                      node.Ipv4Address,
 			ConfigPatches:             n.ConfigPatches,
 		}, append(opts, pulumi.Parent(node), pulumi.DependsOn(talosUpgradeQueue))...)
 		if err != nil {
-			return err
+			return nil, err
 		}
+		configurationApplies = append(configurationApplies, configurationApply)
 	}
 
 	for _, node := range n.AutoScalerNodes {
-		_, err := machine.NewConfigurationApply(ctx, node.Name, &machine.ConfigurationApplyArgs{
+		configurationApply, err := machine.NewConfigurationApply(ctx, node.Name, &machine.ConfigurationApplyArgs{
 			ClientConfiguration:       n.MachineConfigurationManager.Secrets.ClientConfiguration,
 			MachineConfigurationInput: machineConfiguration,
 			Node:                      pulumi.String(node.Ipv4Address),
 			ConfigPatches:             n.ConfigPatches,
 		}, opts...)
 		if err != nil {
-			return err
+			return nil, err
 		}
+		configurationApplies = append(configurationApplies, configurationApply)
 	}
-	return nil
+	return configurationApplies, nil
 }
 
 type UpgradeTalosArgs struct {
@@ -432,28 +436,37 @@ func DeployWorkerPools(ctx *pulumi.Context, cfg *config.PulumiConfig, images *im
 }
 
 // ApplyConfigPatchesToAllPools applies configuration patches to all node pools
-func ApplyConfigPatchesToAllPools(ctx *pulumi.Context, cpPools []*NodePool, workerPools []*NodePool, hetznerProvider *hcloud.Provider, opts ...pulumi.ResourceOption) error {
+func ApplyConfigPatchesToAllPools(ctx *pulumi.Context, cpPools []*NodePool, workerPools []*NodePool, hetznerProvider *hcloud.Provider, opts ...pulumi.ResourceOption) ([]pulumi.Resource, error) {
+	configurationApplies := []*machine.ConfigurationApply{}
+
 	// Apply config patches to control plane pools
 	for _, cpPool := range cpPools {
-		err := cpPool.ApplyConfigPatches(ctx,
+		configurationApply, err := cpPool.ApplyConfigPatches(ctx,
 			append(opts, pulumi.DependsOn(talosUpgradeQueue))...,
 		)
 		if err != nil {
-			return err
+			return nil, err
 		}
+		configurationApplies = append(configurationApplies, configurationApply...)
 	}
 
 	// Apply config patches to worker pools
 	for _, workerPool := range workerPools {
-		err := workerPool.ApplyConfigPatches(ctx,
+		configurationApply, err := workerPool.ApplyConfigPatches(ctx,
 			append(opts, pulumi.DependsOn(talosUpgradeQueue))...,
 		)
 		if err != nil {
-			return err
+			return nil, err
 		}
+		configurationApplies = append(configurationApplies, configurationApply...)
 	}
 
-	return nil
+	out := []pulumi.Resource{}
+	for _, c := range configurationApplies {
+		out = append(out, c)
+	}
+
+	return out, nil
 }
 
 // UpgradeTalosOnAllPools upgrades Talos on all node pools

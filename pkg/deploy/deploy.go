@@ -184,7 +184,7 @@ func NewHetznerTalosKubernetesCluster(ctx *pulumi.Context, name string, cfg *con
 	}
 
 	// Apply configuration patches to all nodes
-	err = compute.ApplyConfigPatchesToAllPools(ctx, cpPools, workerPools, hetznerProvider,
+	configurationApplies, err := compute.ApplyConfigPatchesToAllPools(ctx, cpPools, workerPools, hetznerProvider,
 		pulumi.DependsOn(upgradedNodes),
 	)
 	if err != nil {
@@ -198,7 +198,9 @@ func NewHetznerTalosKubernetesCluster(ctx *pulumi.Context, name string, cfg *con
 		Images:                      images,
 		MachineConfigurationManager: machineConfigurationManager,
 		FirewallWorker:              firewallWorker,
-	})
+	},
+		pulumi.DependsOn(configurationApplies),
+	)
 	if err != nil {
 		return nil, err
 	}

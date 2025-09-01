@@ -40,7 +40,7 @@ type Applications struct {
 	MetricServer               *metricsserver.MetricServer
 }
 
-func NewApplications(ctx *pulumi.Context, name string, args *ApplicationsArgs) (*Applications, error) { //nolint:cyclop,funlen
+func NewApplications(ctx *pulumi.Context, name string, args *ApplicationsArgs, opts ...pulumi.ResourceOption) (*Applications, error) { //nolint:cyclop,funlen
 	out := &Applications{}
 	var err error
 
@@ -53,14 +53,14 @@ func NewApplications(ctx *pulumi.Context, name string, args *ApplicationsArgs) (
 	}
 
 	// default k8s pulumi opts, define kubernetes provider & parent
-	k8sOpts := []pulumi.ResourceOption{
+	opts = append(opts,
 		pulumi.Provider(out.Provider),
 		pulumi.Parent(out.Provider),
 		pulumi.DependsOn([]pulumi.Resource{
 			args.Kubeconfig,
 			out.Provider,
 		}),
-	}
+	)
 
 	if args.Cfg.Kubernetes.HCloudToken != "" {
 		out.HcloudSecret, err = corev1.NewSecret(ctx, "hcloud-secret", &corev1.SecretArgs{
@@ -73,12 +73,12 @@ func NewApplications(ctx *pulumi.Context, name string, args *ApplicationsArgs) (
 				"network": args.Network.Network.ID(),
 			},
 		},
-			k8sOpts...,
+			opts...,
 		)
 		if err != nil {
 			return nil, err
 		}
-		k8sOpts = append(k8sOpts, pulumi.DependsOn([]pulumi.Resource{out.HcloudSecret}))
+		opts = append(opts, pulumi.DependsOn([]pulumi.Resource{out.HcloudSecret}))
 	}
 
 	if args.Cfg.Kubernetes.HetznerCCM != nil && args.Cfg.Kubernetes.HetznerCCM.Enabled {
@@ -88,7 +88,7 @@ func NewApplications(ctx *pulumi.Context, name string, args *ApplicationsArgs) (
 			Version:    args.Cfg.Kubernetes.HetznerCCM.Version,
 			PodSubnets: args.Cfg.Network.PodSubnets,
 		},
-			k8sOpts...,
+			opts...,
 		)
 		if err != nil {
 			return nil, err
@@ -103,7 +103,7 @@ func NewApplications(ctx *pulumi.Context, name string, args *ApplicationsArgs) (
 			IsDefaultStorageClass: args.Cfg.Kubernetes.CSI.IsDefaultStorageClass,
 			ReclaimPolicy:         args.Cfg.Kubernetes.CSI.ReclaimPolicy,
 		},
-			k8sOpts...,
+			opts...,
 		)
 		if err != nil {
 			return nil, err
@@ -124,7 +124,7 @@ func NewApplications(ctx *pulumi.Context, name string, args *ApplicationsArgs) (
 			HcloudToken:                 args.Cfg.Kubernetes.HCloudToken,
 			Firewall:                    args.FirewallWorker,
 		},
-			k8sOpts...,
+			opts...,
 		)
 		if err != nil {
 			return nil, err
@@ -135,7 +135,7 @@ func NewApplications(ctx *pulumi.Context, name string, args *ApplicationsArgs) (
 		out.KubeletServingCertApprover, err = kubeletservingcertapprover.New(ctx, &kubeletservingcertapprover.Args{
 			Version: args.Cfg.Kubernetes.KubeletServingCertApprover.Version,
 		},
-			k8sOpts...,
+			opts...,
 		)
 		if err != nil {
 			return nil, err
@@ -147,7 +147,7 @@ func NewApplications(ctx *pulumi.Context, name string, args *ApplicationsArgs) (
 			Values:  args.Cfg.Kubernetes.KubernetesMetricsServer.Values,
 			Version: args.Cfg.Kubernetes.KubernetesMetricsServer.Version,
 		},
-			k8sOpts...,
+			opts...,
 		)
 		if err != nil {
 			return nil, err
@@ -159,7 +159,7 @@ func NewApplications(ctx *pulumi.Context, name string, args *ApplicationsArgs) (
 			Values:  args.Cfg.Kubernetes.Longhorn.Values,
 			Version: args.Cfg.Kubernetes.Longhorn.Version,
 		},
-			k8sOpts...,
+			opts...,
 		)
 		if err != nil {
 			return nil, err
