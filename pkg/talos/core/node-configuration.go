@@ -52,7 +52,7 @@ type NodeConfigurationArgs struct {
 	EnableHetznerCCMExtraManifest bool
 }
 
-func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) {
+func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) { //nolint:funlen
 	var adminKubeconfig *config.AdminKubeconfigConfig
 	if args.CertLifetime != nil {
 		adminKubeconfig = &config.AdminKubeconfigConfig{
