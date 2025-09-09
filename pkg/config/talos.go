@@ -136,8 +136,8 @@ type TalosConfig struct {
 
 	// EnableHetznerCCMExtraManifest enables installation of Hetzner Cloud Controller Manager via Talos extra manifests.
 	// If enabled, the following manifests will be installed:
-	//   - https://raw.githubusercontent.com/hetznercloud/hcloud-cloud-controller-manager/refs/heads/main/deploy/ccm-networks.yaml
-	//   - https://raw.githubusercontent.com/hetznercloud/hcloud-cloud-controller-manager/refs/heads/main/deploy/ccm.yaml
+	//   - https://raw.githubusercontent.com/hetznercloud/hcloud-cloud-controller-manager/refs/tags/v1.26.0/deploy/ccm-networks.yaml
+	//   - https://raw.githubusercontent.com/hetznercloud/hcloud-cloud-controller-manager/refs/tags/v1.26.0/deploy/ccm.yaml
 	// Disabled by default. If enabled, do not enable HetznerCCM Helm chart in KubernetesConfig.
 	EnableHetznerCCMExtraManifest bool `json:"enable_hetzner_ccm_extra_manifest"`
 }

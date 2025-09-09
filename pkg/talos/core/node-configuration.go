@@ -63,8 +63,8 @@ func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) { //nolin
 	ccmExtraManifests := []string{}
 	if args.EnableHetznerCCMExtraManifest {
 		ccmExtraManifests = []string{
-			"https://raw.githubusercontent.com/hetznercloud/hcloud-cloud-controller-manager/refs/heads/main/deploy/ccm-networks.yaml",
-			"https://raw.githubusercontent.com/hetznercloud/hcloud-cloud-controller-manager/refs/heads/main/deploy/ccm.yaml",
+			"https://raw.githubusercontent.com/hetznercloud/hcloud-cloud-controller-manager/refs/tags/v1.26.0/deploy/ccm-networks.yaml",
+			"https://raw.githubusercontent.com/hetznercloud/hcloud-cloud-controller-manager/refs/tags/v1.26.0/deploy/ccm.yaml",
 		}
 	}
 
