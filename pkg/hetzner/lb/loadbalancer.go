@@ -22,6 +22,8 @@ type ControlplaneArgs struct {
 	LoadBalancerType string
 	// Hetzner Cloud network to use for the load balancer
 	Network *network.Network
+	// Location is the location to create the load balancer in
+	Location *string
 }
 
 // Controlplane represents a control plane load balancer
@@ -44,12 +46,17 @@ type Controlplane struct {
 func NewControlplane(ctx *pulumi.Context, name string, args *ControlplaneArgs, opts ...pulumi.ResourceOption) (*Controlplane, error) {
 	resourceName := fmt.Sprintf("%s-controlplane", name)
 
-	loadBalancer, err := hcloud.NewLoadBalancer(ctx, resourceName, &hcloud.LoadBalancerArgs{
+	lbArgs := &hcloud.LoadBalancerArgs{
 		Name:             pulumi.String(resourceName),
 		LoadBalancerType: pulumi.String(args.LoadBalancerType),
-		NetworkZone:      args.Network.NetworkSubnet.NetworkZone,
 		Labels:           meta.NewLabels(ctx, &meta.ServerLabelsArgs{ServerNodeType: meta.ControlPlaneNode}),
-	}, opts...)
+	}
+	if args.Location != nil {
+		lbArgs.Location = pulumi.StringPtrFromPtr(args.Location)
+	} else {
+		lbArgs.NetworkZone = args.Network.NetworkSubnet.NetworkZone
+	}
+	loadBalancer, err := hcloud.NewLoadBalancer(ctx, resourceName, lbArgs, opts...)
 	if err != nil {
 		return nil, err
 	}

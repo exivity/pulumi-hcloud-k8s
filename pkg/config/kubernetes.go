@@ -43,6 +43,9 @@ type KubernetesConfig struct {
 	// This is required when enable CCM, CSI driver or autoscaler
 	HCloudToken string `json:"hcloud_token" validate:"env=K8S_HCLOUD_TOKEN"`
 
+	// HetznerCCM configures installation of the Hetzner Cloud Controller Manager via Helm chart.
+	// Only enable this if EnableHetznerCCMExtraManifest in TalosConfig is false.
+	// Using the Helm chart allows for more customization and lets Pulumi keep track of CCM resources.
 	HetznerCCM        *ChartConfig    `json:"hetzner_ccm"`
 	CSI               *CSIChartConfig `json:"csi"`
 	ClusterAutoScaler *ChartConfig    `json:"cluster_auto_scaler"`

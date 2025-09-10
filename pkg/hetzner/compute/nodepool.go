@@ -193,36 +193,40 @@ func (n *NodePool) FindNodePoolAutoScalerNodes(ctx *pulumi.Context, opts ...pulu
 }
 
 // ApplyConfigPatches applies the config patches to the nodes in the node pool.
-func (n *NodePool) ApplyConfigPatches(ctx *pulumi.Context, opts ...pulumi.ResourceOption) error {
+func (n *NodePool) ApplyConfigPatches(ctx *pulumi.Context, opts ...pulumi.ResourceOption) ([]*machine.ConfigurationApply, error) {
 	machineConfiguration := n.MachineConfigurationManager.NewMachineConfiguration(ctx, &core.MachineConfigurationArgs{
 		ServerNodeType: n.ServerNodeType,
 		ConfigPatches:  n.ConfigPatches,
 	})
 
+	configurationApplies := []*machine.ConfigurationApply{}
+
 	for i, node := range n.Nodes {
-		_, err := machine.NewConfigurationApply(ctx, fmt.Sprintf("%s-%d", n.NodePoolName, i), &machine.ConfigurationApplyArgs{
+		configurationApply, err := machine.NewConfigurationApply(ctx, fmt.Sprintf("%s-%d", n.NodePoolName, i), &machine.ConfigurationApplyArgs{
 			ClientConfiguration:       n.MachineConfigurationManager.Secrets.ClientConfiguration,
 			MachineConfigurationInput: machineConfiguration,
 			Node:                      node.Ipv4Address,
 			ConfigPatches:             n.ConfigPatches,
-		}, pulumi.DependsOn([]pulumi.Resource{node}), pulumi.Parent(node))
+		}, append(opts, pulumi.Parent(node), pulumi.DependsOn(talosUpgradeQueue))...)
 		if err != nil {
-			return err
+			return nil, err
 		}
+		configurationApplies = append(configurationApplies, configurationApply)
 	}
 
 	for _, node := range n.AutoScalerNodes {
-		_, err := machine.NewConfigurationApply(ctx, node.Name, &machine.ConfigurationApplyArgs{
+		configurationApply, err := machine.NewConfigurationApply(ctx, node.Name, &machine.ConfigurationApplyArgs{
 			ClientConfiguration:       n.MachineConfigurationManager.Secrets.ClientConfiguration,
 			MachineConfigurationInput: machineConfiguration,
 			Node:                      pulumi.String(node.Ipv4Address),
 			ConfigPatches:             n.ConfigPatches,
 		}, opts...)
 		if err != nil {
-			return err
+			return nil, err
 		}
+		configurationApplies = append(configurationApplies, configurationApply)
 	}
-	return nil
+	return configurationApplies, nil
 }
 
 type UpgradeTalosArgs struct {
@@ -234,7 +238,7 @@ type UpgradeTalosArgs struct {
 	Images *image.Images
 }
 
-func (n *NodePool) UpgradeTalos(ctx *pulumi.Context, args *UpgradeTalosArgs) error {
+func (n *NodePool) UpgradeTalos(ctx *pulumi.Context, args *UpgradeTalosArgs, opts ...pulumi.ResourceOption) ([]pulumi.Resource, error) {
 	for i, node := range n.Nodes {
 		upgradeTalos, err := cli.UpgradeTalos(ctx, fmt.Sprintf("%s-%d", n.NodePoolName, i), &cli.UpgradeTalosArgs{
 			Talosconfig:     args.Talosconfig,
@@ -242,9 +246,9 @@ func (n *NodePool) UpgradeTalos(ctx *pulumi.Context, args *UpgradeTalosArgs) err
 			Images:          args.Images,
 			NodeIpv4Address: node.Ipv4Address,
 			NodeImage:       node.Image,
-		}, pulumi.Parent(node), pulumi.DependsOn(talosUpgradeQueue))
+		}, append(opts, pulumi.Parent(node), pulumi.DependsOn(talosUpgradeQueue))...)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		talosUpgradeQueue = append(talosUpgradeQueue, upgradeTalos)
 	}
@@ -256,14 +260,14 @@ func (n *NodePool) UpgradeTalos(ctx *pulumi.Context, args *UpgradeTalosArgs) err
 			Images:          args.Images,
 			NodeIpv4Address: pulumi.String(node.Ipv4Address).ToStringOutput(),
 			NodeImage:       pulumi.StringPtr(node.Image).ToStringPtrOutput(),
-		}, pulumi.DependsOn(talosUpgradeQueue))
+		}, append(opts, pulumi.DependsOn(talosUpgradeQueue))...)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		talosUpgradeQueue = append(talosUpgradeQueue, upgradeTalos)
 	}
 
-	return nil
+	return talosUpgradeQueue, nil
 }
 
 // DeployControlPlanePools deploys all control plane node pools
@@ -288,6 +292,7 @@ func DeployControlPlanePools(ctx *pulumi.Context, cfg *config.PulumiConfig, imag
 			ExtraManifests:                 cfg.Talos.ExtraManifests,
 			ExtraManifestHeaders:           cfg.Talos.ExtraManifestHeaders,
 			InlineManifests:                cfg.Talos.InlineManifests,
+			EnableHetznerCCMExtraManifest:  cfg.Talos.EnableHetznerCCMExtraManifest,
 		})
 		if err != nil {
 			return nil, err
@@ -309,6 +314,7 @@ func DeployControlPlanePools(ctx *pulumi.Context, cfg *config.PulumiConfig, imag
 			ExtraManifests:                 cfg.Talos.ExtraManifests,
 			ExtraManifestHeaders:           cfg.Talos.ExtraManifestHeaders,
 			InlineManifests:                cfg.Talos.InlineManifests,
+			EnableHetznerCCMExtraManifest:  cfg.Talos.EnableHetznerCCMExtraManifest,
 		})
 		if err != nil {
 			return nil, err
@@ -430,51 +436,68 @@ func DeployWorkerPools(ctx *pulumi.Context, cfg *config.PulumiConfig, images *im
 }
 
 // ApplyConfigPatchesToAllPools applies configuration patches to all node pools
-func ApplyConfigPatchesToAllPools(ctx *pulumi.Context, cpPools []*NodePool, workerPools []*NodePool, hetznerProvider *hcloud.Provider) error {
+func ApplyConfigPatchesToAllPools(ctx *pulumi.Context, cpPools []*NodePool, workerPools []*NodePool, hetznerProvider *hcloud.Provider, opts ...pulumi.ResourceOption) ([]pulumi.Resource, error) {
+	configurationApplies := []*machine.ConfigurationApply{}
+
 	// Apply config patches to control plane pools
 	for _, cpPool := range cpPools {
-		err := cpPool.ApplyConfigPatches(ctx, pulumi.Provider(hetznerProvider))
+		configurationApply, err := cpPool.ApplyConfigPatches(ctx,
+			append(opts, pulumi.DependsOn(talosUpgradeQueue))...,
+		)
 		if err != nil {
-			return err
+			return nil, err
 		}
+		configurationApplies = append(configurationApplies, configurationApply...)
 	}
 
 	// Apply config patches to worker pools
 	for _, workerPool := range workerPools {
-		err := workerPool.ApplyConfigPatches(ctx, pulumi.Provider(hetznerProvider))
+		configurationApply, err := workerPool.ApplyConfigPatches(ctx,
+			append(opts, pulumi.DependsOn(talosUpgradeQueue))...,
+		)
 		if err != nil {
-			return err
+			return nil, err
 		}
+		configurationApplies = append(configurationApplies, configurationApply...)
 	}
 
-	return nil
+	out := []pulumi.Resource{}
+	for _, c := range configurationApplies {
+		out = append(out, c)
+	}
+
+	return out, nil
 }
 
 // UpgradeTalosOnAllPools upgrades Talos on all node pools
-func UpgradeTalosOnAllPools(ctx *pulumi.Context, cpPools []*NodePool, workerPools []*NodePool, talosVersion string, images *image.Images, talosConfig pulumi.StringOutput) error {
+func UpgradeTalosOnAllPools(ctx *pulumi.Context, cpPools []*NodePool, workerPools []*NodePool, talosVersion string, images *image.Images, talosConfig pulumi.StringOutput, opts ...pulumi.ResourceOption) ([]pulumi.Resource, error) {
+	talosUpgradeQueue := []pulumi.Resource{}
+
 	// Upgrade control plane pools
 	for _, cpPool := range cpPools {
-		err := cpPool.UpgradeTalos(ctx, &UpgradeTalosArgs{
+		talosUpgradeQueuePool, err := cpPool.UpgradeTalos(ctx, &UpgradeTalosArgs{
 			Talosconfig:  talosConfig,
 			TalosVersion: talosVersion,
 			Images:       images,
-		})
+		}, append(opts, pulumi.DependsOn(talosUpgradeQueue))...)
 		if err != nil {
-			return err
+			return nil, err
 		}
+		talosUpgradeQueue = append(talosUpgradeQueue, talosUpgradeQueuePool...)
 	}
 
 	// Upgrade worker pools
 	for _, workerPool := range workerPools {
-		err := workerPool.UpgradeTalos(ctx, &UpgradeTalosArgs{
+		talosUpgradeQueuePool, err := workerPool.UpgradeTalos(ctx, &UpgradeTalosArgs{
 			Talosconfig:  talosConfig,
 			TalosVersion: talosVersion,
 			Images:       images,
-		})
+		}, append(opts, pulumi.DependsOn(talosUpgradeQueue))...)
 		if err != nil {
-			return err
+			return nil, err
 		}
+		talosUpgradeQueue = append(talosUpgradeQueue, talosUpgradeQueuePool...)
 	}
 
-	return nil
+	return talosUpgradeQueue, nil
 }
