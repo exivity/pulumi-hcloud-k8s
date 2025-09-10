@@ -126,10 +126,10 @@ func NewHetznerTalosKubernetesCluster(ctx *pulumi.Context, name string, cfg *con
 		return nil, err
 	}
 
-	woerkPoolDependsOn := []pulumi.Resource{}
+	workerPoolDependsOn := []pulumi.Resource{}
 	for _, cpPool := range cpPools {
 		for _, node := range cpPool.Nodes {
-			woerkPoolDependsOn = append(woerkPoolDependsOn, node)
+			workerPoolDependsOn = append(workerPoolDependsOn, node)
 		}
 	}
 
@@ -139,7 +139,7 @@ func NewHetznerTalosKubernetesCluster(ctx *pulumi.Context, name string, cfg *con
 		FirstControlPlane:          cpPools[0].Nodes[0],
 		Secrets:                    machineConfigurationManager.Secrets,
 	},
-		pulumi.DependsOn(append(woerkPoolDependsOn,
+		pulumi.DependsOn(append(workerPoolDependsOn,
 			cpPools[0].Nodes[0],
 			cpLb.LoadBalancer,
 			cpLb.Service,
@@ -177,7 +177,7 @@ func NewHetznerTalosKubernetesCluster(ctx *pulumi.Context, name string, cfg *con
 
 	// Upgrade Talos on all nodes
 	upgradedNodes, err := compute.UpgradeTalosOnAllPools(ctx, cpPools, workerPools, cfg.Talos.ImageVersion, images, out.TalosConfig,
-		pulumi.DependsOn(append(woerkPoolDependsOn, out.Kubeconfig.Bootstrap)),
+		pulumi.DependsOn(append(workerPoolDependsOn, out.Kubeconfig.Bootstrap)),
 	)
 	if err != nil {
 		return nil, err
