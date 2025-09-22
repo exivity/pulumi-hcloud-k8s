@@ -124,6 +124,8 @@ func NewApplications(ctx *pulumi.Context, name string, args *ApplicationsArgs, o
 			HcloudToken:                 args.Cfg.Kubernetes.HCloudToken,
 			Firewall:                    args.FirewallWorker,
 			EnableKubeSpan:              args.Cfg.Talos.EnableKubeSpan,
+			CNI:                         args.Cfg.Talos.CNI,
+			Proxy:                       args.Cfg.Talos.Proxy,
 		},
 			opts...,
 		)

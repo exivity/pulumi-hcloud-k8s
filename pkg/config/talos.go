@@ -54,6 +54,20 @@ type ClusterInlineManifest struct {
 	Contents string `json:"contents" validate:"required"`
 }
 
+// CNIConfig holds the CNI configuration for the cluster.
+type CNIConfig struct {
+	// Name of the CNI to use. Can be "flannel", "custom", or "none".
+	Name string `json:"name" validate:"required,oneof=flannel custom none"`
+	// URLs of the CNI manifests to apply if Name is "custom".
+	URLs []string `json:"urls,omitempty" validate:"required_if=Name custom"`
+}
+
+// ProxyConfig holds the proxy configuration for the cluster.
+type ProxyConfig struct {
+	// Disabled disables the kube-proxy.
+	Disabled bool `json:"disabled,omitempty"`
+}
+
 // TalosConfig contains all Talos Linux image & version settings.
 type TalosConfig struct {
 	// If set, overrides the ID of the Talos image on Hetzner
@@ -143,4 +157,10 @@ type TalosConfig struct {
 
 	// EnableKubeSpan can be used to encrypt the traffic with wireguard. This works well with flannel, but it is recommended to disable when using a CNI like Cilium.
 	EnableKubeSpan bool `json:"enable_kubespan" validate:"default=true"`
+
+	// CNI configuration for the cluster.
+	CNI *CNIConfig `json:"cni"`
+
+	// Proxy configuration for the cluster.
+	Proxy *ProxyConfig `json:"proxy"`
 }

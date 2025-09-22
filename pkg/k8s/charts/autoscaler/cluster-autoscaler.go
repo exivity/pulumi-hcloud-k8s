@@ -34,6 +34,10 @@ type ClusterAutoscalerArgs struct {
 	// Firewall is the firewall to use for the nodes
 	Firewall       *hcloud.Firewall
 	EnableKubeSpan bool
+	// CNI is the CNI configuration for the cluster.
+	CNI *config.CNIConfig
+	// Proxy is the proxy configuration for the cluster.
+	Proxy *config.ProxyConfig
 }
 
 type ClusterAutoscaler struct {
@@ -67,6 +71,8 @@ func NewClusterAutoscaler(ctx *pulumi.Context, args *ClusterAutoscalerArgs, opts
 			EnableLonghornSupport: args.EnableLonghorn,
 			EnableKubeSpan:        args.EnableKubeSpan,
 			BootstrapEnable:       true,
+			CNI:                   args.CNI,
+			Proxy:                 args.Proxy,
 		})
 		if err != nil {
 			return nil, err
