@@ -293,6 +293,7 @@ func DeployControlPlanePools(ctx *pulumi.Context, cfg *config.PulumiConfig, imag
 			ExtraManifestHeaders:           cfg.Talos.ExtraManifestHeaders,
 			InlineManifests:                cfg.Talos.InlineManifests,
 			EnableHetznerCCMExtraManifest:  cfg.Talos.EnableHetznerCCMExtraManifest,
+			EnableKubeSpan:                 cfg.Talos.EnableKubeSpan,
 		})
 		if err != nil {
 			return nil, err
@@ -315,6 +316,7 @@ func DeployControlPlanePools(ctx *pulumi.Context, cfg *config.PulumiConfig, imag
 			ExtraManifestHeaders:           cfg.Talos.ExtraManifestHeaders,
 			InlineManifests:                cfg.Talos.InlineManifests,
 			EnableHetznerCCMExtraManifest:  cfg.Talos.EnableHetznerCCMExtraManifest,
+			EnableKubeSpan:                 cfg.Talos.EnableKubeSpan,
 		})
 		if err != nil {
 			return nil, err
@@ -376,6 +378,7 @@ func DeployWorkerPools(ctx *pulumi.Context, cfg *config.PulumiConfig, images *im
 			EnableLocalStorage:    cfg.Talos.EnableLocalStorage,
 			BootstrapEnable:       true,
 			Registries:            cfg.Talos.Registries,
+			EnableKubeSpan:        cfg.Talos.EnableKubeSpan,
 		})
 		if err != nil {
 			return nil, err
@@ -391,6 +394,7 @@ func DeployWorkerPools(ctx *pulumi.Context, cfg *config.PulumiConfig, images *im
 			EnableLonghornSupport: cfg.Talos.EnableLonghorn,
 			EnableLocalStorage:    cfg.Talos.EnableLocalStorage,
 			Registries:            cfg.Talos.Registries,
+			EnableKubeSpan:        cfg.Talos.EnableKubeSpan,
 		})
 		if err != nil {
 			return nil, err

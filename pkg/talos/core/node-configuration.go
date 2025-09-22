@@ -50,6 +50,8 @@ type NodeConfigurationArgs struct {
 	InlineManifests []core_config.ClusterInlineManifest
 	// EnableHetznerCCMExtraManifest enables installation of Hetzner CCM via Talos extra manifests
 	EnableHetznerCCMExtraManifest bool
+	// EnableKubeSpan can be used to encrypt the traffic with wireguard. This works well with flannel, but it is recommended to disable when using a CNI like Cilium.
+	EnableKubeSpan bool
 }
 
 func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) { //nolint:funlen
@@ -99,7 +101,7 @@ func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) { //nolin
 				},
 				Nameservers: args.Nameservers,
 				KubeSpan: &config.NetworkKubeSpan{
-					Enabled: true, // Enable kube span (wireguard)
+					Enabled: args.EnableKubeSpan, // Enable kube span (wireguard)
 				},
 			},
 			Kubelet: &config.KubeletConfig{

@@ -32,7 +32,8 @@ type ClusterAutoscalerArgs struct {
 	Network                     *network.Network
 	HcloudToken                 string
 	// Firewall is the firewall to use for the nodes
-	Firewall *hcloud.Firewall
+	Firewall       *hcloud.Firewall
+	EnableKubeSpan bool
 }
 
 type ClusterAutoscaler struct {
@@ -64,6 +65,7 @@ func NewClusterAutoscaler(ctx *pulumi.Context, args *ClusterAutoscalerArgs, opts
 			NodeTaints:            pool.Taints,
 			NodeAnnotations:       pool.Annotations,
 			EnableLonghornSupport: args.EnableLonghorn,
+			EnableKubeSpan:        args.EnableKubeSpan,
 			BootstrapEnable:       true,
 		})
 		if err != nil {

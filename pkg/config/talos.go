@@ -140,4 +140,7 @@ type TalosConfig struct {
 	//   - https://raw.githubusercontent.com/hetznercloud/hcloud-cloud-controller-manager/refs/heads/main/deploy/ccm.yaml
 	// Disabled by default. If enabled, do not enable HetznerCCM Helm chart in KubernetesConfig.
 	EnableHetznerCCMExtraManifest bool `json:"enable_hetzner_ccm_extra_manifest"`
+
+	// EnableKubeSpan can be used to encrypt the traffic with wireguard. This works well with flannel, but it is recommended to disable when using a CNI like Cilium.
+	EnableKubeSpan bool `json:"enable_kubespan" validate:"default=true"`
 }
