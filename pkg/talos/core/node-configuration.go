@@ -50,6 +50,10 @@ type NodeConfigurationArgs struct {
 	InlineManifests []core_config.ClusterInlineManifest
 	// EnableHetznerCCMExtraManifest enables installation of Hetzner CCM via Talos extra manifests
 	EnableHetznerCCMExtraManifest bool
+	// EnableKubeSpan can be used to encrypt the traffic with wireguard. This works well with flannel, but it is recommended to disable when using a CNI like Cilium.
+	EnableKubeSpan bool
+	// CNI is the CNI configuration for the cluster.
+	CNI *core_config.CNIConfig
 }
 
 func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) { //nolint:funlen
@@ -76,6 +80,7 @@ func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) { //nolin
 			},
 			Network: &config.ClusterNetworkConfig{
 				PodSubnets: []string{args.PodSubnets},
+				CNI:        toCNIConfig(args.CNI),
 			},
 			Discovery: &config.ClusterDiscoveryConfig{
 				Enabled: true, // Enable discovery, required for network encryption via kube span
@@ -99,7 +104,7 @@ func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) { //nolin
 				},
 				Nameservers: args.Nameservers,
 				KubeSpan: &config.NetworkKubeSpan{
-					Enabled: true, // Enable kube span (wireguard)
+					Enabled: args.EnableKubeSpan, // Enable kube span (wireguard)
 				},
 			},
 			Kubelet: &config.KubeletConfig{
@@ -176,6 +181,17 @@ func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) { //nolin
 	configPatch.Machine.Registries = toRegistriesConfig(args.Registries)
 
 	return configPatch.YAML()
+}
+
+func toCNIConfig(cni *core_config.CNIConfig) *config.CNIConfig {
+	if cni == nil {
+		return nil
+	}
+
+	return &config.CNIConfig{
+		Name: cni.Name,
+		URLs: cni.URLs,
+	}
 }
 
 func toTalosTaints(taints []core_config.Taint) string {
