@@ -156,7 +156,7 @@ type TalosConfig struct {
 	EnableHetznerCCMExtraManifest bool `json:"enable_hetzner_ccm_extra_manifest"`
 
 	// EnableKubeSpan can be used to encrypt the traffic with wireguard. This works well with flannel, but it is recommended to disable when using a CNI like Cilium.
-	EnableKubeSpan bool `json:"enable_kubespan" validate:"default=true"`
+	EnableKubeSpan bool `json:"enable_kubespan"`
 
 	// CNI configuration for the cluster.
 	CNI *CNIConfig `json:"cni"`
