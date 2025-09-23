@@ -36,8 +36,6 @@ type ClusterAutoscalerArgs struct {
 	EnableKubeSpan bool
 	// CNI is the CNI configuration for the cluster.
 	CNI *config.CNIConfig
-	// Proxy is the proxy configuration for the cluster.
-	Proxy *config.ProxyConfig
 }
 
 type ClusterAutoscaler struct {
@@ -72,7 +70,6 @@ func NewClusterAutoscaler(ctx *pulumi.Context, args *ClusterAutoscalerArgs, opts
 			EnableKubeSpan:        args.EnableKubeSpan,
 			BootstrapEnable:       true,
 			CNI:                   args.CNI,
-			Proxy:                 args.Proxy,
 		})
 		if err != nil {
 			return nil, err

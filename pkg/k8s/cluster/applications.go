@@ -125,7 +125,6 @@ func NewApplications(ctx *pulumi.Context, name string, args *ApplicationsArgs, o
 			Firewall:                    args.FirewallWorker,
 			EnableKubeSpan:              args.Cfg.Talos.EnableKubeSpan,
 			CNI:                         args.Cfg.Talos.CNI,
-			Proxy:                       args.Cfg.Talos.Proxy,
 		},
 			opts...,
 		)

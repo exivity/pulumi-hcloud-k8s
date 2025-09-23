@@ -295,7 +295,6 @@ func DeployControlPlanePools(ctx *pulumi.Context, cfg *config.PulumiConfig, imag
 			EnableHetznerCCMExtraManifest:  cfg.Talos.EnableHetznerCCMExtraManifest,
 			EnableKubeSpan:                 cfg.Talos.EnableKubeSpan,
 			CNI:                            cfg.Talos.CNI,
-			Proxy:                          cfg.Talos.Proxy,
 		})
 		if err != nil {
 			return nil, err
@@ -320,7 +319,6 @@ func DeployControlPlanePools(ctx *pulumi.Context, cfg *config.PulumiConfig, imag
 			EnableHetznerCCMExtraManifest:  cfg.Talos.EnableHetznerCCMExtraManifest,
 			EnableKubeSpan:                 cfg.Talos.EnableKubeSpan,
 			CNI:                            cfg.Talos.CNI,
-			Proxy:                          cfg.Talos.Proxy,
 		})
 		if err != nil {
 			return nil, err
@@ -384,7 +382,6 @@ func DeployWorkerPools(ctx *pulumi.Context, cfg *config.PulumiConfig, images *im
 			Registries:            cfg.Talos.Registries,
 			EnableKubeSpan:        cfg.Talos.EnableKubeSpan,
 			CNI:                   cfg.Talos.CNI,
-			Proxy:                 cfg.Talos.Proxy,
 		})
 		if err != nil {
 			return nil, err
@@ -402,7 +399,6 @@ func DeployWorkerPools(ctx *pulumi.Context, cfg *config.PulumiConfig, images *im
 			Registries:            cfg.Talos.Registries,
 			EnableKubeSpan:        cfg.Talos.EnableKubeSpan,
 			CNI:                   cfg.Talos.CNI,
-			Proxy:                 cfg.Talos.Proxy,
 		})
 		if err != nil {
 			return nil, err

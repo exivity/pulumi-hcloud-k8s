@@ -160,7 +160,4 @@ type TalosConfig struct {
 
 	// CNI configuration for the cluster.
 	CNI *CNIConfig `json:"cni"`
-
-	// Proxy configuration for the cluster.
-	Proxy *ProxyConfig `json:"proxy"`
 }

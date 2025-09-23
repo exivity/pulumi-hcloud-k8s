@@ -54,8 +54,6 @@ type NodeConfigurationArgs struct {
 	EnableKubeSpan bool
 	// CNI is the CNI configuration for the cluster.
 	CNI *core_config.CNIConfig
-	// Proxy is the proxy configuration for the cluster.
-	Proxy *core_config.ProxyConfig
 }
 
 func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) { //nolint:funlen
@@ -84,7 +82,6 @@ func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) { //nolin
 				PodSubnets: []string{args.PodSubnets},
 				CNI:        toCNIConfig(args.CNI),
 			},
-			Proxy: toProxyConfig(args.Proxy),
 			Discovery: &config.ClusterDiscoveryConfig{
 				Enabled: true, // Enable discovery, required for network encryption via kube span
 			},
@@ -194,16 +191,6 @@ func toCNIConfig(cni *core_config.CNIConfig) *config.CNIConfig {
 	return &config.CNIConfig{
 		Name: cni.Name,
 		URLs: cni.URLs,
-	}
-}
-
-func toProxyConfig(proxy *core_config.ProxyConfig) *config.ProxyConfig {
-	if proxy == nil {
-		return nil
-	}
-
-	return &config.ProxyConfig{
-		Disabled: proxy.Disabled,
 	}
 }
 
