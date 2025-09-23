@@ -125,14 +125,6 @@ func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) { //nolin
 				},
 				ExtraMounts: []config.ExtraMount{},
 			},
-			Features: &config.FeaturesConfig{
-				ImageCache: &config.ImageCacheConfig{
-					LocalEnabled: true,
-				},
-				HostDNS: &config.HostDNSConfig{
-					ForwardKubeDNSToHost: false,
-				},
-			},
 		},
 	}
 
