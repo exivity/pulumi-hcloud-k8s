@@ -30,6 +30,7 @@ type ClusterAutoscalerArgs struct {
 	PodSubnets                  string
 	EnableLonghorn              bool
 	Network                     *network.Network
+	Nameservers                 []string
 	HcloudToken                 string
 	// Firewall is the firewall to use for the nodes
 	Firewall       *hcloud.Firewall
@@ -68,6 +69,7 @@ func NewClusterAutoscaler(ctx *pulumi.Context, args *ClusterAutoscalerArgs, opts
 			NodeAnnotations:       pool.Annotations,
 			EnableLonghornSupport: args.EnableLonghorn,
 			EnableKubeSpan:        args.EnableKubeSpan,
+			Nameservers:           args.Nameservers,
 			BootstrapEnable:       true,
 			CNI:                   args.CNI,
 		})
