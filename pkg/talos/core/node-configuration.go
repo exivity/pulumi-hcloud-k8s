@@ -137,7 +137,7 @@ func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) { //nolin
 	if args.BootstrapEnable {
 		// Enable encryption by default
 		// TODO: add options to configure more secure encryption
-		// See: https://www.talos.dev/v1.9/talos-guides/configuration/disk-encryption/#luks2
+		// See: https://www.talos.dev/v1.11/talos-guides/configuration/disk-encryption/
 		configPatch.Machine.SystemDiskEncryption = &config.SystemDiskEncryptionConfig{
 			State: &config.EncryptionConfig{
 				Provider: "luks2",
