@@ -70,7 +70,6 @@ func NewClusterAutoscaler(ctx *pulumi.Context, args *ClusterAutoscalerArgs, opts
 			EnableLonghornSupport: args.EnableLonghorn,
 			EnableKubeSpan:        args.EnableKubeSpan,
 			Nameservers:           args.Nameservers,
-			BootstrapEnable:       true,
 			CNI:                   args.CNI,
 		})
 		if err != nil {
