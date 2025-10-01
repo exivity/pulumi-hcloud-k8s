@@ -10,9 +10,6 @@ import (
 )
 
 type NodeConfigurationArgs struct {
-	// BootstrapEnable is true if bootstrap is enabled
-	// this is used to enable the bootstrap service like encryption. This can only use once and should not be apply for updates
-	BootstrapEnable bool
 	// ServerNodeType is the type of the server node
 	ServerNodeType meta.ServerNodeType
 	// Subnet is the subnet for the cluster
@@ -56,7 +53,7 @@ type NodeConfigurationArgs struct {
 	CNI *core_config.CNIConfig
 }
 
-func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) { //nolint:funlen
+func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) {
 	var adminKubeconfig *config.AdminKubeconfigConfig
 	if args.CertLifetime != nil {
 		adminKubeconfig = &config.AdminKubeconfigConfig{
@@ -132,23 +129,6 @@ func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) { //nolin
 			Source:      "/var/mnt",
 			Options:     []string{"bind", "rshared", "rw"},
 		})
-	}
-
-	if args.BootstrapEnable {
-		// Enable encryption by default
-		// TODO: add options to configure more secure encryption
-		// See: https://www.talos.dev/v1.9/talos-guides/configuration/disk-encryption/#luks2
-		configPatch.Machine.SystemDiskEncryption = &config.SystemDiskEncryptionConfig{
-			State: &config.EncryptionConfig{
-				Provider: "luks2",
-				Keys: []config.EncryptionKey{
-					{
-						NodeID: &config.EncryptionKeyNodeID{},
-						Slot:   0,
-					},
-				},
-			},
-		}
 	}
 
 	if args.SecretboxEncryptionSecret != nil {

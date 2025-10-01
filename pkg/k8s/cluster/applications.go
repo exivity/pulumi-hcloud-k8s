@@ -121,6 +121,7 @@ func NewApplications(ctx *pulumi.Context, name string, args *ApplicationsArgs, o
 			PodSubnets:                  args.Cfg.Network.PodSubnets,
 			EnableLonghorn:              args.Cfg.Talos.EnableLonghorn,
 			Network:                     args.Network,
+			Nameservers:                 args.Cfg.Network.Nameservers,
 			HcloudToken:                 args.Cfg.Kubernetes.HCloudToken,
 			Firewall:                    args.FirewallWorker,
 			EnableKubeSpan:              args.Cfg.Talos.EnableKubeSpan,
