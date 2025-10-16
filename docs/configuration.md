@@ -70,7 +70,7 @@ config:
     node_pools:
       - name: core
         count: 2
-        server_size: cx22
+        server_size: cx23
         arch: amd64
         region: fsn1
         auto_scaler:
@@ -123,7 +123,7 @@ config:
     node_pools:
       - name: core
         count: 2
-        server_size: cx22
+        server_size: cx23
         arch: amd64
         region: fsn1
         auto_scaler:

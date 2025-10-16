@@ -19,7 +19,7 @@ type ControlPlaneNodePoolConfig struct {
 	// Number of control‑plane nodes
 	Count int `json:"count" validate:"default=1,min=1"`
 
-	// Hetzner server type (e.g. "cx22", "cax11")
+	// Hetzner server type (e.g. "cx23", "cax11")
 	ServerSize string `json:"server_size" validate:"required"`
 
 	// CPU architecture

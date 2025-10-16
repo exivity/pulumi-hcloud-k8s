@@ -94,8 +94,8 @@ func TestGetArchFromServerSize(t *testing.T) {
 
 		// x86/AMD64 server types (cx series)
 		{
-			name: "cx22 should return x86",
-			args: args{serverSize: "cx22"},
+			name: "cx23 should return x86",
+			args: args{serverSize: "cx23"},
 			want: image.ArchX86,
 		},
 		{
