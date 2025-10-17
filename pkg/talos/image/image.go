@@ -95,7 +95,7 @@ type ImageArgs struct {
 	// Arch is the architecture of the image to upload. Must be either "amd64" or "arm64".
 	Arch CPUArchitecture
 	// ServerSize is the server type to use for the image upload. The size muss match the architecture.
-	// Like "cx22" for "amd64" or "cax11" for "arm64".
+	// Like "cx23" for "amd64" or "cax11" for "arm64".
 	// All available server types can be found here https://www.hetzner.com/cloud/
 	ServerSize string
 	// ImageBuildRegion is the region to use for the image upload.

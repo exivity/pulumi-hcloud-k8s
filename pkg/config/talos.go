@@ -2,7 +2,7 @@ package config
 
 // ImageGeneratorSizes holds the two supported VM sizes.
 type ImageGeneratorSizes struct {
-	X86 string `json:"x86" validate:"default=cx22"`
+	X86 string `json:"x86" validate:"default=cx23"`
 	ARM string `json:"arm" validate:"default=cax11"`
 }
 
