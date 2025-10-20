@@ -4,6 +4,9 @@ import "github.com/exivity/pulumi-hcloud-k8s/pkg/talos/image"
 
 // ControlPlaneConfig defines control‑plane node settings.
 type ControlPlaneConfig struct {
+	// Disable load balancer deployment
+	DisableLoadBalancer bool `json:"disable_load_balancer"`
+
 	// Hetzner load‑balancer type (e.g. "lb11")
 	LoadBalancerType string `json:"load_balancer_type" validate:"default=lb11"`
 
