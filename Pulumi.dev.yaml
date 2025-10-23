@@ -12,22 +12,28 @@ config:
       - "2001:4860:4860::8888"
   hcloud-k8s:firewall:
     open_talos_api: true
+    custom_rules_controlplane:
+      - port: 6443
+        cidrs:
+          - "0.0.0.0/0"
+          - "::/0"
   hcloud-k8s:control_plane:
+    disable_load_balancer: true
     node_pools:
       - count: 1
-        server_size: cax11
+        server_size: cx23
         region: fsn1
-      - count: 1
-        server_size: cax11
-        region: nbg1
-      - count: 1
-        server_size: cax11
-        region: hel1
+      # - count: 1
+      #   server_size: cx23
+      #   region: nbg1
+      # - count: 1
+      #   server_size: cax11
+      #   region: hel1
   hcloud-k8s:node_pools:
     node_pools:
       - name: worker
         count: 1
-        server_size: cax31
+        server_size: cx43
         region: hel1
         auto_scaler:
           min_count: 1
