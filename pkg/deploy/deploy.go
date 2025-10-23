@@ -74,9 +74,10 @@ func NewHetznerTalosKubernetesCluster(ctx *pulumi.Context, name string, cfg *con
 	}
 
 	cpLb, err := lb.NewControlplane(ctx, "controlplane-lb", &lb.ControlplaneArgs{
-		LoadBalancerType: cfg.ControlPlane.LoadBalancerType,
-		Network:          net,
-		Location:         cfg.ControlPlane.LoadBalancerLocation,
+		DisableLoadBalancer: cfg.ControlPlane.DisableLoadBalancer,
+		LoadBalancerType:    cfg.ControlPlane.LoadBalancerType,
+		Network:             net,
+		Location:            cfg.ControlPlane.LoadBalancerLocation,
 	}, pulumi.Parent(net.Network), pulumi.Provider(hetznerProvider))
 	if err != nil {
 		return nil, err
@@ -133,19 +134,26 @@ func NewHetznerTalosKubernetesCluster(ctx *pulumi.Context, name string, cfg *con
 		}
 	}
 
+	workerPoolDependsOn = append(workerPoolDependsOn,
+		cpPools[0].Nodes[0],
+	)
+
+	if cpLb != nil {
+		workerPoolDependsOn = append(workerPoolDependsOn,
+			cpLb.LoadBalancer,
+			cpLb.Service,
+			cpLb.Target,
+			cpLb.LoadBalancerNetwork,
+		)
+	}
+
 	// TODO: remove bootstrap creation from k8s package
 	out.Kubeconfig, err = core.NewKubeconfig(ctx, &core.KubeconfigArgs{
 		CertificateRenewalDuration: cfg.Talos.K8sCertificateRenewalDuration,
 		FirstControlPlane:          cpPools[0].Nodes[0],
 		Secrets:                    machineConfigurationManager.Secrets,
 	},
-		pulumi.DependsOn(append(workerPoolDependsOn,
-			cpPools[0].Nodes[0],
-			cpLb.LoadBalancer,
-			cpLb.Service,
-			cpLb.Target,
-			cpLb.LoadBalancerNetwork,
-		)),
+		pulumi.DependsOn(workerPoolDependsOn),
 	)
 	if err != nil {
 		return nil, err
