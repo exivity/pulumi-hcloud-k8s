@@ -18,6 +18,8 @@ const (
 
 // ControlplaneArgs are the arguments for the NewControlplane function
 type ControlplaneArgs struct {
+	// DisableLoadBalancer disables the creation of the load balancer
+	DisableLoadBalancer bool
 	// LoadBalancerType is the type of load balancer to create
 	LoadBalancerType string
 	// Hetzner Cloud network to use for the load balancer
@@ -44,6 +46,11 @@ type Controlplane struct {
 
 // NewControlplane creates a new control plane load balancer
 func NewControlplane(ctx *pulumi.Context, name string, args *ControlplaneArgs, opts ...pulumi.ResourceOption) (*Controlplane, error) {
+	// If load balancer is disabled, return nil
+	if args.DisableLoadBalancer {
+		return nil, nil
+	}
+
 	resourceName := fmt.Sprintf("%s-controlplane", name)
 
 	lbArgs := &hcloud.LoadBalancerArgs{

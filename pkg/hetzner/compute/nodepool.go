@@ -352,6 +352,8 @@ func DeployControlPlanePools(ctx *pulumi.Context, cfg *config.PulumiConfig, imag
 			return nil, err
 		}
 
+		machineConfigurationManager.SetSingleControlPlaneNodeIP(cpPool.Nodes[0].Ipv4Address)
+
 		cpPools = append(cpPools, cpPool)
 	}
 
