@@ -1,7 +1,7 @@
 config:
   hcloud-k8s:talos:
-    image_version: v1.10.5
-    kubernetes_version: "1.33.0"
+    image_version: v1.11.3
+    kubernetes_version: "1.34.0"
     enable_longhorn: true
   hcloud-k8s:network:
     nameservers:
