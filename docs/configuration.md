@@ -60,6 +60,24 @@ config:
         region: fsn1
 ```
 
+Disable load balancer (development only)
+
+If you are running a small development or test cluster you can disable the
+automatic Hetzner load balancer creation by setting `disable_load_balancer`.
+This is useful for single-node clusters, CI jobs, or local integration tests
+where a cloud load balancer is not available or desired. Example:
+
+```yaml
+config:
+  hcloud-k8s:control_plane:
+    disable_load_balancer: true
+```
+
+Important: Disabling the load balancer is intended only for development and
+testing. It is not recommended for production workloads because it bypasses
+the high-availability and traffic distribution guarantees provided by a
+properly configured load balancer.
+
 ### Worker Node Pools
 
 Configure worker node pools:
