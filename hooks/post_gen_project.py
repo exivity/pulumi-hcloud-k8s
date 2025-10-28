@@ -112,6 +112,10 @@ def main():
         pulumi_config_remove("hcloud-k8s:control_plane.node_pools[1]")
         pulumi_config_remove("hcloud-k8s:control_plane.node_pools[1]")
 
+    # Remove the disable_load_balancer config if it's set to False (default behavior)
+    if "{{cookiecutter.controlplane_disable_load_balancer}}" == "True":
+        pulumi_config_remove("hcloud-k8s:control_plane.disable_load_balancer")
+
     # setup longhorn configuration
     if "{{cookiecutter.enable_longhorn}}" == "True":
         pulumi_config_set("hcloud-k8s:talos.enable_longhorn", "true")

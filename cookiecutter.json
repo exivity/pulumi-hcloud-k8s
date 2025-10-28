@@ -16,6 +16,7 @@
   "kubernetes_version": "1.33.0",
 
   "controlplane_enable_ha": false,
+  "controlplane_disable_load_balancer": false,
   "controlplane_server_size": "cax11",
 
   "worker_pool_name": "worker",

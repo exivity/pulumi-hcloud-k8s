@@ -11,6 +11,7 @@ config:
       - "8.8.8.8"
       - "2001:4860:4860::8888"
   hcloud-k8s:control_plane:
+    disable_load_balancer: {{cookiecutter.controlplane_disable_load_balancer}}
     node_pools:
       - count: 1
         server_size: "{{cookiecutter.controlplane_server_size}}"
