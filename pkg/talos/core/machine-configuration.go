@@ -1,12 +1,18 @@
 package core
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/exivity/pulumi-hcloud-k8s/pkg/hetzner/lb"
 	"github.com/exivity/pulumi-hcloud-k8s/pkg/hetzner/meta"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 	"github.com/pulumiverse/pulumi-talos/sdk/go/talos/machine"
+)
+
+var (
+	// ErrNoClusterEndpoint is returned when neither ControlplaneLoadBalancer nor SingleControlPlaneNodeIP is set
+	ErrNoClusterEndpoint = errors.New("either ControlplaneLoadBalancer or SingleControlPlaneNodeIP must be set")
 )
 
 type MachineConfigurationManagerArgs struct {
@@ -85,7 +91,7 @@ func (c *MachineConfigurationManager) NewMachineConfiguration(ctx *pulumi.Contex
 	}
 
 	if configuration.ClusterEndpoint == nil {
-		return pulumi.StringOutput{}, fmt.Errorf("either ControlplaneLoadBalancer or SingleControlPlaneNodeIP must be set")
+		return pulumi.StringOutput{}, ErrNoClusterEndpoint
 	}
 
 	return machine.GetConfigurationOutput(ctx, configuration,
