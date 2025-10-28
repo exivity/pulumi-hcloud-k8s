@@ -257,7 +257,11 @@ func buildFirewallRuleArgs(rule CustomFirewallRuleArg, nodeType string, index in
 	if rule.Description != "" {
 		ruleArgs.Description = pulumi.String(rule.Description)
 	} else {
-		ruleArgs.Description = pulumi.Sprintf("Custom: %s %s", rule.Protocol, rule.Port)
+		if rule.Port != "" {
+			ruleArgs.Description = pulumi.Sprintf("Custom: %s %s", rule.Protocol, rule.Port)
+		} else {
+			ruleArgs.Description = pulumi.Sprintf("Custom: %s", rule.Protocol)
+		}
 	}
 
 	// Set port if applicable
