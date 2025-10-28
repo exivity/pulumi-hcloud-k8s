@@ -3,86 +3,11 @@ config:
     image_version: v1.11.3
     kubernetes_version: "1.34.0"
     allow_scheduling_on_control_planes: true
-  hcloud-k8s:network:
-    nameservers:
-      # Quad9 DNS
-      - "9.9.9.9"
-      - "2620:fe::fe"
-      # Google Public DNS
-      - "8.8.8.8"
-      - "2001:4860:4860::8888"
   hcloud-k8s:firewall:
     open_talos_api: true
-    custom_rules_controlplane:
-      - direction: in
-        protocol: tcp
-        port: "80"
-        source_ips:
-          - "0.0.0.0/0"
-          - "::/0"
-      - direction: in
-        protocol: tcp
-        port: "443"
-        source_ips:
-          - "0.0.0.0/0"
-          - "::/0"
   hcloud-k8s:control_plane:
     disable_load_balancer: true
     node_pools:
       - count: 1
         server_size: cx23
         region: hel1
-  hcloud-k8s:node_pools:
-    node_pools:
-      - name: worker
-        count: 1
-        server_size: cx23
-        region: hel1
-  # hcloud-k8s:kubernetes:
-  #   hetzner_ccm:
-  #     enabled: true
-  #     version: 1.23.0
-  #     values:
-  #       nodeSelector:
-  #         node-role.kubernetes.io/control-plane: ""
-  #       additionalTolerations:
-  #         - key: "node-role.kubernetes.io/control-plane"
-  #           operator: "Equal"
-  #           effect: "NoSchedule"
-  #   csi:
-  #     enabled: true
-  #     version: 2.16.0
-  #     is_default_storage_class: true
-  #     reclaim_policy: Delete
-  #     encrypted_secret: randomString
-  #     values:
-  #       controller:
-  #         nodeSelector:
-  #           node-role.kubernetes.io/control-plane: ""
-  #         tolerations:
-  #           - key: "node-role.kubernetes.io/control-plane"
-  #             operator: "Equal"
-  #             effect: "NoSchedule"
-  #   cluster_auto_scaler:
-  #     enabled: true
-  #     version: 9.48.0
-  #     values:
-  #       nodeSelector:
-  #         node-role.kubernetes.io/control-plane: ""
-  #       tolerations:
-  #         - key: "node-role.kubernetes.io/control-plane"
-  #           operator: "Equal"
-  #           effect: "NoSchedule"
-  #   kubelet_serving_cert_approver:
-  #     enabled: true
-  #     version: v0.9.1
-  #   kubernetes_metrics_server:
-  #     enabled: true
-  #     version: 3.12.2
-  #     values:
-  #       nodeSelector:
-  #         node-role.kubernetes.io/control-plane: ""
-  #       tolerations:
-  #         - key: "node-role.kubernetes.io/control-plane"
-  #           operator: "Equal"
-  #           effect: "NoSchedule"
