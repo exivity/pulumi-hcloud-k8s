@@ -1,9 +1,26 @@
 package config
 
-// FirewallRuleConfig allows specifying custom firewall rules (port and allowed CIDRs).
+// FirewallRuleConfig allows specifying custom firewall rules with full control over direction, protocol, and allowed IPs.
 type FirewallRuleConfig struct {
-	Port  string   `json:"port" validate:"required"`
-	CIDRs []string `json:"cidrs" validate:"dive,cidr"`
+	// Direction of the Firewall Rule. Required. Valid values: "in", "out"
+	Direction string `json:"direction" validate:"required,oneof=in out"`
+
+	// Protocol of the Firewall Rule. Required. Valid values: "tcp", "udp", "icmp", "gre", "esp"
+	Protocol string `json:"protocol" validate:"required,oneof=tcp udp icmp gre esp"`
+
+	// Description of the firewall rule (optional)
+	Description string `json:"description,omitempty"`
+
+	// Port of the Firewall Rule. Required when protocol is tcp or udp.
+	// You can use "any" to allow all ports for the specific protocol.
+	// Port ranges are also possible: "80-85" allows all ports between 80 and 85.
+	Port string `json:"port,omitempty"`
+
+	// SourceIps lists IPs or CIDRs that are allowed within this Firewall Rule (when direction is "in")
+	SourceIps []string `json:"source_ips,omitempty" validate:"dive,cidr"`
+
+	// DestinationIps lists IPs or CIDRs that are allowed within this Firewall Rule (when direction is "out")
+	DestinationIps []string `json:"destination_ips,omitempty" validate:"dive,cidr"`
 }
 
 // FirewallConfig holds settings for Hetzner Cloud Firewall configuration,

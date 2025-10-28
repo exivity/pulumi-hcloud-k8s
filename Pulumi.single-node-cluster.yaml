@@ -12,6 +12,19 @@ config:
       - "2001:4860:4860::8888"
   hcloud-k8s:firewall:
     open_talos_api: true
+    custom_rules_controlplane:
+      - direction: in
+        protocol: tcp
+        port: "80"
+        source_ips:
+          - "0.0.0.0/0"
+          - "::/0"
+      - direction: in
+        protocol: tcp
+        port: "443"
+        source_ips:
+          - "0.0.0.0/0"
+          - "::/0"
   hcloud-k8s:control_plane:
     disable_load_balancer: true
     node_pools:
