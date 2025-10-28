@@ -147,6 +147,12 @@ func NewHetznerTalosKubernetesCluster(ctx *pulumi.Context, name string, cfg *con
 		)
 	}
 
+	// Apply configuration patches to all nodes
+	configurationApplies, err := compute.ApplyConfigPatchesToAllPools(ctx, cpPools, workerPools, hetznerProvider)
+	if err != nil {
+		return nil, err
+	}
+
 	// TODO: remove bootstrap creation from k8s package
 	out.Kubeconfig, err = core.NewKubeconfig(ctx, &core.KubeconfigArgs{
 		CertificateRenewalDuration: cfg.Talos.K8sCertificateRenewalDuration,
@@ -154,6 +160,7 @@ func NewHetznerTalosKubernetesCluster(ctx *pulumi.Context, name string, cfg *con
 		Secrets:                    machineConfigurationManager.Secrets,
 	},
 		pulumi.DependsOn(workerPoolDependsOn),
+		pulumi.DependsOn(configurationApplies),
 	)
 	if err != nil {
 		return nil, err
@@ -191,14 +198,6 @@ func NewHetznerTalosKubernetesCluster(ctx *pulumi.Context, name string, cfg *con
 		return nil, err
 	}
 
-	// Apply configuration patches to all nodes
-	configurationApplies, err := compute.ApplyConfigPatchesToAllPools(ctx, cpPools, workerPools, hetznerProvider,
-		pulumi.DependsOn(upgradedNodes),
-	)
-	if err != nil {
-		return nil, err
-	}
-
 	out.ClusterApplications, err = cluster.NewApplications(ctx, name, &cluster.ApplicationsArgs{
 		Cfg:                         cfg,
 		Kubeconfig:                  out.Kubeconfig.Kubeconfig,
@@ -207,7 +206,7 @@ func NewHetznerTalosKubernetesCluster(ctx *pulumi.Context, name string, cfg *con
 		MachineConfigurationManager: machineConfigurationManager,
 		FirewallWorker:              firewallWorker,
 	},
-		pulumi.DependsOn(configurationApplies),
+		pulumi.DependsOn(upgradedNodes),
 	)
 	if err != nil {
 		return nil, err

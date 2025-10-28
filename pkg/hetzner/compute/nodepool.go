@@ -91,10 +91,19 @@ func NewNodePool(ctx *pulumi.Context, name string, args *NodePoolArgs, opts ...p
 		}).(pulumi.IntPtrOutput)
 	}
 
-	machineConfiguration := args.MachineConfigurationManager.NewMachineConfiguration(ctx, &core.MachineConfigurationArgs{
-		ServerNodeType: args.ServerNodeType,
-		ConfigPatches:  args.ConfigPatchesBootstrap,
-	})
+	// Generate the user data only if the cluster endpoint is available
+	// This is needed to support node pools in a non-loadbalancer setup
+	// Where the IP of the first control plane node is used as the cluster endpoint
+	var userData pulumi.StringPtrInput
+	if args.MachineConfigurationManager.HasClusterEndpoint() {
+		userData, err = args.MachineConfigurationManager.NewMachineConfiguration(ctx, &core.MachineConfigurationArgs{
+			ServerNodeType: args.ServerNodeType,
+			ConfigPatches:  args.ConfigPatchesBootstrap,
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	nodes := make([]*hcloud.Server, args.Count)
 
@@ -120,7 +129,7 @@ func NewNodePool(ctx *pulumi.Context, name string, args *NodePoolArgs, opts ...p
 					Ipv6Enabled: pulumi.Bool(true),
 				},
 			},
-			UserData:               machineConfiguration,
+			UserData:               userData,
 			ShutdownBeforeDeletion: pulumi.BoolPtr(true),
 			PlacementGroupId:       pg,
 			FirewallIds: pulumi.IntArray{
@@ -194,10 +203,13 @@ func (n *NodePool) FindNodePoolAutoScalerNodes(ctx *pulumi.Context, opts ...pulu
 
 // ApplyConfigPatches applies the config patches to the nodes in the node pool.
 func (n *NodePool) ApplyConfigPatches(ctx *pulumi.Context, opts ...pulumi.ResourceOption) ([]*machine.ConfigurationApply, error) {
-	machineConfiguration := n.MachineConfigurationManager.NewMachineConfiguration(ctx, &core.MachineConfigurationArgs{
+	machineConfiguration, err := n.MachineConfigurationManager.NewMachineConfiguration(ctx, &core.MachineConfigurationArgs{
 		ServerNodeType: n.ServerNodeType,
 		ConfigPatches:  n.ConfigPatches,
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	configurationApplies := []*machine.ConfigurationApply{}
 

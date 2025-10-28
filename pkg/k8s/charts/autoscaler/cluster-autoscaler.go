@@ -76,12 +76,15 @@ func NewClusterAutoscaler(ctx *pulumi.Context, args *ClusterAutoscalerArgs, opts
 			return nil, err
 		}
 
-		workerMachineConfiguration := args.MachineConfigurationManager.NewMachineConfiguration(ctx, &core.MachineConfigurationArgs{
+		workerMachineConfiguration, err := args.MachineConfigurationManager.NewMachineConfiguration(ctx, &core.MachineConfigurationArgs{
 			ServerNodeType: meta.WorkerNode,
 			ConfigPatches: pulumi.StringArray{
 				pulumi.String(workerNodeConfiguration),
 			},
 		})
+		if err != nil {
+			return nil, err
+		}
 
 		nodeConfig := HCloudNodeConfig{
 			CloudInit: workerMachineConfiguration,
