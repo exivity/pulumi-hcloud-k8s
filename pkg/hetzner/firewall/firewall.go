@@ -15,6 +15,13 @@ type ControlplaneFirewallArgs struct {
 	// OpenAPIToEveryone opens control-plane API Talos API & trustd (50000-50001) to all IPs.
 	OpenAPIToEveryone bool
 
+	// ExposeKubernetesAPIWithoutLoadBalancer enables Kubernetes API (port 6443) access for non-loadbalancer setups.
+	// This should ONLY be enabled when control plane is configured without a load balancer.
+	// Behavior:
+	//   - If VpnCidrs are configured: port 6443 will be exposed only to those specific CIDRs
+	//   - If VpnCidrs are empty: port 6443 will be exposed to everyone (0.0.0.0/0, ::/0)
+	ExposeKubernetesAPIWithoutLoadBalancer bool
+
 	// CustomRules allows opening additional ports to specific CIDRs (e.g., 80/443 for MetalLB).
 	CustomRules []CustomFirewallRuleArg
 }
@@ -34,9 +41,19 @@ func NewControlplaneFirewall(ctx *pulumi.Context, name string, args *Controlplan
 				Port:        pulumi.String(p), SourceIps: src,
 			})
 		}
+		// Also open Kubernetes API (6443) to VPN CIDRs for non-loadbalancer setup
+		if args.ExposeKubernetesAPIWithoutLoadBalancer {
+			rules = append(rules, &hcloud.FirewallRuleArgs{
+				Description: pulumi.String("VPN: Open Kubernetes API (non-LB setup)"),
+				Direction:   pulumi.String("in"),
+				Protocol:    pulumi.String("tcp"),
+				Port:        pulumi.String("6443"),
+				SourceIps:   src,
+			})
+		}
 	}
 
-	// Optionally open to all
+	// Optionally open Talos API to all
 	if args.OpenAPIToEveryone {
 		all := toPulumiIPList([]string{"0.0.0.0/0", "::/0"})
 		for _, p := range []string{"50000", "50001"} {
@@ -48,6 +65,19 @@ func NewControlplaneFirewall(ctx *pulumi.Context, name string, args *Controlplan
 				SourceIps:   all,
 			})
 		}
+	}
+
+	// Open Kubernetes API for non-loadbalancer setup when no VPN CIDRs are configured
+	// If VPN CIDRs exist, the API is already exposed to them in the loop above
+	if args.ExposeKubernetesAPIWithoutLoadBalancer && len(args.VpnCidrs) == 0 {
+		all := toPulumiIPList([]string{"0.0.0.0/0", "::/0"})
+		rules = append(rules, &hcloud.FirewallRuleArgs{
+			Description: pulumi.String("Public: Open Kubernetes API (non-LB setup)"),
+			Direction:   pulumi.String("in"),
+			Protocol:    pulumi.String("tcp"),
+			Port:        pulumi.String("6443"),
+			SourceIps:   all,
+		})
 	}
 
 	// Add custom rules (e.g., for MetalLB)

@@ -100,9 +100,10 @@ func NewHetznerTalosKubernetesCluster(ctx *pulumi.Context, name string, cfg *con
 	}
 
 	firewallCp, err := hfirewall.NewControlplaneFirewall(ctx, "fw-controlplane", &hfirewall.ControlplaneFirewallArgs{
-		VpnCidrs:          cfg.Firewall.VpnCidrs,
-		OpenAPIToEveryone: cfg.Firewall.OpenTalosAPI,
-		CustomRules:       hfirewall.ToCustomFirewallRuleArgs(cfg.Firewall.CustomRulesControlplane),
+		VpnCidrs:                               cfg.Firewall.VpnCidrs,
+		OpenAPIToEveryone:                      cfg.Firewall.OpenTalosAPI,
+		ExposeKubernetesAPIWithoutLoadBalancer: cfg.ControlPlane.DisableLoadBalancer,
+		CustomRules:                            hfirewall.ToCustomFirewallRuleArgs(cfg.Firewall.CustomRulesControlplane),
 	}, pulumi.Provider(hetznerProvider))
 	if err != nil {
 		return nil, err

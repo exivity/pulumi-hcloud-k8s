@@ -10,6 +10,8 @@ type FirewallRuleConfig struct {
 // mapping to ControlplaneFirewallArgs and WorkerFirewallArgs in the firewall package.
 type FirewallConfig struct {
 	// VpnCidrs lists VPN network CIDRs allowed to access control-plane API & trustd.
+	// When load balancer is disabled, these CIDRs also control access to the Kubernetes API (port 6443).
+	// If empty and load balancer is disabled, Kubernetes API will be exposed to all IPs (0.0.0.0/0, ::/0).
 	VpnCidrs []string `json:"vpn_cidrs" validate:"dive,cidr"`
 
 	// OpenTalosAPI opens Talos API to all IPs.
