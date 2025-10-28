@@ -98,9 +98,6 @@ type ImageArgs struct {
 	// Like "cx23" for "amd64" or "cax11" for "arm64".
 	// All available server types can be found here https://www.hetzner.com/cloud/
 	ServerSize string
-	// ImageBuildRegion is the region to use for the image upload.
-	// This is the region where the server will be created.
-	ImageBuildRegion string
 }
 
 // Image represents the uploaded Talos image

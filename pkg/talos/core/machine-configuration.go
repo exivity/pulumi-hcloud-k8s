@@ -62,33 +62,35 @@ type MachineConfigurationArgs struct {
 // NewMachineConfiguration generates a new machine configuration for the cluster
 // A MachineConfiguration is needed to give a new hetzner server as UserData
 // Like UserData: NewMachineConfiguration()
-func (c *MachineConfigurationManager) NewMachineConfiguration(ctx *pulumi.Context, args *MachineConfigurationArgs) pulumi.StringOutput {
-	// Default to localhost for the first control plane node (bootstrap scenario)
-	clusterEndpoint := pulumi.Sprintf("https://10.128.1.1:%d", lb.ControlPlaneLoadBalancerPort)
-
-	// If we have a single control plane IP, use that
-	if c.SingleControlPlaneNodeIP != nil {
-		clusterEndpoint = pulumi.Sprintf("https://%s:%d", c.SingleControlPlaneNodeIP, lb.ControlPlaneLoadBalancerPort)
-	}
-
-	// If we have a load balancer, prefer that over single node IP
-	if c.ControlplaneLoadBalancer != nil {
-		clusterEndpoint = pulumi.Sprintf("https://%s:%d", c.ControlplaneLoadBalancer.LoadBalancer.Ipv4, lb.ControlPlaneLoadBalancerPort)
-	}
-
-	return machine.GetConfigurationOutput(ctx, machine.GetConfigurationOutputArgs{
+func (c *MachineConfigurationManager) NewMachineConfiguration(ctx *pulumi.Context, args *MachineConfigurationArgs) (pulumi.StringOutput, error) {
+	configuration := machine.GetConfigurationOutputArgs{
 		ClusterName:       pulumi.String(c.ClusterName),
 		MachineType:       pulumi.String(args.ServerNodeType),
-		ClusterEndpoint:   clusterEndpoint,
 		MachineSecrets:    c.Secrets.MachineSecrets,
 		TalosVersion:      pulumi.String(c.TalosVersion),
 		KubernetesVersion: pulumi.String(c.KubernetesVersion),
 		ConfigPatches:     args.ConfigPatches,
 		Docs:              pulumi.BoolPtr(false),
 		Examples:          pulumi.BoolPtr(false),
-	},
+	}
+
+	// If we have a single control plane IP, use that
+	if c.SingleControlPlaneNodeIP != nil {
+		configuration.ClusterEndpoint = pulumi.Sprintf("https://%s:%d", c.SingleControlPlaneNodeIP, lb.ControlPlaneLoadBalancerPort)
+	}
+
+	// If we have a load balancer, prefer that over single node IP
+	if c.ControlplaneLoadBalancer != nil {
+		configuration.ClusterEndpoint = pulumi.Sprintf("https://%s:%d", c.ControlplaneLoadBalancer.LoadBalancer.Ipv4, lb.ControlPlaneLoadBalancerPort)
+	}
+
+	if configuration.ClusterEndpoint == nil {
+		return pulumi.StringOutput{}, fmt.Errorf("either ControlplaneLoadBalancer or SingleControlPlaneNodeIP must be set")
+	}
+
+	return machine.GetConfigurationOutput(ctx, configuration,
 		pulumi.Parent(c.Secrets),
-	).MachineConfiguration()
+	).MachineConfiguration(), nil
 }
 
 // SetSingleControlPlaneNodeIP sets the IP address of the first control plane node.
@@ -96,4 +98,12 @@ func (c *MachineConfigurationManager) NewMachineConfiguration(ctx *pulumi.Contex
 // It allows setting the control plane endpoint after the first control plane node is created.
 func (c *MachineConfigurationManager) SetSingleControlPlaneNodeIP(ip pulumi.StringInput) {
 	c.SingleControlPlaneNodeIP = ip
+}
+
+// HasClusterEndpoint checks if a cluster endpoint is available.
+// Returns true if either a control plane load balancer is configured
+// or a single control plane node IP is set. This helps determine
+// whether the configuration is for a load balancer or non-loadbalancer setup.
+func (c *MachineConfigurationManager) HasClusterEndpoint() bool {
+	return c.ControlplaneLoadBalancer != nil || c.SingleControlPlaneNodeIP != nil
 }
