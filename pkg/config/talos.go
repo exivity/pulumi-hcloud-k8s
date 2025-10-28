@@ -102,9 +102,11 @@ type TalosConfig struct {
 	// Registry configuration for image registries
 	Registries *RegistriesConfig `json:"registries"`
 
-	// EnableLocalStorage enables local storage support in Talos
+	// LocalStorageFolders is a list of folders to make accessible for local storage in Talos.
+	// Each folder will be mounted as a bind mount with rshared and rw options.
 	// See: https://www.talos.dev/v1.7/kubernetes-guides/configuration/local-storage/
-	EnableLocalStorage bool `json:"enable_local_storage"`
+	// Example: ["/var/mnt", "/var/local-storage"]
+	LocalStorageFolders []string `json:"local_storage_folders"`
 
 	// Enable workers on your control plane
 	// This is useful for testing, but not recommended for production
