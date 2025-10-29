@@ -20,6 +20,8 @@ type HetznerTalosKubernetesCluster struct {
 	Kubeconfig          *core.Kubeconfig
 	TalosConfig         pulumi.StringOutput
 	ClusterApplications *cluster.Applications
+	ControlPlanePools   []*compute.NodePool
+	WorkerPools         []*compute.NodePool
 }
 
 // NewHetznerTalosKubernetesCluster creates a new Hetzner Talos Kubernetes cluster with the given name and configuration.
@@ -122,11 +124,13 @@ func NewHetznerTalosKubernetesCluster(ctx *pulumi.Context, name string, cfg *con
 	if err != nil {
 		return nil, err
 	}
+	out.ControlPlanePools = cpPools
 
 	workerPools, err := compute.DeployWorkerPools(ctx, cfg, images, net, machineConfigurationManager, firewallWorker, hetznerProvider)
 	if err != nil {
 		return nil, err
 	}
+	out.WorkerPools = workerPools
 
 	workerPoolDependsOn := []pulumi.Resource{}
 	for _, cpPool := range cpPools {
