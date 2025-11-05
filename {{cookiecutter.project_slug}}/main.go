@@ -34,7 +34,7 @@ func main() {
 		// This allows you to override or extend configuration programmatically
 		// Examples:
 		// 1. Override specific values:
-		//    baseCfg.Talos.ImageVersion = "v1.10.6"
+		//    baseCfg.Talos.ImageVersion = "v1.11.3"
 		//    baseCfg.ControlPlane.NodePools[0].Count = 5
 		//
 		// 2. Add conditional logic:
@@ -45,7 +45,7 @@ func main() {
 		// 3. Alternative: Skip pulumiconfig entirely and build config programmatically:
 		//    baseCfg := &config.PulumiConfig{
 		//        Hetzner: config.HetznerConfig{Token: "your-token"},
-		//        Talos: config.TalosConfig{ImageVersion: "v1.10.5"},
+		//        Talos: config.TalosConfig{ImageVersion: "v1.11.3"},
 		//        // ... other fields
 		//    }
 

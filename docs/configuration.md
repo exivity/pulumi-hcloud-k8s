@@ -40,8 +40,8 @@ Configure Talos Linux version and Kubernetes version:
 ```yaml
 config:
   hcloud-k8s:talos:
-    image_version: v1.10.5
-    kubernetes_version: "1.33.0"
+    image_version: v1.11.3
+    kubernetes_version: "1.34.0"
     api_allowed_cidrs: "10.0.0.0/8,192.168.0.0/16"  # Optional
 ```
 
@@ -128,8 +128,8 @@ config:
   # Tokens are set as secrets via: pulumi config set --path hcloud-k8s:hetzner.token --secret
   # Tokens are set as secrets via: pulumi config set --path hcloud-k8s:kubernetes.hcloud_token --secret
   hcloud-k8s:talos:
-    image_version: v1.10.5
-    kubernetes_version: "1.33.0"
+    image_version: v1.11.3
+    kubernetes_version: "1.34.0"
   hcloud-k8s:control_plane:
     enable_ha: true
     node_pools:

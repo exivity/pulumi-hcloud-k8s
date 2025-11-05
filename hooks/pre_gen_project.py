@@ -123,8 +123,8 @@ def print_installation_instructions(missing_tools: List[str]) -> None:
         "talosctl": {
             "description": "Talos Linux CLI tool",
             "macos": "brew install siderolabs/tap/talosctl",
-            "linux": "Visit https://www.talos.dev/v1.10/talos-guides/install/talosctl/",
-            "url": "https://www.talos.dev/v1.10/talos-guides/install/talosctl/",
+            "linux": "Visit https://www.talos.dev/v1.11/talos-guides/install/talosctl/",
+            "url": "https://www.talos.dev/v1.11/talos-guides/install/talosctl/",
         },
     }
 

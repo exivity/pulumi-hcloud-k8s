@@ -114,9 +114,7 @@ import (
 
 func main() {
     pulumi.Run(func(ctx *pulumi.Context) error {
-        cluster, err := deploy.NewCluster(ctx, "my-cluster", &deploy.ClusterArgs{
-            // Configuration here
-        })
+        cluster, err := deploy.NewHetznerTalosKubernetesCluster(ctx, "my-cluster", cfg)
         return err
     })
 }

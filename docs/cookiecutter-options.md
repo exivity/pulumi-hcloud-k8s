@@ -62,12 +62,12 @@ This document describes all the available options when using the cookiecutter te
 
 ### `talos_version`
 
-**Default:** `"v1.10.5"`
-**Description:** The version of Talos Linux to use. See the [Talos Support Matrix](https://www.talos.dev/v1.10/introduction/support-matrix/) for supported Kubernetes versions.
+**Default:** `"v1.11.3"`
+**Description:** The version of Talos Linux to use. See the [Talos Support Matrix](https://www.talos.dev/v1.11/introduction/support-matrix/) for supported Kubernetes versions.
 
 ### `kubernetes_version`
 
-**Default:** `"1.33.0"`
+**Default:** `"1.34.0"`
 **Description:** The Kubernetes version to deploy. Must be compatible with the selected Talos version.
 
 ## Control Plane Configuration

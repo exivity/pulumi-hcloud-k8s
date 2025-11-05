@@ -17,8 +17,8 @@
 config:
   # Tokens are set as secrets via CLI and won't appear in this file
   hcloud-k8s:talos:
-    image_version: v1.10.5
-    kubernetes_version: "1.33.0"
+    image_version: v1.11.3
+    kubernetes_version: "1.34.0"
   hcloud-k8s:control_plane:
     node_pools:
       - count: 1
@@ -40,8 +40,8 @@ config:
 config:
   # Tokens are set as secrets via CLI and won't appear in this file
   hcloud-k8s:talos:
-    image_version: v1.10.5
-    kubernetes_version: "1.33.0"
+    image_version: v1.11.3
+    kubernetes_version: "1.34.0"
     api_allowed_cidrs: "10.0.0.0/8,192.168.0.0/16"
   hcloud-k8s:control_plane:
     enable_ha: true
@@ -89,8 +89,8 @@ config:
 config:
   # Tokens are set as secrets via CLI and won't appear in this file
   hcloud-k8s:talos:
-    image_version: v1.10.5
-    kubernetes_version: "1.33.0"
+    image_version: v1.11.3
+    kubernetes_version: "1.34.0"
   hcloud-k8s:control_plane:
     enable_ha: true
     node_pools:
@@ -122,7 +122,7 @@ config:
 
 - **Security**: Always use `pulumi config set --path <path> --secret` to set Hetzner tokens. Never store tokens in plain text YAML files
 - **Token Requirements**: Both `hetzner.token` and `kubernetes.hcloud_token` must be set when using Kubernetes features. You can use the same token value for both
-- **Versions**: Always check the [Talos Support Matrix](https://www.talos.dev/v1.10/introduction/support-matrix/) for compatible Kubernetes versions
+- **Versions**: Always check the [Talos Support Matrix](https://www.talos.dev/v1.11/introduction/support-matrix/) for compatible Kubernetes versions
 - **Architecture**: ARM64 instances (cax series) are generally more cost-effective
 - **Longhorn**: Requires at least 3 worker nodes for proper replication
 - **High Availability**: Enable `control_plane.enable_ha` for production deployments
