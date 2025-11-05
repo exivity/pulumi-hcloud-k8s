@@ -183,8 +183,8 @@ github.com/pulumi/pulumi-hcloud/sdk v1.25.0 h1:YgeQ+bgF4Do4E/sdIgWYrFc/mysGwC+Js
 github.com/pulumi/pulumi-hcloud/sdk v1.25.0/go.mod h1:9tlT0uwf63dud3ZWPzxEsKEyXIijZQYWPwc8wuuASiU=
 github.com/pulumi/pulumi-kubernetes/sdk/v4 v4.23.0 h1:TZ/XhzF+3/jRiGsjlJHCWhXcU5E5tbXU8O0DKnPmFic=
 github.com/pulumi/pulumi-kubernetes/sdk/v4 v4.23.0/go.mod h1:jOdpeNeRvY4iN+W8aDP5+HyqrM7hXsxa9paPsmjQFfY=
-github.com/pulumi/pulumi/sdk/v3 v3.204.0 h1:tIiirsTpnq+Y9HqLY2NmXSEtbSg5XdZT9k+/6NmesAo=
-github.com/pulumi/pulumi/sdk/v3 v3.204.0/go.mod h1:aV0+c5xpSYccWKmOjTZS9liYCqh7+peu3cQgSXu7CJw=
+github.com/pulumi/pulumi/sdk/v3 v3.205.0 h1:Cuev0D3nBUqnFnFzWsO6M5XtOdGCe7lpgSds80yROyQ=
+github.com/pulumi/pulumi/sdk/v3 v3.205.0/go.mod h1:aV0+c5xpSYccWKmOjTZS9liYCqh7+peu3cQgSXu7CJw=
 github.com/pulumiverse/pulumi-talos/sdk v0.6.1 h1:X11e1wKTL7iH2G++N5XktwEPWkHOLzE6dG28PCkBEvc=
 github.com/pulumiverse/pulumi-talos/sdk v0.6.1/go.mod h1:Rcf9ULD6zXDnfYiwnM1WwFprqWdT/AxDCsX2896AOXs=
 github.com/rivo/uniseg v0.2.0/go.mod h1:J6wj4VEh+S6ZtnVlnTBMWIodfgj8LQOQFoIToxlJtxc=
