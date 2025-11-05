@@ -15,10 +15,10 @@ config:
   hcloud-k8s:control_plane:
     node_pools:
       - count: 1
-        server_size: cax11
+        server_size: cx23
         region: fsn1
       - count: 1
-        server_size: cax11
+        server_size: cx23
         region: nbg1
       - count: 1
         server_size: cax11
@@ -27,7 +27,7 @@ config:
     node_pools:
       - name: worker
         count: 1
-        server_size: cax31
+        server_size: cx43
         region: hel1
         auto_scaler:
           min_count: 1

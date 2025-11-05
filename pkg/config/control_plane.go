@@ -4,6 +4,17 @@ import "github.com/exivity/pulumi-hcloud-k8s/pkg/talos/image"
 
 // ControlPlaneConfig defines control‑plane node settings.
 type ControlPlaneConfig struct {
+	// Disable load balancer deployment.
+	//
+	// This option is intended for development and testing only. It disables
+	// automatic creation of the Hetzner load balancer so clusters can be
+	// brought up in environments where a load balancer is not available or
+	// desired (for example, single-node development clusters, CI, or local
+	// integration tests). It is NOT recommended for production workloads
+	// because it bypasses the high‑availability and traffic distribution
+	// guarantees provided by the load balancer.
+	DisableLoadBalancer bool `json:"disable_load_balancer"`
+
 	// Hetzner load‑balancer type (e.g. "lb11")
 	LoadBalancerType string `json:"load_balancer_type" validate:"default=lb11"`
 

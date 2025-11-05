@@ -33,8 +33,8 @@ type NodeConfigurationArgs struct {
 	// Nameservers is the list of DNS servers to use for the cluster
 	// If not provided, defaults are used
 	Nameservers []string
-	// EnableLocalStorage is true if local storage support is enabled
-	EnableLocalStorage bool
+	// LocalStorageFolders is a list of folders to make accessible for local storage
+	LocalStorageFolders []string
 	// Registries is the registries configuration for the Talos image
 	Registries *core_config.RegistriesConfig
 	// ExtraManifests is a list of URLs that point to additional manifests
@@ -122,11 +122,11 @@ func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) {
 		},
 	}
 
-	if args.EnableLocalStorage {
+	for _, folder := range args.LocalStorageFolders {
 		configPatch.Machine.Kubelet.ExtraMounts = append(configPatch.Machine.Kubelet.ExtraMounts, config.ExtraMount{
-			Destination: "/var/mnt",
+			Destination: folder,
 			Type:        "bind",
-			Source:      "/var/mnt",
+			Source:      folder,
 			Options:     []string{"bind", "rshared", "rw"},
 		})
 	}

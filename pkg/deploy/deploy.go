@@ -20,6 +20,8 @@ type HetznerTalosKubernetesCluster struct {
 	Kubeconfig          *core.Kubeconfig
 	TalosConfig         pulumi.StringOutput
 	ClusterApplications *cluster.Applications
+	ControlPlanePools   []*compute.NodePool
+	WorkerPools         []*compute.NodePool
 }
 
 // NewHetznerTalosKubernetesCluster creates a new Hetzner Talos Kubernetes cluster with the given name and configuration.
@@ -74,9 +76,10 @@ func NewHetznerTalosKubernetesCluster(ctx *pulumi.Context, name string, cfg *con
 	}
 
 	cpLb, err := lb.NewControlplane(ctx, "controlplane-lb", &lb.ControlplaneArgs{
-		LoadBalancerType: cfg.ControlPlane.LoadBalancerType,
-		Network:          net,
-		Location:         cfg.ControlPlane.LoadBalancerLocation,
+		DisableLoadBalancer: cfg.ControlPlane.DisableLoadBalancer,
+		LoadBalancerType:    cfg.ControlPlane.LoadBalancerType,
+		Network:             net,
+		Location:            cfg.ControlPlane.LoadBalancerLocation,
 	}, pulumi.Parent(net.Network), pulumi.Provider(hetznerProvider))
 	if err != nil {
 		return nil, err
@@ -99,9 +102,10 @@ func NewHetznerTalosKubernetesCluster(ctx *pulumi.Context, name string, cfg *con
 	}
 
 	firewallCp, err := hfirewall.NewControlplaneFirewall(ctx, "fw-controlplane", &hfirewall.ControlplaneFirewallArgs{
-		VpnCidrs:          cfg.Firewall.VpnCidrs,
-		OpenAPIToEveryone: cfg.Firewall.OpenTalosAPI,
-		CustomRules:       hfirewall.ToCustomFirewallRuleArgs(cfg.Firewall.CustomRulesControlplane),
+		VpnCidrs:                               cfg.Firewall.VpnCidrs,
+		OpenAPIToEveryone:                      cfg.Firewall.OpenTalosAPI,
+		ExposeKubernetesAPIWithoutLoadBalancer: cfg.ControlPlane.DisableLoadBalancer,
+		CustomRules:                            hfirewall.ToCustomFirewallRuleArgs(cfg.Firewall.CustomRulesControlplane),
 	}, pulumi.Provider(hetznerProvider))
 	if err != nil {
 		return nil, err
@@ -120,11 +124,13 @@ func NewHetznerTalosKubernetesCluster(ctx *pulumi.Context, name string, cfg *con
 	if err != nil {
 		return nil, err
 	}
+	out.ControlPlanePools = cpPools
 
 	workerPools, err := compute.DeployWorkerPools(ctx, cfg, images, net, machineConfigurationManager, firewallWorker, hetznerProvider)
 	if err != nil {
 		return nil, err
 	}
+	out.WorkerPools = workerPools
 
 	workerPoolDependsOn := []pulumi.Resource{}
 	for _, cpPool := range cpPools {
@@ -133,19 +139,33 @@ func NewHetznerTalosKubernetesCluster(ctx *pulumi.Context, name string, cfg *con
 		}
 	}
 
+	workerPoolDependsOn = append(workerPoolDependsOn,
+		cpPools[0].Nodes[0],
+	)
+
+	if cpLb != nil {
+		workerPoolDependsOn = append(workerPoolDependsOn,
+			cpLb.LoadBalancer,
+			cpLb.Service,
+			cpLb.Target,
+			cpLb.LoadBalancerNetwork,
+		)
+	}
+
+	// Apply configuration patches to all nodes
+	configurationApplies, err := compute.ApplyConfigPatchesToAllPools(ctx, cpPools, workerPools, hetznerProvider)
+	if err != nil {
+		return nil, err
+	}
+
 	// TODO: remove bootstrap creation from k8s package
 	out.Kubeconfig, err = core.NewKubeconfig(ctx, &core.KubeconfigArgs{
 		CertificateRenewalDuration: cfg.Talos.K8sCertificateRenewalDuration,
 		FirstControlPlane:          cpPools[0].Nodes[0],
 		Secrets:                    machineConfigurationManager.Secrets,
 	},
-		pulumi.DependsOn(append(workerPoolDependsOn,
-			cpPools[0].Nodes[0],
-			cpLb.LoadBalancer,
-			cpLb.Service,
-			cpLb.Target,
-			cpLb.LoadBalancerNetwork,
-		)),
+		pulumi.DependsOn(workerPoolDependsOn),
+		pulumi.DependsOn(configurationApplies),
 	)
 	if err != nil {
 		return nil, err
@@ -183,14 +203,6 @@ func NewHetznerTalosKubernetesCluster(ctx *pulumi.Context, name string, cfg *con
 		return nil, err
 	}
 
-	// Apply configuration patches to all nodes
-	configurationApplies, err := compute.ApplyConfigPatchesToAllPools(ctx, cpPools, workerPools, hetznerProvider,
-		pulumi.DependsOn(upgradedNodes),
-	)
-	if err != nil {
-		return nil, err
-	}
-
 	out.ClusterApplications, err = cluster.NewApplications(ctx, name, &cluster.ApplicationsArgs{
 		Cfg:                         cfg,
 		Kubeconfig:                  out.Kubeconfig.Kubeconfig,
@@ -199,7 +211,7 @@ func NewHetznerTalosKubernetesCluster(ctx *pulumi.Context, name string, cfg *con
 		MachineConfigurationManager: machineConfigurationManager,
 		FirewallWorker:              firewallWorker,
 	},
-		pulumi.DependsOn(configurationApplies),
+		pulumi.DependsOn(upgradedNodes),
 	)
 	if err != nil {
 		return nil, err

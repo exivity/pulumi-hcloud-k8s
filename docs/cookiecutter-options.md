@@ -77,6 +77,11 @@ This document describes all the available options when using the cookiecutter te
 **Default:** `false`
 **Description:** Enable high availability control plane across multiple regions (fsn1, nbg1, hel1). When enabled, deploys 3 control plane nodes across different regions.
 
+### `controlplane_disable_load_balancer`
+
+**Default:** `false`
+**Description:** Disable the control plane load balancer. When set to `true`, the cluster will be configured to access the Kubernetes API directly via the first control plane node's IP address instead of through a load balancer. This is useful for single-node clusters or cost-sensitive deployments. Note: When the load balancer is disabled, the Kubernetes API port (6443) will be exposed through the firewall rules.
+
 ### `controlplane_server_size`
 
 **Default:** `"cax11"`
