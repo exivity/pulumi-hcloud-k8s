@@ -59,7 +59,7 @@ This guide helps you get started with a new Hetzner Talos Kubernetes cluster usi
 
 - [Go](https://go.dev/doc/install)
 - [Pulumi CLI](www.pulumi.com/docs/iac/download-install/)
-- [talosctl](https://www.talos.dev/v1.10/talos-guides/install/talosctl/)
+- [talosctl](https://www.talos.dev/v1.11/talos-guides/install/talosctl/)
 - [Cookiecutter](https://cookiecutter.readthedocs.io/en/latest/README.html#installation)
   
 Optional:
@@ -89,7 +89,7 @@ For Linux users, please refer to the official installation guides:
 
 - [Go](https://go.dev/doc/install)
 - [Pulumi CLI](https://www.pulumi.com/docs/install/)
-- [talosctl](https://www.talos.dev/v1.10/talos-guides/install/talosctl/)
+- [talosctl](https://www.talos.dev/v1.11/talos-guides/install/talosctl/)
 
 ### Create a New Project
 

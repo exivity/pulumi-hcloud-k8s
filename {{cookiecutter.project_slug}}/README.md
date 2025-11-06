@@ -31,7 +31,7 @@ Install the following tools to manage this cluster:
 - [Go](https://go.dev/doc/install) (for Pulumi program)
 - [Pulumi CLI](https://www.pulumi.com/docs/install/)
 - [kubectl](https://kubernetes.io/docs/tasks/tools/)
-- [talosctl](https://www.talos.dev/v1.10/talos-guides/install/talosctl/)
+- [talosctl](https://www.talos.dev/v1.11/talos-guides/install/talosctl/)
 - [golangci-lint](https://golangci-lint.run/) (for linting)
 
 Optional but recommended:
@@ -138,7 +138,7 @@ make talosctl get members
 make talosctl dashboard
 ```
 
-For more Talos commands, see the [talosctl CLI reference](https://www.talos.dev/v1.10/reference/cli/#talosctl-dashboard).
+For more Talos commands, see the [talosctl CLI reference](https://www.talos.dev/v1.11/reference/cli/#talosctl-dashboard).
 
 ### Common Operations
 
