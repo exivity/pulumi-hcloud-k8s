@@ -41,7 +41,7 @@ type Applications struct {
 	MetricServer               *metricsserver.MetricServer
 }
 
-func NewApplications(ctx *pulumi.Context, name string, args *ApplicationsArgs, opts ...pulumi.ResourceOption) (*Applications, error) { //nolint:cyclop,funlen
+func NewApplications(ctx *pulumi.Context, name string, args *ApplicationsArgs, opts ...pulumi.ResourceOption) (*Applications, error) { //nolint:cyclop // TODO: refactor
 	out := &Applications{}
 	var err error
 
@@ -113,53 +113,8 @@ func NewApplications(ctx *pulumi.Context, name string, args *ApplicationsArgs, o
 
 	// Deploy autoscaler configuration if any node pool has autoscaling enabled
 	// This configuration is needed even if the Helm chart is not deployed
-	if args.Cfg.NodePools.HasAutoScaling() {
-		// If the Helm chart is enabled, deploy everything together
-		if args.Cfg.Kubernetes.ClusterAutoScaler != nil && args.Cfg.Kubernetes.ClusterAutoScaler.Enabled {
-			out.ClusterAutoscaler, err = autoscaler.NewClusterAutoscaler(ctx, &autoscaler.ClusterAutoscalerArgs{
-				Values:                      args.Cfg.Kubernetes.ClusterAutoScaler.Values,
-				Version:                     args.Cfg.Kubernetes.ClusterAutoScaler.Version,
-				Images:                      args.Images,
-				MachineConfigurationManager: args.MachineConfigurationManager,
-				NodePools:                   args.Cfg.NodePools.NodePools,
-				Subnet:                      args.Cfg.Network.Subnet,
-				PodSubnets:                  args.Cfg.Network.PodSubnets,
-				EnableLonghorn:              args.Cfg.Talos.EnableLonghorn,
-				Network:                     args.Network,
-				Nameservers:                 args.Cfg.Network.Nameservers,
-				HcloudToken:                 args.Cfg.Kubernetes.HCloudToken,
-				Firewall:                    args.FirewallWorker,
-				EnableKubeSpan:              args.Cfg.Talos.EnableKubeSpan,
-				CNI:                         args.Cfg.Talos.CNI,
-			},
-				opts...,
-			)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			// If the Helm chart is not enabled but autoscaling is configured,
-			// deploy only the configuration (secrets and node configs)
-			out.AutoscalerConfiguration, err = autoscaler.DeployAutoscalerConfiguration(ctx, &autoscaler.AutoscalerConfigurationArgs{
-				Images:                      args.Images,
-				MachineConfigurationManager: args.MachineConfigurationManager,
-				NodePools:                   args.Cfg.NodePools.NodePools,
-				Subnet:                      args.Cfg.Network.Subnet,
-				PodSubnets:                  args.Cfg.Network.PodSubnets,
-				EnableLonghorn:              args.Cfg.Talos.EnableLonghorn,
-				Network:                     args.Network,
-				Nameservers:                 args.Cfg.Network.Nameservers,
-				HcloudToken:                 args.Cfg.Kubernetes.HCloudToken,
-				Firewall:                    args.FirewallWorker,
-				EnableKubeSpan:              args.Cfg.Talos.EnableKubeSpan,
-				CNI:                         args.Cfg.Talos.CNI,
-			},
-				opts...,
-			)
-			if err != nil {
-				return nil, err
-			}
-		}
+	if err := deployAutoscaler(ctx, out, args, opts); err != nil {
+		return nil, err
 	}
 
 	if args.Cfg.Kubernetes.KubeletServingCertApprover != nil && args.Cfg.Kubernetes.KubeletServingCertApprover.Enabled {
@@ -198,4 +153,56 @@ func NewApplications(ctx *pulumi.Context, name string, args *ApplicationsArgs, o
 	}
 
 	return out, nil
+}
+
+// deployAutoscaler handles deployment of cluster autoscaler and its configuration.
+// If autoscaling is configured, it deploys either the full Helm chart (if enabled)
+// or just the configuration (if chart is disabled).
+func deployAutoscaler(ctx *pulumi.Context, out *Applications, args *ApplicationsArgs, opts []pulumi.ResourceOption) error {
+	if !args.Cfg.NodePools.HasAutoScaling() {
+		return nil
+	}
+
+	var err error
+	autoscalerArgs := &autoscaler.AutoscalerConfigurationArgs{
+		Images:                      args.Images,
+		MachineConfigurationManager: args.MachineConfigurationManager,
+		NodePools:                   args.Cfg.NodePools.NodePools,
+		Subnet:                      args.Cfg.Network.Subnet,
+		PodSubnets:                  args.Cfg.Network.PodSubnets,
+		EnableLonghorn:              args.Cfg.Talos.EnableLonghorn,
+		Network:                     args.Network,
+		Nameservers:                 args.Cfg.Network.Nameservers,
+		HcloudToken:                 args.Cfg.Kubernetes.HCloudToken,
+		Firewall:                    args.FirewallWorker,
+		EnableKubeSpan:              args.Cfg.Talos.EnableKubeSpan,
+		CNI:                         args.Cfg.Talos.CNI,
+	}
+
+	if args.Cfg.Kubernetes.ClusterAutoScaler != nil && args.Cfg.Kubernetes.ClusterAutoScaler.Enabled {
+		out.ClusterAutoscaler, err = autoscaler.NewClusterAutoscaler(ctx, &autoscaler.ClusterAutoscalerArgs{
+			Values:                      args.Cfg.Kubernetes.ClusterAutoScaler.Values,
+			Version:                     args.Cfg.Kubernetes.ClusterAutoScaler.Version,
+			Images:                      autoscalerArgs.Images,
+			MachineConfigurationManager: autoscalerArgs.MachineConfigurationManager,
+			NodePools:                   autoscalerArgs.NodePools,
+			Subnet:                      autoscalerArgs.Subnet,
+			PodSubnets:                  autoscalerArgs.PodSubnets,
+			EnableLonghorn:              autoscalerArgs.EnableLonghorn,
+			Network:                     autoscalerArgs.Network,
+			Nameservers:                 autoscalerArgs.Nameservers,
+			HcloudToken:                 autoscalerArgs.HcloudToken,
+			Firewall:                    autoscalerArgs.Firewall,
+			EnableKubeSpan:              autoscalerArgs.EnableKubeSpan,
+			CNI:                         autoscalerArgs.CNI,
+		},
+			opts...,
+		)
+		return err
+	}
+
+	// If the Helm chart is not enabled but autoscaling is configured,
+	// deploy only the configuration (secrets and node configs)
+	out.AutoscalerConfiguration, err = autoscaler.DeployAutoscalerConfiguration(ctx, autoscalerArgs, opts...)
+	return err
 }

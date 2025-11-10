@@ -195,7 +195,7 @@ func DeployAutoscalerConfiguration(ctx *pulumi.Context, args *AutoscalerConfigur
 	}, nil
 }
 
-func NewClusterAutoscaler(ctx *pulumi.Context, args *ClusterAutoscalerArgs, opts ...pulumi.ResourceOption) (*ClusterAutoscaler, error) { //nolint:cyclop,funlen // TODO: refactor
+func NewClusterAutoscaler(ctx *pulumi.Context, args *ClusterAutoscalerArgs, opts ...pulumi.ResourceOption) (*ClusterAutoscaler, error) {
 	// Deploy autoscaler configuration (secrets and node configs)
 	autoscalerConfig, err := DeployAutoscalerConfiguration(ctx, &AutoscalerConfigurationArgs{
 		Images:                      args.Images,
