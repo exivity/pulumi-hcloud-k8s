@@ -45,3 +45,13 @@ type NodePoolsConfig struct {
 	// proper management of auto-scaler created nodes.
 	SkipAutoScalerDiscovery bool `json:"skip_auto_scaler_discovery"`
 }
+
+// HasAutoScaling returns true if at least one node pool has AutoScaler configured
+func (n *NodePoolsConfig) HasAutoScaling() bool {
+	for _, pool := range n.NodePools {
+		if pool.AutoScaler != nil {
+			return true
+		}
+	}
+	return false
+}

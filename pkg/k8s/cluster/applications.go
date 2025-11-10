@@ -36,6 +36,7 @@ type Applications struct {
 	CloudControlManager        *ccm.CloudControlManager
 	CSI                        *csi.CSI
 	ClusterAutoscaler          *autoscaler.ClusterAutoscaler
+	AutoscalerConfiguration    *autoscaler.AutoscalerConfiguration
 	KubeletServingCertApprover *kubeletservingcertapprover.KubeletServingCertApprover
 	MetricServer               *metricsserver.MetricServer
 }
@@ -110,27 +111,54 @@ func NewApplications(ctx *pulumi.Context, name string, args *ApplicationsArgs, o
 		}
 	}
 
-	if args.Cfg.Kubernetes.ClusterAutoScaler != nil && args.Cfg.Kubernetes.ClusterAutoScaler.Enabled {
-		out.ClusterAutoscaler, err = autoscaler.NewClusterAutoscaler(ctx, &autoscaler.ClusterAutoscalerArgs{
-			Values:                      args.Cfg.Kubernetes.ClusterAutoScaler.Values,
-			Version:                     args.Cfg.Kubernetes.ClusterAutoScaler.Version,
-			Images:                      args.Images,
-			MachineConfigurationManager: args.MachineConfigurationManager,
-			NodePools:                   args.Cfg.NodePools.NodePools,
-			Subnet:                      args.Cfg.Network.Subnet,
-			PodSubnets:                  args.Cfg.Network.PodSubnets,
-			EnableLonghorn:              args.Cfg.Talos.EnableLonghorn,
-			Network:                     args.Network,
-			Nameservers:                 args.Cfg.Network.Nameservers,
-			HcloudToken:                 args.Cfg.Kubernetes.HCloudToken,
-			Firewall:                    args.FirewallWorker,
-			EnableKubeSpan:              args.Cfg.Talos.EnableKubeSpan,
-			CNI:                         args.Cfg.Talos.CNI,
-		},
-			opts...,
-		)
-		if err != nil {
-			return nil, err
+	// Deploy autoscaler configuration if any node pool has autoscaling enabled
+	// This configuration is needed even if the Helm chart is not deployed
+	if args.Cfg.NodePools.HasAutoScaling() {
+		// If the Helm chart is enabled, deploy everything together
+		if args.Cfg.Kubernetes.ClusterAutoScaler != nil && args.Cfg.Kubernetes.ClusterAutoScaler.Enabled {
+			out.ClusterAutoscaler, err = autoscaler.NewClusterAutoscaler(ctx, &autoscaler.ClusterAutoscalerArgs{
+				Values:                      args.Cfg.Kubernetes.ClusterAutoScaler.Values,
+				Version:                     args.Cfg.Kubernetes.ClusterAutoScaler.Version,
+				Images:                      args.Images,
+				MachineConfigurationManager: args.MachineConfigurationManager,
+				NodePools:                   args.Cfg.NodePools.NodePools,
+				Subnet:                      args.Cfg.Network.Subnet,
+				PodSubnets:                  args.Cfg.Network.PodSubnets,
+				EnableLonghorn:              args.Cfg.Talos.EnableLonghorn,
+				Network:                     args.Network,
+				Nameservers:                 args.Cfg.Network.Nameservers,
+				HcloudToken:                 args.Cfg.Kubernetes.HCloudToken,
+				Firewall:                    args.FirewallWorker,
+				EnableKubeSpan:              args.Cfg.Talos.EnableKubeSpan,
+				CNI:                         args.Cfg.Talos.CNI,
+			},
+				opts...,
+			)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			// If the Helm chart is not enabled but autoscaling is configured,
+			// deploy only the configuration (secrets and node configs)
+			out.AutoscalerConfiguration, err = autoscaler.DeployAutoscalerConfiguration(ctx, &autoscaler.AutoscalerConfigurationArgs{
+				Images:                      args.Images,
+				MachineConfigurationManager: args.MachineConfigurationManager,
+				NodePools:                   args.Cfg.NodePools.NodePools,
+				Subnet:                      args.Cfg.Network.Subnet,
+				PodSubnets:                  args.Cfg.Network.PodSubnets,
+				EnableLonghorn:              args.Cfg.Talos.EnableLonghorn,
+				Network:                     args.Network,
+				Nameservers:                 args.Cfg.Network.Nameservers,
+				HcloudToken:                 args.Cfg.Kubernetes.HCloudToken,
+				Firewall:                    args.FirewallWorker,
+				EnableKubeSpan:              args.Cfg.Talos.EnableKubeSpan,
+				CNI:                         args.Cfg.Talos.CNI,
+			},
+				opts...,
+			)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
