@@ -87,10 +87,6 @@ func DeployAutoscalerConfiguration(ctx *pulumi.Context, args *AutoscalerConfigur
 	nodeConfigs := map[string]HCloudNodeConfig{}
 	autoscalingGroups := pulumi.Array{}
 	for _, pool := range args.NodePools {
-		if pool.AutoScaler == nil {
-			continue
-		}
-
 		workerNodeConfiguration, err := core.NewNodeConfiguration(&core.NodeConfigurationArgs{
 			ServerNodeType:        meta.WorkerNode,
 			Subnet:                args.Subnet,
@@ -138,6 +134,10 @@ func DeployAutoscalerConfiguration(ctx *pulumi.Context, args *AutoscalerConfigur
 		}
 
 		nodeConfigs[pool.Name] = nodeConfig
+
+		if pool.AutoScaler == nil {
+			continue
+		}
 
 		autoscalingGroups = append(autoscalingGroups, pulumi.Map{
 			"name":         pulumi.String(pool.Name),
