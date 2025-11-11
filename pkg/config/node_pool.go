@@ -38,20 +38,15 @@ type NodePoolConfig struct {
 type NodePoolsConfig struct {
 	NodePools []NodePoolConfig `json:"node_pools" validate:"dive,required"`
 
+	// ForceDeployAutoScalerConfig forces deployment of node pool autoscaler configuration on the cluster,
+	// even if no node pool has autoscaling options set. This is needed when managing cluster autoscaler
+	// outside of this Pulumi script, e.g., with ArgoCD or other GitOps tools.
+	ForceDeployAutoScalerConfig bool `json:"force_deploy_autoscaler_config"`
+
 	// SkipAutoScalerDiscovery skips the FindNodePoolAutoScalerNodes call for all node pools.
 	// This is useful for development environments where auto-scaler nodes may not exist
 	// or when testing without a full cluster setup.
 	// WARNING: This should NEVER be enabled in production as it will prevent
 	// proper management of auto-scaler created nodes.
 	SkipAutoScalerDiscovery bool `json:"skip_auto_scaler_discovery"`
-}
-
-// HasAutoScaling returns true if at least one node pool has AutoScaler configured
-func (n *NodePoolsConfig) HasAutoScaling() bool {
-	for _, pool := range n.NodePools {
-		if pool.AutoScaler != nil {
-			return true
-		}
-	}
-	return false
 }

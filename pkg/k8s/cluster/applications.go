@@ -156,10 +156,20 @@ func NewApplications(ctx *pulumi.Context, name string, args *ApplicationsArgs, o
 }
 
 // deployAutoscaler handles deployment of cluster autoscaler and its configuration.
-// If autoscaling is configured, it deploys either the full Helm chart (if enabled)
-// or just the configuration (if chart is disabled).
+// If autoscaling is configured (or ForceDeployAutoScalerConfig is set), it deploys
+// either the full Helm chart (if enabled) or just the configuration (if chart is disabled).
 func deployAutoscaler(ctx *pulumi.Context, out *Applications, args *ApplicationsArgs, opts []pulumi.ResourceOption) error {
-	if !args.Cfg.NodePools.HasAutoScaling() {
+	// Check if any node pool has autoscaling configured
+	hasAutoScaling := false
+	for _, pool := range args.Cfg.NodePools.NodePools {
+		if pool.AutoScaler != nil {
+			hasAutoScaling = true
+			break
+		}
+	}
+
+	// Skip if no autoscaling is configured and force deploy is not set
+	if !hasAutoScaling && !args.Cfg.NodePools.ForceDeployAutoScalerConfig {
 		return nil
 	}
 
