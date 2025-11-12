@@ -42,13 +42,12 @@ download: ## Downloads the dependencies
 
 tidy: ## Cleans up go.mod and go.sum
 	@go mod tidy
-	@go mod tidy -modfile=golangci-lint.mod
 
 fmt: ## Formats all code with go fmt
 	@go fmt ./...
 
 lint: fmt $(GOLANGCI_LINT) download ## Lints all code with golangci-lint
-	@go tool -modfile=golangci-lint.mod golangci-lint run
+	@go tool golangci-lint run
 
 test: ## Runs all tests
 	@go test $(ARGS) ./...

@@ -40,10 +40,41 @@ type ClusterAutoscalerArgs struct {
 }
 
 type ClusterAutoscaler struct {
-	Chart *helmv4.Chart
+	Chart                       *helmv4.Chart
+	AutoscalerSecret            *corev1.Secret
+	AutoscalerClusterConfigHash pulumi.StringOutput
+	AutoscalerClusterConfig     *corev1.Secret
+	AutoscalingGroupsConfig     pulumi.Array
 }
 
-func NewClusterAutoscaler(ctx *pulumi.Context, args *ClusterAutoscalerArgs, opts ...pulumi.ResourceOption) (*ClusterAutoscaler, error) { //nolint:cyclop,funlen // TODO: refactor
+// AutoscalerConfigurationArgs contains the arguments needed to deploy autoscaler configuration
+type AutoscalerConfigurationArgs struct {
+	Images                      *image.Images
+	MachineConfigurationManager *core.MachineConfigurationManager
+	NodePools                   []config.NodePoolConfig
+	Subnet                      string
+	PodSubnets                  string
+	EnableLonghorn              bool
+	Network                     *network.Network
+	Nameservers                 []string
+	HcloudToken                 string
+	Firewall                    *hcloud.Firewall
+	EnableKubeSpan              bool
+	CNI                         *config.CNIConfig
+}
+
+// AutoscalerConfiguration holds the deployed autoscaler configuration resources
+type AutoscalerConfiguration struct {
+	AutoscalerSecret        *corev1.Secret
+	AutoscalerClusterConfig *corev1.Secret
+	ClusterConfigJSON       pulumi.StringOutput
+	ClusterConfigJSONHash   pulumi.StringOutput
+	AutoscalingGroups       pulumi.Array
+}
+
+// DeployAutoscalerConfiguration deploys the autoscaler configuration (secrets and node configs)
+// This can be used independently of whether the Helm chart is deployed or not
+func DeployAutoscalerConfiguration(ctx *pulumi.Context, args *AutoscalerConfigurationArgs, opts ...pulumi.ResourceOption) (*AutoscalerConfiguration, error) { //nolint:cyclop,funlen
 	imgARM, err := args.Images.GetImageByArch(image.ArchARM)
 	if err != nil {
 		return nil, err
@@ -56,10 +87,6 @@ func NewClusterAutoscaler(ctx *pulumi.Context, args *ClusterAutoscalerArgs, opts
 	nodeConfigs := map[string]HCloudNodeConfig{}
 	autoscalingGroups := pulumi.Array{}
 	for _, pool := range args.NodePools {
-		if pool.AutoScaler == nil {
-			continue
-		}
-
 		workerNodeConfiguration, err := core.NewNodeConfiguration(&core.NodeConfigurationArgs{
 			ServerNodeType:        meta.WorkerNode,
 			Subnet:                args.Subnet,
@@ -98,7 +125,7 @@ func NewClusterAutoscaler(ctx *pulumi.Context, args *ClusterAutoscalerArgs, opts
 		for key, value := range pool.Annotations {
 			nodeConfig.Labels[key] = value
 		}
-		for _, taint := range pool.Taints { // TODO: does this make sense?
+		for _, taint := range pool.Taints {
 			nodeConfig.Taints = append(nodeConfig.Taints, Taint{
 				Key:    taint.Key,
 				Value:  taint.Value,
@@ -107,6 +134,10 @@ func NewClusterAutoscaler(ctx *pulumi.Context, args *ClusterAutoscalerArgs, opts
 		}
 
 		nodeConfigs[pool.Name] = nodeConfig
+
+		if pool.AutoScaler == nil {
+			continue
+		}
 
 		autoscalingGroups = append(autoscalingGroups, pulumi.Map{
 			"name":         pulumi.String(pool.Name),
@@ -155,6 +186,35 @@ func NewClusterAutoscaler(ctx *pulumi.Context, args *ClusterAutoscalerArgs, opts
 		return nil, err
 	}
 
+	return &AutoscalerConfiguration{
+		AutoscalerSecret:        autoscalerSecret,
+		AutoscalerClusterConfig: autoscalerClusterConfig,
+		ClusterConfigJSON:       clusterConfigJSON,
+		ClusterConfigJSONHash:   clusterConfigJSONHash,
+		AutoscalingGroups:       autoscalingGroups,
+	}, nil
+}
+
+func NewClusterAutoscaler(ctx *pulumi.Context, args *ClusterAutoscalerArgs, opts ...pulumi.ResourceOption) (*ClusterAutoscaler, error) {
+	// Deploy autoscaler configuration (secrets and node configs)
+	autoscalerConfig, err := DeployAutoscalerConfiguration(ctx, &AutoscalerConfigurationArgs{
+		Images:                      args.Images,
+		MachineConfigurationManager: args.MachineConfigurationManager,
+		NodePools:                   args.NodePools,
+		Subnet:                      args.Subnet,
+		PodSubnets:                  args.PodSubnets,
+		EnableLonghorn:              args.EnableLonghorn,
+		Network:                     args.Network,
+		Nameservers:                 args.Nameservers,
+		HcloudToken:                 args.HcloudToken,
+		Firewall:                    args.Firewall,
+		EnableKubeSpan:              args.EnableKubeSpan,
+		CNI:                         args.CNI,
+	}, opts...)
+	if err != nil {
+		return nil, err
+	}
+
 	preDefineValues := pulumi.Map{
 		"cloudProvider": pulumi.String("hetzner"),
 		"envFromSecret": pulumi.String("hcloud-autoscaler"),
@@ -168,13 +228,13 @@ func NewClusterAutoscaler(ctx *pulumi.Context, args *ClusterAutoscalerArgs, opts
 			// do not scale nodes down if they use local storage
 			"skip-nodes-with-local-storage": pulumi.Bool(true),
 		},
-		"autoscalingGroups": autoscalingGroups,
+		"autoscalingGroups": autoscalerConfig.AutoscalingGroups,
 		"autoDiscovery": pulumi.Map{
 			"enabled": pulumi.Bool(false),
 		},
 		"extraEnv": pulumi.StringMap{
 			"HCLOUD_CLUSTER_CONFIG_FILE": pulumi.String("/etc/kubernetes/hcloud_cluster_config/HCLOUD_CLUSTER_CONFIG"),
-			"HCLOUD_CLUSTER_CONFIG_HASH": clusterConfigJSONHash, // Hash of the cluster config to detect changes
+			"HCLOUD_CLUSTER_CONFIG_HASH": autoscalerConfig.ClusterConfigJSONHash, // Hash of the cluster config to detect changes
 		},
 		"extraVolumes": pulumi.Array{
 			pulumi.Map{
@@ -212,10 +272,10 @@ func NewClusterAutoscaler(ctx *pulumi.Context, args *ClusterAutoscalerArgs, opts
 		Version: pulumi.StringPtrFromPtr(args.Version),
 		Values:  values,
 	}, append(opts,
-		pulumi.Parent(autoscalerSecret),
+		pulumi.Parent(autoscalerConfig.AutoscalerSecret),
 		pulumi.DependsOn([]pulumi.Resource{
-			autoscalerSecret,
-			autoscalerClusterConfig,
+			autoscalerConfig.AutoscalerSecret,
+			autoscalerConfig.AutoscalerClusterConfig,
 		}),
 	)...)
 	if err != nil {
@@ -223,6 +283,10 @@ func NewClusterAutoscaler(ctx *pulumi.Context, args *ClusterAutoscalerArgs, opts
 	}
 
 	return &ClusterAutoscaler{
-		Chart: clusterAutoscaler,
+		Chart:                       clusterAutoscaler,
+		AutoscalerSecret:            autoscalerConfig.AutoscalerSecret,
+		AutoscalerClusterConfigHash: autoscalerConfig.ClusterConfigJSONHash,
+		AutoscalerClusterConfig:     autoscalerConfig.AutoscalerClusterConfig,
+		AutoscalingGroupsConfig:     autoscalerConfig.AutoscalingGroups,
 	}, nil
 }

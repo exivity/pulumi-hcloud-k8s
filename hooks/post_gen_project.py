@@ -44,23 +44,12 @@ def main():
     subprocess.run(["go", "mod", "init", module_path], check=True)
     subprocess.run(["go", "mod", "tidy"], check=True)
 
-    # Initialize golangci-lint with a separate mod file
-    subprocess.run(
-        [
-            "go",
-            "mod",
-            "init",
-            "-modfile=golangci-lint.mod",
-            "golangci-lint",
-        ],
-        check=True,
-    )
+    # Initialize golangci-lint
     subprocess.run(
         [
             "go",
             "get",
             "-tool",
-            "-modfile=golangci-lint.mod",
             "github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest",
         ],
         check=True,
