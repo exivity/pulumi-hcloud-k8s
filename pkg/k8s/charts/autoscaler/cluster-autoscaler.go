@@ -29,6 +29,7 @@ type ClusterAutoscalerArgs struct {
 	Subnet                      string
 	PodSubnets                  string
 	EnableLonghorn              bool
+	LocalStorageFolders         []string
 	Network                     *network.Network
 	Nameservers                 []string
 	HcloudToken                 string
@@ -55,6 +56,7 @@ type AutoscalerConfigurationArgs struct {
 	Subnet                      string
 	PodSubnets                  string
 	EnableLonghorn              bool
+	LocalStorageFolders         []string
 	Network                     *network.Network
 	Nameservers                 []string
 	HcloudToken                 string
@@ -95,6 +97,7 @@ func DeployAutoscalerConfiguration(ctx *pulumi.Context, args *AutoscalerConfigur
 			NodeTaints:            pool.Taints,
 			NodeAnnotations:       pool.Annotations,
 			EnableLonghornSupport: args.EnableLonghorn,
+			LocalStorageFolders:   args.LocalStorageFolders,
 			EnableKubeSpan:        args.EnableKubeSpan,
 			Nameservers:           args.Nameservers,
 			CNI:                   args.CNI,
@@ -204,6 +207,7 @@ func NewClusterAutoscaler(ctx *pulumi.Context, args *ClusterAutoscalerArgs, opts
 		Subnet:                      args.Subnet,
 		PodSubnets:                  args.PodSubnets,
 		EnableLonghorn:              args.EnableLonghorn,
+		LocalStorageFolders:         args.LocalStorageFolders,
 		Network:                     args.Network,
 		Nameservers:                 args.Nameservers,
 		HcloudToken:                 args.HcloudToken,
