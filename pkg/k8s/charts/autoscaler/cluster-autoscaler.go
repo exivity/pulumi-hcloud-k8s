@@ -97,6 +97,7 @@ func DeployAutoscalerConfiguration(ctx *pulumi.Context, args *AutoscalerConfigur
 			NodeTaints:            pool.Taints,
 			NodeAnnotations:       pool.Annotations,
 			EnableLonghornSupport: args.EnableLonghorn,
+			LocalStorageFolders:   args.LocalStorageFolders,
 			EnableKubeSpan:        args.EnableKubeSpan,
 			Nameservers:           args.Nameservers,
 			CNI:                   args.CNI,
