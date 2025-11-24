@@ -471,8 +471,8 @@ github.com/pulumi/pulumi-command/sdk v1.1.3 h1:2FdcqVenuHcGJfcVnUg6G22IeoQ/lY5UX
 github.com/pulumi/pulumi-command/sdk v1.1.3/go.mod h1:3ochnip+NSR3+lQh8//Cni6hR9ckswuc1c6URsmX4RM=
 github.com/pulumi/pulumi-hcloud/sdk v1.25.0 h1:YgeQ+bgF4Do4E/sdIgWYrFc/mysGwC+JsyIHVmGrM2o=
 github.com/pulumi/pulumi-hcloud/sdk v1.25.0/go.mod h1:9tlT0uwf63dud3ZWPzxEsKEyXIijZQYWPwc8wuuASiU=
-github.com/pulumi/pulumi-kubernetes/sdk/v4 v4.23.0 h1:TZ/XhzF+3/jRiGsjlJHCWhXcU5E5tbXU8O0DKnPmFic=
-github.com/pulumi/pulumi-kubernetes/sdk/v4 v4.23.0/go.mod h1:jOdpeNeRvY4iN+W8aDP5+HyqrM7hXsxa9paPsmjQFfY=
+github.com/pulumi/pulumi-kubernetes/sdk/v4 v4.24.0 h1:dlDJvsugKow8tCaD0yJngc7PXdv8WT2YwPEUmj48tF4=
+github.com/pulumi/pulumi-kubernetes/sdk/v4 v4.24.0/go.mod h1:8HDO923pZUokTAEMgS7XepoUIDCazm2WAwX6s4HUDtc=
 github.com/pulumi/pulumi/sdk/v3 v3.206.0 h1:DvEn8GiYwSCraOv+RkGHYFOvA2m7Y3peWAdgmuYknUY=
 github.com/pulumi/pulumi/sdk/v3 v3.206.0/go.mod h1:UsBMdaUQ+WoKoQtF2PYbQIbo8ZRJuAo1axkyit9IQVE=
 github.com/pulumiverse/pulumi-talos/sdk v0.6.1 h1:X11e1wKTL7iH2G++N5XktwEPWkHOLzE6dG28PCkBEvc=
@@ -511,8 +511,8 @@ github.com/sashamelentyev/usestdlibvars v1.29.0 h1:8J0MoRrw4/NAXtjQqTHrbW9NN+3iM
 github.com/sashamelentyev/usestdlibvars v1.29.0/go.mod h1:8PpnjHMk5VdeWlVb4wCdrB8PNbLqZ3wBZTZWkrpZZL8=
 github.com/securego/gosec/v2 v2.22.10 h1:ntbBqdWXnu46DUOXn+R2SvPo3PiJCDugTCgTW2g4tQg=
 github.com/securego/gosec/v2 v2.22.10/go.mod h1:9UNjK3tLpv/w2b0+7r82byV43wCJDNtEDQMeS+H/g2w=
-github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 h1:n661drycOFuPLCN3Uc8sB6B/s6Z4t2xvBgU1htSHuq8=
-github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3/go.mod h1:A0bzQcvG0E7Rwjx0REVgAGH58e96+X0MeOfepqsbeW4=
+github.com/sergi/go-diff v1.4.0 h1:n/SP9D5ad1fORl+llWyN+D6qoUETXNZARKjyY2/KVCw=
+github.com/sergi/go-diff v1.4.0/go.mod h1:A0bzQcvG0E7Rwjx0REVgAGH58e96+X0MeOfepqsbeW4=
 github.com/shurcooL/go v0.0.0-20180423040247-9e1955d9fb6e/go.mod h1:TDJrrUr11Vxrven61rcy3hJMUqaf/CLWYhHNPmT14Lk=
 github.com/shurcooL/go-goon v0.0.0-20170922171312-37c2f522c041/go.mod h1:N5mDOmsrJOB+vfqUK+7DmDyjhSLIIBnXo9lvZJj3MWQ=
 github.com/sirupsen/logrus v1.7.0/go.mod h1:yWOB1SBYBC5VeMP7gHvWumXLIWorT60ONWic61uBYv0=

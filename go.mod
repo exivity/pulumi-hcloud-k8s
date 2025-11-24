@@ -11,7 +11,7 @@ require (
 	github.com/go-playground/validator/v10 v10.28.0
 	github.com/pulumi/pulumi-command/sdk v1.1.3
 	github.com/pulumi/pulumi-hcloud/sdk v1.25.0
-	github.com/pulumi/pulumi-kubernetes/sdk/v4 v4.23.0
+	github.com/pulumi/pulumi-kubernetes/sdk/v4 v4.24.0
 	github.com/pulumi/pulumi/sdk/v3 v3.206.0
 	github.com/pulumiverse/pulumi-talos/sdk v0.6.1
 	github.com/stretchr/testify v1.11.1
@@ -220,7 +220,7 @@ require (
 	github.com/sashamelentyev/interfacebloat v1.1.0 // indirect
 	github.com/sashamelentyev/usestdlibvars v1.29.0 // indirect
 	github.com/securego/gosec/v2 v2.22.10 // indirect
-	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
+	github.com/sergi/go-diff v1.4.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/sivchari/containedctx v1.0.3 // indirect
 	github.com/skeema/knownhosts v1.3.1 // indirect
