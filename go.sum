@@ -473,8 +473,8 @@ github.com/pulumi/pulumi-hcloud/sdk v1.28.0 h1:+GoLFLHelhOb482GEyXmCRFqQBL87Gq8z
 github.com/pulumi/pulumi-hcloud/sdk v1.28.0/go.mod h1:9tlT0uwf63dud3ZWPzxEsKEyXIijZQYWPwc8wuuASiU=
 github.com/pulumi/pulumi-kubernetes/sdk/v4 v4.24.0 h1:dlDJvsugKow8tCaD0yJngc7PXdv8WT2YwPEUmj48tF4=
 github.com/pulumi/pulumi-kubernetes/sdk/v4 v4.24.0/go.mod h1:8HDO923pZUokTAEMgS7XepoUIDCazm2WAwX6s4HUDtc=
-github.com/pulumi/pulumi/sdk/v3 v3.206.0 h1:DvEn8GiYwSCraOv+RkGHYFOvA2m7Y3peWAdgmuYknUY=
-github.com/pulumi/pulumi/sdk/v3 v3.206.0/go.mod h1:UsBMdaUQ+WoKoQtF2PYbQIbo8ZRJuAo1axkyit9IQVE=
+github.com/pulumi/pulumi/sdk/v3 v3.208.0 h1:AUBoh7zw67NZVo1IkapOog1WBMz46DXco/7YsKBNK1s=
+github.com/pulumi/pulumi/sdk/v3 v3.208.0/go.mod h1:UsBMdaUQ+WoKoQtF2PYbQIbo8ZRJuAo1axkyit9IQVE=
 github.com/pulumiverse/pulumi-talos/sdk v0.6.1 h1:X11e1wKTL7iH2G++N5XktwEPWkHOLzE6dG28PCkBEvc=
 github.com/pulumiverse/pulumi-talos/sdk v0.6.1/go.mod h1:Rcf9ULD6zXDnfYiwnM1WwFprqWdT/AxDCsX2896AOXs=
 github.com/quasilyte/go-ruleguard v0.4.5 h1:AGY0tiOT5hJX9BTdx/xBdoCubQUAE2grkqY2lSwvZcA=
