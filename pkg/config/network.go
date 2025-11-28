@@ -14,7 +14,7 @@ type NetworkConfig struct {
 	// DNS domain for the cluster, defaults to "cluster.local" if not provided
 	DNSDomain *string `json:"dns_domain"`
 
-	// Service subnet for the cluster
+	// Service subnet for the cluster, defaults to "10.96.0.0/12" if not provided
 	ServiceSubnet *string `json:"service_subnet"`
 
 	// Custom nameservers for the cluster nodes
