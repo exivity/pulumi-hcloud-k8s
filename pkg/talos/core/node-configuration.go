@@ -3,7 +3,6 @@ package core
 import (
 	"encoding/base64"
 	"fmt"
-	"os"
 
 	core_config "github.com/exivity/pulumi-hcloud-k8s/pkg/config"
 	"github.com/exivity/pulumi-hcloud-k8s/pkg/hetzner/meta"
@@ -174,10 +173,6 @@ func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) {
 	}
 
 	configPatch.Machine.Registries = toRegistriesConfig(args.Registries)
-
-	// write configPatch.YAML() to file
-	cfg, _ := configPatch.YAML()
-	os.WriteFile("talos-node-config.yaml", []byte(cfg), 0644)
 
 	return configPatch.YAML()
 }
