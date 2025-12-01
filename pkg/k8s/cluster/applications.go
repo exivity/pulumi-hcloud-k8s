@@ -181,6 +181,7 @@ func deployAutoscaler(ctx *pulumi.Context, out *Applications, args *Applications
 		Subnet:                      args.Cfg.Network.Subnet,
 		PodSubnets:                  args.Cfg.Network.PodSubnets,
 		DNSDomain:                   args.Cfg.Network.DNSDomain,
+		ServiceSubnet:               args.Cfg.Network.ServiceSubnet,
 		EnableLonghorn:              args.Cfg.Talos.EnableLonghorn,
 		LocalStorageFolders:         args.Cfg.Talos.LocalStorageFolders,
 		Network:                     args.Network,
