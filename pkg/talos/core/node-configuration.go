@@ -174,6 +174,8 @@ func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) {
 
 	configPatch.Machine.Registries = toRegistriesConfig(args.Registries)
 
+	fmt.Sprint(configPatch.YAML())
+
 	return configPatch.YAML()
 }
 
