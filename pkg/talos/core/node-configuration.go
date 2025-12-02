@@ -57,7 +57,7 @@ type NodeConfigurationArgs struct {
 	CNI *core_config.CNIConfig
 }
 
-func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) {
+func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) { //nolint:funlen // TODO: refactor
 	var adminKubeconfig *config.AdminKubeconfigConfig
 	if args.CertLifetime != nil {
 		adminKubeconfig = &config.AdminKubeconfigConfig{
