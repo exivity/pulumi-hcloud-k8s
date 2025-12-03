@@ -251,6 +251,11 @@ func toRegistriesConfig(args *core_config.RegistriesConfig) *config.RegistriesCo
 		}
 	}
 
+	// If both maps are empty, return nil to avoid serializing empty registries configuration
+	if len(out.Mirrors) == 0 && len(out.Config) == 0 {
+		return nil
+	}
+
 	return out
 }
 
