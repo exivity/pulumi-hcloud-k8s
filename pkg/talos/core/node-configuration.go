@@ -200,13 +200,13 @@ func toTalosTaints(taints []core_config.Taint) string {
 }
 
 func toRegistriesConfig(args *core_config.RegistriesConfig) *config.RegistriesConfig {
+	if args == nil {
+		return nil
+	}
+
 	out := &config.RegistriesConfig{
 		Mirrors: map[string]config.RegistryMirrorConfig{},
 		Config:  map[string]config.RegistryConfig{},
-	}
-
-	if args == nil {
-		return out
 	}
 
 	for key, mirror := range args.Mirrors {
