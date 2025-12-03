@@ -12,10 +12,14 @@ import (
 type NodeConfigurationArgs struct {
 	// ServerNodeType is the type of the server node
 	ServerNodeType meta.ServerNodeType
+	// DNSDomain is the DNS domain for the cluster, defaults to "cluster.local" if not provided
+	DNSDomain *string
 	// Subnet is the subnet for the cluster
 	Subnet string
 	// PodSubnets is the pod subnets for the cluster
 	PodSubnets string
+	// ServiceSubnet is the service subnets for the cluster
+	ServiceSubnet *string
 	// NodeLabels is the labels for the node
 	NodeLabels map[string]string
 	// NodeAnnotations is the annotations for the node
@@ -53,7 +57,7 @@ type NodeConfigurationArgs struct {
 	CNI *core_config.CNIConfig
 }
 
-func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) {
+func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) { //nolint:funlen // TODO: refactor
 	var adminKubeconfig *config.AdminKubeconfigConfig
 	if args.CertLifetime != nil {
 		adminKubeconfig = &config.AdminKubeconfigConfig{
@@ -69,16 +73,26 @@ func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) {
 		}
 	}
 
+	clusterNetwork := &config.ClusterNetworkConfig{
+		PodSubnets: []string{args.PodSubnets},
+		CNI:        toCNIConfig(args.CNI),
+	}
+
+	if args.DNSDomain != nil {
+		clusterNetwork.DNSDomain = *args.DNSDomain
+	}
+
+	if args.ServiceSubnet != nil {
+		clusterNetwork.ServiceSubnets = []string{*args.ServiceSubnet}
+	}
+
 	configPatch := config.TalosConfig{
 		Cluster: &config.ClusterConfig{
 			ExternalCloudProvider: &config.ExternalCloudProviderConfig{
 				Enabled:   true,
 				Manifests: ccmExtraManifests,
 			},
-			Network: &config.ClusterNetworkConfig{
-				PodSubnets: []string{args.PodSubnets},
-				CNI:        toCNIConfig(args.CNI),
-			},
+			Network: clusterNetwork,
 			Discovery: &config.ClusterDiscoveryConfig{
 				Enabled: true, // Enable discovery, required for network encryption via kube span
 			},
