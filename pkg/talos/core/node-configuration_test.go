@@ -113,10 +113,7 @@ func Test_toRegistriesConfig(t *testing.T) {
 		{
 			name: "nil input",
 			args: args{args: nil},
-			want: &config.RegistriesConfig{
-				Mirrors: map[string]config.RegistryMirrorConfig{},
-				Config:  map[string]config.RegistryConfig{},
-			},
+			want: nil,
 		},
 		{
 			name: "empty input",
@@ -124,10 +121,7 @@ func Test_toRegistriesConfig(t *testing.T) {
 				Mirrors: map[string]core_config.RegistryMirrorConfig{},
 				Config:  map[string]core_config.RegistryConfig{},
 			}},
-			want: &config.RegistriesConfig{
-				Mirrors: map[string]config.RegistryMirrorConfig{},
-				Config:  map[string]config.RegistryConfig{},
-			},
+			want: nil,
 		},
 		{
 			name: "single mirror",

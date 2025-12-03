@@ -32,9 +32,11 @@ type ClusterAutoscalerArgs struct {
 	ServiceSubnet               *string
 	EnableLonghorn              bool
 	LocalStorageFolders         []string
-	Network                     *network.Network
-	Nameservers                 []string
-	HcloudToken                 string
+	// Registries is the registries configuration for the Talos image
+	Registries  *config.RegistriesConfig
+	Network     *network.Network
+	Nameservers []string
+	HcloudToken string
 	// Firewall is the firewall to use for the nodes
 	Firewall       *hcloud.Firewall
 	EnableKubeSpan bool
@@ -61,6 +63,7 @@ type AutoscalerConfigurationArgs struct {
 	ServiceSubnet               *string
 	EnableLonghorn              bool
 	LocalStorageFolders         []string
+	Registries                  *config.RegistriesConfig
 	Network                     *network.Network
 	Nameservers                 []string
 	HcloudToken                 string
@@ -104,6 +107,7 @@ func DeployAutoscalerConfiguration(ctx *pulumi.Context, args *AutoscalerConfigur
 			NodeAnnotations:       pool.Annotations,
 			EnableLonghornSupport: args.EnableLonghorn,
 			LocalStorageFolders:   args.LocalStorageFolders,
+			Registries:            args.Registries,
 			EnableKubeSpan:        args.EnableKubeSpan,
 			Nameservers:           args.Nameservers,
 			CNI:                   args.CNI,
@@ -216,6 +220,7 @@ func NewClusterAutoscaler(ctx *pulumi.Context, args *ClusterAutoscalerArgs, opts
 		ServiceSubnet:               args.ServiceSubnet,
 		EnableLonghorn:              args.EnableLonghorn,
 		LocalStorageFolders:         args.LocalStorageFolders,
+		Registries:                  args.Registries,
 		Network:                     args.Network,
 		Nameservers:                 args.Nameservers,
 		HcloudToken:                 args.HcloudToken,
