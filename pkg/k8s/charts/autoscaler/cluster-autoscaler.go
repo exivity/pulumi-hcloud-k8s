@@ -28,11 +28,15 @@ type ClusterAutoscalerArgs struct {
 	NodePools                   []config.NodePoolConfig
 	Subnet                      string
 	PodSubnets                  string
+	DNSDomain                   *string
+	ServiceSubnet               *string
 	EnableLonghorn              bool
 	LocalStorageFolders         []string
-	Network                     *network.Network
-	Nameservers                 []string
-	HcloudToken                 string
+	// Registries is the registries configuration for the Talos image
+	Registries  *config.RegistriesConfig
+	Network     *network.Network
+	Nameservers []string
+	HcloudToken string
 	// Firewall is the firewall to use for the nodes
 	Firewall       *hcloud.Firewall
 	EnableKubeSpan bool
@@ -55,8 +59,11 @@ type AutoscalerConfigurationArgs struct {
 	NodePools                   []config.NodePoolConfig
 	Subnet                      string
 	PodSubnets                  string
+	DNSDomain                   *string
+	ServiceSubnet               *string
 	EnableLonghorn              bool
 	LocalStorageFolders         []string
+	Registries                  *config.RegistriesConfig
 	Network                     *network.Network
 	Nameservers                 []string
 	HcloudToken                 string
@@ -93,11 +100,14 @@ func DeployAutoscalerConfiguration(ctx *pulumi.Context, args *AutoscalerConfigur
 			ServerNodeType:        meta.WorkerNode,
 			Subnet:                args.Subnet,
 			PodSubnets:            args.PodSubnets,
+			DNSDomain:             args.DNSDomain,
+			ServiceSubnet:         args.ServiceSubnet,
 			NodeLabels:            pool.Labels,
 			NodeTaints:            pool.Taints,
 			NodeAnnotations:       pool.Annotations,
 			EnableLonghornSupport: args.EnableLonghorn,
 			LocalStorageFolders:   args.LocalStorageFolders,
+			Registries:            args.Registries,
 			EnableKubeSpan:        args.EnableKubeSpan,
 			Nameservers:           args.Nameservers,
 			CNI:                   args.CNI,
@@ -206,8 +216,11 @@ func NewClusterAutoscaler(ctx *pulumi.Context, args *ClusterAutoscalerArgs, opts
 		NodePools:                   args.NodePools,
 		Subnet:                      args.Subnet,
 		PodSubnets:                  args.PodSubnets,
+		DNSDomain:                   args.DNSDomain,
+		ServiceSubnet:               args.ServiceSubnet,
 		EnableLonghorn:              args.EnableLonghorn,
 		LocalStorageFolders:         args.LocalStorageFolders,
+		Registries:                  args.Registries,
 		Network:                     args.Network,
 		Nameservers:                 args.Nameservers,
 		HcloudToken:                 args.HcloudToken,

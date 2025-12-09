@@ -287,10 +287,12 @@ func DeployControlPlanePools(ctx *pulumi.Context, cfg *config.PulumiConfig, imag
 	cpPools := []*NodePool{}
 
 	for _, pool := range cfg.ControlPlane.NodePools {
-		cpNodeConfigurationBootstrap, err := core.NewNodeConfiguration(&core.NodeConfigurationArgs{
+		cpNodeConfigurationBootstrap, err := core.NewNodeConfiguration(&core.NodeConfigurationArgs{ //nolint:dupl // TODO: refactor
 			ServerNodeType:                 meta.ControlPlaneNode,
 			Subnet:                         cfg.Network.Subnet,
 			PodSubnets:                     cfg.Network.PodSubnets,
+			DNSDomain:                      cfg.Network.DNSDomain,
+			ServiceSubnet:                  cfg.Network.ServiceSubnet,
 			EnableLonghornSupport:          cfg.Talos.EnableLonghorn,
 			LocalStorageFolders:            cfg.Talos.LocalStorageFolders,
 			Nameservers:                    cfg.Network.Nameservers,
@@ -312,10 +314,12 @@ func DeployControlPlanePools(ctx *pulumi.Context, cfg *config.PulumiConfig, imag
 			return nil, err
 		}
 
-		cpNodeConfiguration, err := core.NewNodeConfiguration(&core.NodeConfigurationArgs{
+		cpNodeConfiguration, err := core.NewNodeConfiguration(&core.NodeConfigurationArgs{ //nolint:dupl // TODO: refactor
 			ServerNodeType:                 meta.ControlPlaneNode,
 			Subnet:                         cfg.Network.Subnet,
 			PodSubnets:                     cfg.Network.PodSubnets,
+			DNSDomain:                      cfg.Network.DNSDomain,
+			ServiceSubnet:                  cfg.Network.ServiceSubnet,
 			EnableLonghornSupport:          cfg.Talos.EnableLonghorn,
 			LocalStorageFolders:            cfg.Talos.LocalStorageFolders,
 			Nameservers:                    cfg.Network.Nameservers,
@@ -388,6 +392,8 @@ func DeployWorkerPools(ctx *pulumi.Context, cfg *config.PulumiConfig, images *im
 			ServerNodeType:        meta.WorkerNode,
 			Subnet:                cfg.Network.Subnet,
 			PodSubnets:            cfg.Network.PodSubnets,
+			DNSDomain:             cfg.Network.DNSDomain,
+			ServiceSubnet:         cfg.Network.ServiceSubnet,
 			NodeLabels:            pool.Labels,
 			NodeTaints:            pool.Taints,
 			NodeAnnotations:       pool.Annotations,
@@ -406,6 +412,8 @@ func DeployWorkerPools(ctx *pulumi.Context, cfg *config.PulumiConfig, images *im
 			ServerNodeType:        meta.WorkerNode,
 			Subnet:                cfg.Network.Subnet,
 			PodSubnets:            cfg.Network.PodSubnets,
+			DNSDomain:             cfg.Network.DNSDomain,
+			ServiceSubnet:         cfg.Network.ServiceSubnet,
 			NodeLabels:            pool.Labels,
 			NodeTaints:            pool.Taints,
 			NodeAnnotations:       pool.Annotations,
