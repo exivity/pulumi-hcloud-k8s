@@ -8,7 +8,12 @@ import (
 	"github.com/exivity/pulumi-hcloud-k8s/pkg/hetzner/meta"
 	"github.com/exivity/pulumi-hcloud-k8s/pkg/talos/config"
 	"github.com/stretchr/testify/assert"
+	"gopkg.in/yaml.v3"
 )
+
+func stringPtr(s string) *string {
+	return &s
+}
 
 func Test_toTalosTaints(t *testing.T) {
 	type args struct {
@@ -511,10 +516,9 @@ func Test_newMainTalosConfig(t *testing.T) {
 	tests := []struct {
 		name string // description of this test case
 		// Named input parameters for target function.
-		args    *NodeConfigurationArgs
-		want    *config.TalosConfig
-		wantErr bool
-		verify  func(t *testing.T, cfg *config.TalosConfig)
+		args   *NodeConfigurationArgs
+		want   *config.TalosConfig
+		verify func(t *testing.T, cfg *config.TalosConfig)
 	}{
 		{
 			name: "basic controlplane",
@@ -652,16 +656,7 @@ func Test_newMainTalosConfig(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, gotErr := newMainTalosConfig(tt.args)
-			if gotErr != nil {
-				if !tt.wantErr {
-					t.Errorf("newMainTalosConfig() failed: %v", gotErr)
-				}
-				return
-			}
-			if tt.wantErr {
-				t.Fatal("newMainTalosConfig() succeeded unexpectedly")
-			}
+			got := newMainTalosConfig(tt.args)
 			if tt.verify != nil {
 				tt.verify(t, got)
 			}
@@ -669,6 +664,50 @@ func Test_newMainTalosConfig(t *testing.T) {
 	}
 }
 
-func stringPtr(s string) *string {
-	return &s
+func TestNewNodeConfiguration(t *testing.T) {
+	tests := []struct {
+		name    string
+		args    *NodeConfigurationArgs
+		wantLen int
+		wantErr bool
+	}{
+		{
+			name: "returns all config files",
+			args: &NodeConfigurationArgs{
+				ServerNodeType: meta.ControlPlaneNode,
+				Subnet:         "10.0.0.0/24",
+				PodSubnets:     "10.244.0.0/16",
+			},
+			wantLen: 3,
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := NewNodeConfiguration(tt.args)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("NewNodeConfiguration() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !tt.wantErr {
+				assert.Len(t, got, tt.wantLen)
+
+				// Verify TalosConfig
+				var talosConfig config.TalosConfig
+				err = yaml.Unmarshal([]byte(got[0]), &talosConfig)
+				assert.NoError(t, err, "failed to unmarshal TalosConfig")
+				assert.Equal(t, "controlplane", talosConfig.Machine.Type)
+
+				// Verify VolumeConfig
+				var volumeConfig config.VolumeConfig
+				err = yaml.Unmarshal([]byte(got[1]), &volumeConfig)
+				assert.NoError(t, err, "failed to unmarshal VolumeConfig")
+
+				// Verify UserVolumeConfig
+				var userVolumeConfig config.UserVolumeConfig
+				err = yaml.Unmarshal([]byte(got[2]), &userVolumeConfig)
+				assert.NoError(t, err, "failed to unmarshal UserVolumeConfig")
+			}
+		})
+	}
 }
