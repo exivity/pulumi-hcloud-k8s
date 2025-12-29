@@ -46,7 +46,7 @@ type EncryptionSpec struct {
 
 // EncryptionKey represents configuration for disk encryption key.
 type EncryptionKey struct {
-	Slot        int                  `yaml:"slot,omitempty" validate:"gte=0"`
+	Slot        int                  `yaml:"slot" validate:"gte=0"`
 	Static      *EncryptionKeyStatic `yaml:"static,omitempty" validate:"omitempty"`
 	NodeID      *EncryptionKeyNodeID `yaml:"nodeID,omitempty" validate:"omitempty"`
 	KMS         *EncryptionKeyKMS    `yaml:"kms,omitempty" validate:"omitempty"`
