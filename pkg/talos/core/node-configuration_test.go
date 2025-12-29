@@ -7,7 +7,6 @@ import (
 	core_config "github.com/exivity/pulumi-hcloud-k8s/pkg/config"
 	"github.com/exivity/pulumi-hcloud-k8s/pkg/hetzner/meta"
 	"github.com/exivity/pulumi-hcloud-k8s/pkg/talos/config/core"
-	"github.com/exivity/pulumi-hcloud-k8s/pkg/talos/config/uservolume"
 	"github.com/exivity/pulumi-hcloud-k8s/pkg/talos/config/volume"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v3"
@@ -672,6 +671,7 @@ func TestNewNodeConfiguration(t *testing.T) {
 		args    *NodeConfigurationArgs
 		wantLen int
 		wantErr bool
+		verify  func(t *testing.T, configs []string)
 	}{
 		{
 			name: "returns all config files",
@@ -680,8 +680,51 @@ func TestNewNodeConfiguration(t *testing.T) {
 				Subnet:         "10.0.0.0/24",
 				PodSubnets:     "10.244.0.0/16",
 			},
+			wantLen: 1,
+			wantErr: false,
+			verify: func(t *testing.T, configs []string) {
+				var talosConfig core.TalosConfig
+				err := yaml.Unmarshal([]byte(configs[0]), &talosConfig)
+				assert.NoError(t, err, "failed to unmarshal TalosConfig")
+				assert.Equal(t, "controlplane", talosConfig.Machine.Type)
+			},
+		},
+		{
+			name: "with disk encryption",
+			args: &NodeConfigurationArgs{
+				ServerNodeType: meta.ControlPlaneNode,
+				Subnet:         "10.0.0.0/24",
+				PodSubnets:     "10.244.0.0/16",
+				DiskEncryption: &core_config.DiskEncryptionConfig{
+					EncryptState:     true,
+					EncryptEphemeral: true,
+					Keys: []core_config.EncryptionKeyConfig{
+						{
+							Slot:   0,
+							NodeID: &core_config.EncryptionKeyNodeID{},
+						},
+					},
+				},
+			},
 			wantLen: 3,
 			wantErr: false,
+			verify: func(t *testing.T, configs []string) {
+				// Verify STATE volume config
+				var stateConfig volume.VolumeConfig
+				err := yaml.Unmarshal([]byte(configs[1]), &stateConfig)
+				assert.NoError(t, err)
+				assert.Equal(t, "STATE", stateConfig.Name)
+				assert.Equal(t, "luks2", stateConfig.Encryption.Provider)
+				assert.Len(t, stateConfig.Encryption.Keys, 1)
+				assert.NotNil(t, stateConfig.Encryption.Keys[0].NodeID)
+
+				// Verify EPHEMERAL volume config
+				var ephemeralConfig volume.VolumeConfig
+				err = yaml.Unmarshal([]byte(configs[2]), &ephemeralConfig)
+				assert.NoError(t, err)
+				assert.Equal(t, "EPHEMERAL", ephemeralConfig.Name)
+				assert.Equal(t, "luks2", ephemeralConfig.Encryption.Provider)
+			},
 		},
 	}
 	for _, tt := range tests {
@@ -693,22 +736,9 @@ func TestNewNodeConfiguration(t *testing.T) {
 			}
 			if !tt.wantErr {
 				assert.Len(t, got, tt.wantLen)
-
-				// Verify TalosConfig
-				var talosConfig core.TalosConfig
-				err = yaml.Unmarshal([]byte(got[0]), &talosConfig)
-				assert.NoError(t, err, "failed to unmarshal TalosConfig")
-				assert.Equal(t, "controlplane", talosConfig.Machine.Type)
-
-				// Verify VolumeConfig
-				var volumeConfig volume.VolumeConfig
-				err = yaml.Unmarshal([]byte(got[1]), &volumeConfig)
-				assert.NoError(t, err, "failed to unmarshal VolumeConfig")
-
-				// Verify UserVolumeConfig
-				var userVolumeConfig uservolume.UserVolumeConfig
-				err = yaml.Unmarshal([]byte(got[2]), &userVolumeConfig)
-				assert.NoError(t, err, "failed to unmarshal UserVolumeConfig")
+				if tt.verify != nil {
+					tt.verify(t, got)
+				}
 			}
 		})
 	}

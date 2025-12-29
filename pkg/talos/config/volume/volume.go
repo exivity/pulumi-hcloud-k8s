@@ -38,7 +38,7 @@ type DiskSelector struct {
 type EncryptionSpec struct {
 	Provider  string          `yaml:"provider,omitempty" validate:"omitempty,eq=luks2"` // e.g., luks2
 	Keys      []EncryptionKey `yaml:"keys,omitempty" validate:"omitempty,dive"`
-	Cipher    string          `yaml:"cipher,omitempty" validate:"omitempty,oneof=aes-xts-plain64 xchacha12,aes-adiantum-plain64 xchacha20,aes-adiantum-plain64"`
+	Cipher    string          `yaml:"cipher,omitempty" validate:"omitempty"`
 	KeySize   uint            `yaml:"keySize,omitempty"`
 	BlockSize uint64          `yaml:"blockSize,omitempty"`
 	Options   []string        `yaml:"options,omitempty"`

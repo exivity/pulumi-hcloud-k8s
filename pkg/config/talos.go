@@ -68,6 +68,25 @@ type ProxyConfig struct {
 	Disabled bool `json:"disabled,omitempty"`
 }
 
+// EncryptionKeyNodeID configuration.
+type EncryptionKeyNodeID struct{}
+
+// EncryptionKeyConfig defines a single encryption key.
+type EncryptionKeyConfig struct {
+	Slot   int                  `json:"slot" validate:"min=0,max=31"`
+	NodeID *EncryptionKeyNodeID `json:"node_id,omitempty"`
+}
+
+// DiskEncryptionConfig configures disk encryption.
+type DiskEncryptionConfig struct {
+	// EncryptState enables encryption for the STATE partition.
+	EncryptState bool `json:"encrypt_state"`
+	// EncryptEphemeral enables encryption for the EPHEMERAL partition.
+	EncryptEphemeral bool `json:"encrypt_ephemeral"`
+	// Keys is a list of encryption keys to use.
+	Keys []EncryptionKeyConfig `json:"keys" validate:"dive"`
+}
+
 // TalosConfig contains all Talos Linux image & version settings.
 type TalosConfig struct {
 	// If set, overrides the ID of the Talos image on Hetzner
@@ -166,4 +185,7 @@ type TalosConfig struct {
 
 	// CNI configuration for the cluster.
 	CNI *CNIConfig `json:"cni"`
+
+	// DiskEncryption configures disk encryption for system partitions.
+	DiskEncryption *DiskEncryptionConfig `json:"disk_encryption"`
 }

@@ -7,7 +7,6 @@ import (
 	core_config "github.com/exivity/pulumi-hcloud-k8s/pkg/config"
 	"github.com/exivity/pulumi-hcloud-k8s/pkg/hetzner/meta"
 	"github.com/exivity/pulumi-hcloud-k8s/pkg/talos/config/core"
-	"github.com/exivity/pulumi-hcloud-k8s/pkg/talos/config/uservolume"
 	"github.com/exivity/pulumi-hcloud-k8s/pkg/talos/config/volume"
 )
 
@@ -57,6 +56,8 @@ type NodeConfigurationArgs struct {
 	EnableKubeSpan bool
 	// CNI is the CNI configuration for the cluster.
 	CNI *core_config.CNIConfig
+	// DiskEncryption configures disk encryption for system partitions.
+	DiskEncryption *core_config.DiskEncryptionConfig
 }
 
 func NewNodeConfiguration(args *NodeConfigurationArgs) ([]string, error) {
@@ -66,31 +67,19 @@ func NewNodeConfiguration(args *NodeConfigurationArgs) ([]string, error) {
 		return nil, fmt.Errorf("failed to generate Talos config YAML: %w", err)
 	}
 
-	volumeConfig, err := newVolumeConfig(args)
-	if err != nil {
-		return nil, err
+	configs := []string{nodeConfigYAML}
+
+	volumeConfigs := newVolumeConfigs(args)
+
+	for _, vc := range volumeConfigs {
+		vcYAML, err := vc.YAML()
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate Volume config YAML: %w", err)
+		}
+		configs = append(configs, vcYAML)
 	}
 
-	volumeConfigYAML, err := volumeConfig.YAML()
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate Volume config YAML: %w", err)
-	}
-
-	userVolumeConfig, err := newUserVolumeConfig(args)
-	if err != nil {
-		return nil, err
-	}
-
-	userVolumeConfigYAML, err := userVolumeConfig.YAML()
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate UserVolume config YAML: %w", err)
-	}
-
-	return []string{
-		nodeConfigYAML,
-		volumeConfigYAML,
-		userVolumeConfigYAML,
-	}, nil
+	return configs, nil
 }
 
 func newMainTalosConfig(args *NodeConfigurationArgs) *core.TalosConfig { //nolint:funlen // lengthy function due to config mapping
@@ -306,10 +295,45 @@ func toInlineManifests(manifests []core_config.ClusterInlineManifest) []core.Clu
 	return out
 }
 
-func newVolumeConfig(args *NodeConfigurationArgs) (*volume.VolumeConfig, error) {
-	return &volume.VolumeConfig{}, nil
+func newVolumeConfigs(args *NodeConfigurationArgs) []*volume.VolumeConfig {
+	if args.DiskEncryption == nil {
+		return nil
+	}
+
+	var configs []*volume.VolumeConfig
+
+	if args.DiskEncryption.EncryptState {
+		configs = append(configs, &volume.VolumeConfig{
+			Name: "STATE",
+			Encryption: &volume.EncryptionSpec{
+				Provider: "luks2",
+				Keys:     toEncryptionKeys(args.DiskEncryption.Keys),
+			},
+		})
+	}
+
+	if args.DiskEncryption.EncryptEphemeral {
+		configs = append(configs, &volume.VolumeConfig{
+			Name: "EPHEMERAL",
+			Encryption: &volume.EncryptionSpec{
+				Provider: "luks2",
+				Keys:     toEncryptionKeys(args.DiskEncryption.Keys),
+			},
+		})
+	}
+
+	return configs
 }
 
-func newUserVolumeConfig(args *NodeConfigurationArgs) (*uservolume.UserVolumeConfig, error) {
-	return &uservolume.UserVolumeConfig{}, nil
+func toEncryptionKeys(keys []core_config.EncryptionKeyConfig) []volume.EncryptionKey {
+	out := make([]volume.EncryptionKey, len(keys))
+	for i, key := range keys {
+		out[i] = volume.EncryptionKey{
+			Slot: key.Slot,
+		}
+		if key.NodeID != nil {
+			out[i].NodeID = &volume.EncryptionKeyNodeID{}
+		}
+	}
+	return out
 }
