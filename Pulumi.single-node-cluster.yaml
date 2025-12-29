@@ -6,6 +6,12 @@ config:
     allow_scheduling_on_control_planes: true
     local_storage_folders:
       - "/var/local"
+    disk_encryption:
+      encrypt_state: true
+      encrypt_ephemeral: true
+      keys:
+        - slot: 0
+          node_id: {}
   hcloud-k8s:firewall:
     open_talos_api: true
     custom_rules_controlplane:
