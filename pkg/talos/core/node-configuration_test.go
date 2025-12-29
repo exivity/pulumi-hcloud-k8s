@@ -631,3 +631,46 @@ func TestNewNodeConfiguration(t *testing.T) {
 func stringPtr(s string) *string {
 	return &s
 }
+
+func Test_toCNIConfig(t *testing.T) {
+	tests := []struct {
+		name string
+		cni  *core_config.CNIConfig
+		want *config.CNIConfig
+	}{
+		{
+			name: "nil input",
+			cni:  nil,
+			want: nil,
+		},
+		{
+			name: "valid config",
+			cni: &core_config.CNIConfig{
+				Name: "custom-cni",
+				URLs: []string{"https://example.com/cni.yaml"},
+			},
+			want: &config.CNIConfig{
+				Name: "custom-cni",
+				URLs: []string{"https://example.com/cni.yaml"},
+			},
+		},
+		{
+			name: "empty urls",
+			cni: &core_config.CNIConfig{
+				Name: "none",
+				URLs: []string{},
+			},
+			want: &config.CNIConfig{
+				Name: "none",
+				URLs: []string{},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := toCNIConfig(tt.cni); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("toCNIConfig() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
