@@ -45,7 +45,7 @@ linters:
             - github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes
             - gopkg.in/yaml.v3
             - dario.cat/mergo
-            - github.com/stretchr/testify/assert
+            - github.com/stretchr/testify
             - github.com/go-playground/validator/v10
     funlen:
       lines: 110
