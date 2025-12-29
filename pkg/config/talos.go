@@ -73,6 +73,10 @@ type TalosConfig struct {
 	// If set, overrides the ID of the Talos image on Hetzner
 	ImageIDOverride *string `json:"image_id_override"`
 
+	// ImageGenerationLocation is the location where the image will be generated.
+	// Defaults to "fsn1".
+	ImageGenerationLocation string `json:"image_generation_location" validate:"default=fsn1"`
+
 	// Talos image version (GitHub tag)
 	ImageVersion string `json:"image_version" validate:"required"`
 
