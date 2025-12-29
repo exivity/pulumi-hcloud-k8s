@@ -54,13 +54,14 @@ func NewHetznerTalosKubernetesCluster(ctx *pulumi.Context, name string, cfg *con
 	enableARMImages, enableX86Images := image.DetectRequiredArchitecturesFromList(architectures)
 
 	images, err := image.NewImages(ctx, &image.ImagesArgs{
-		HetznerToken:         cfg.Hetzner.Token,
-		EnableARMImageUpload: enableARMImages,
-		EnableX86ImageUpload: enableX86Images,
-		TalosVersion:         cfg.Talos.ImageVersion,
-		TalosImageID:         imageID,
-		ARMServerSize:        cfg.Talos.GeneratorSizes.ARM,
-		X86ServerSize:        cfg.Talos.GeneratorSizes.X86,
+		HetznerToken:            cfg.Hetzner.Token,
+		EnableARMImageUpload:    enableARMImages,
+		EnableX86ImageUpload:    enableX86Images,
+		TalosVersion:            cfg.Talos.ImageVersion,
+		TalosImageID:            imageID,
+		ARMServerSize:           cfg.Talos.GeneratorSizes.ARM,
+		X86ServerSize:           cfg.Talos.GeneratorSizes.X86,
+		ImageGenerationLocation: cfg.Talos.ImageGenerationLocation,
 	}, pulumi.Parent(hetznerProvider))
 	if err != nil {
 		return nil, err

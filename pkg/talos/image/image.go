@@ -37,6 +37,8 @@ type ImagesArgs struct {
 	ARMServerSize string
 	// X86ServerSize is the server type to use for the image upload. The size muss match the architecture.
 	X86ServerSize string
+	// ImageGenerationLocation is the location where the image will be generated.
+	ImageGenerationLocation string
 }
 
 // Images represents the uploaded Talos images for both architectures
@@ -53,11 +55,12 @@ func NewImages(ctx *pulumi.Context, args *ImagesArgs, opts ...pulumi.ResourceOpt
 	var arm *Image
 	if args.EnableARMImageUpload {
 		arm, err = NewImage(ctx, &ImageArgs{
-			HetznerToken: args.HetznerToken,
-			TalosVersion: args.TalosVersion,
-			TalosImageID: args.TalosImageID,
-			Arch:         ArchARM,
-			ServerSize:   args.ARMServerSize,
+			HetznerToken:            args.HetznerToken,
+			TalosVersion:            args.TalosVersion,
+			TalosImageID:            args.TalosImageID,
+			Arch:                    ArchARM,
+			ServerSize:              args.ARMServerSize,
+			ImageGenerationLocation: args.ImageGenerationLocation,
 		}, opts...)
 		if err != nil {
 			return nil, err
@@ -67,11 +70,12 @@ func NewImages(ctx *pulumi.Context, args *ImagesArgs, opts ...pulumi.ResourceOpt
 	var x86 *Image
 	if args.EnableX86ImageUpload {
 		x86, err = NewImage(ctx, &ImageArgs{
-			HetznerToken: args.HetznerToken,
-			TalosVersion: args.TalosVersion,
-			TalosImageID: args.TalosImageID,
-			Arch:         ArchX86,
-			ServerSize:   args.X86ServerSize,
+			HetznerToken:            args.HetznerToken,
+			TalosVersion:            args.TalosVersion,
+			TalosImageID:            args.TalosImageID,
+			Arch:                    ArchX86,
+			ServerSize:              args.X86ServerSize,
+			ImageGenerationLocation: args.ImageGenerationLocation,
 		}, opts...)
 		if err != nil {
 			return nil, err
@@ -98,6 +102,8 @@ type ImageArgs struct {
 	// Like "cx23" for "amd64" or "cax11" for "arm64".
 	// All available server types can be found here https://www.hetzner.com/cloud/
 	ServerSize string
+	// ImageGenerationLocation is the location where the image will be generated.
+	ImageGenerationLocation string
 }
 
 // Image represents the uploaded Talos image
@@ -132,6 +138,7 @@ func NewImage(ctx *pulumi.Context, args *ImageArgs, opts ...pulumi.ResourceOptio
 		ImageUrl:         pulumi.Sprintf("https://factory.talos.dev/image/%s/%s/hcloud-%s.raw.xz", args.TalosImageID, args.TalosVersion, args.Arch),
 		ImageCompression: pulumi.StringPtr("xz"),
 		ServerType:       pulumi.String(args.ServerSize),
+		Location:         pulumi.String(args.ImageGenerationLocation),
 		Labels: pulumi.StringMap{
 			"talos-version": pulumi.String(args.TalosVersion),
 			"arch":          pulumi.String(string(args.Arch)),
