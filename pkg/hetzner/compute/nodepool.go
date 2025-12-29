@@ -352,13 +352,9 @@ func DeployControlPlanePools(ctx *pulumi.Context, cfg *config.PulumiConfig, imag
 			Network:                     net,
 			EnableBackup:                pool.EnableBackup,
 			MachineConfigurationManager: machineConfigurationManager,
-			ConfigPatchesBootstrap: pulumi.StringArray{
-				pulumi.String(cpNodeConfigurationBootstrap),
-			},
-			ConfigPatches: pulumi.StringArray{
-				pulumi.String(cpNodeConfiguration),
-			},
-			Firewall: firewallCp,
+			ConfigPatchesBootstrap:      pulumi.ToStringArray(cpNodeConfigurationBootstrap),
+			ConfigPatches:               pulumi.ToStringArray(cpNodeConfiguration),
+			Firewall:                    firewallCp,
 		},
 			pulumi.Parent(cpPg),
 			pulumi.Provider(hetznerProvider),
@@ -438,13 +434,9 @@ func DeployWorkerPools(ctx *pulumi.Context, cfg *config.PulumiConfig, images *im
 			ServerNodeType:              meta.WorkerNode,
 			Network:                     net,
 			MachineConfigurationManager: machineConfigurationManager,
-			ConfigPatchesBootstrap: pulumi.StringArray{
-				pulumi.String(workerNodeConfigurationBootstrap),
-			},
-			ConfigPatches: pulumi.StringArray{
-				pulumi.String(workerNodeConfiguration),
-			},
-			Firewall: firewallWorker,
+			ConfigPatchesBootstrap:      pulumi.ToStringArray(workerNodeConfigurationBootstrap),
+			ConfigPatches:               pulumi.ToStringArray(workerNodeConfiguration),
+			Firewall:                    firewallWorker,
 		},
 			pulumi.Provider(hetznerProvider),
 			pulumi.DependsOn([]pulumi.Resource{firewallWorker}),

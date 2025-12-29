@@ -5,7 +5,11 @@ import (
 	"testing"
 
 	core_config "github.com/exivity/pulumi-hcloud-k8s/pkg/config"
+	"github.com/exivity/pulumi-hcloud-k8s/pkg/hetzner/meta"
 	"github.com/exivity/pulumi-hcloud-k8s/pkg/talos/config"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 func Test_toTalosTaints(t *testing.T) {
@@ -457,6 +461,215 @@ data:
 		t.Run(tt.name, func(t *testing.T) {
 			if got := toInlineManifests(tt.args.manifests); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("toInlineManifests() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestNewNodeConfiguration(t *testing.T) {
+	tests := []struct {
+		name    string
+		args    *NodeConfigurationArgs
+		verify  func(t *testing.T, cfg *config.TalosConfig)
+		wantErr bool
+	}{
+		{
+			name: "basic controlplane",
+			args: &NodeConfigurationArgs{
+				ServerNodeType: meta.ControlPlaneNode,
+				Subnet:         "10.0.0.0/24",
+				PodSubnets:     "10.244.0.0/16",
+			},
+			verify: func(t *testing.T, cfg *config.TalosConfig) {
+				assert.Equal(t, "controlplane", cfg.Machine.Type)
+				assert.Equal(t, []string{"10.0.0.0/24"}, cfg.Machine.Kubelet.NodeIP.ValidSubnets)
+				assert.Equal(t, []string{"10.244.0.0/16"}, cfg.Cluster.Network.PodSubnets)
+				assert.True(t, cfg.Cluster.ExternalCloudProvider.Enabled)
+				assert.Empty(t, cfg.Cluster.ExternalCloudProvider.Manifests)
+			},
+		},
+		{
+			name: "basic worker",
+			args: &NodeConfigurationArgs{
+				ServerNodeType: meta.WorkerNode,
+				Subnet:         "10.0.1.0/24",
+				PodSubnets:     "10.244.0.0/16",
+			},
+			verify: func(t *testing.T, cfg *config.TalosConfig) {
+				assert.Equal(t, "worker", cfg.Machine.Type)
+			},
+		},
+		{
+			name: "with optional fields",
+			args: &NodeConfigurationArgs{
+				ServerNodeType:                 meta.ControlPlaneNode,
+				Subnet:                         "10.0.0.0/24",
+				PodSubnets:                     "10.244.0.0/16",
+				DNSDomain:                      stringPtr("example.com"),
+				ServiceSubnet:                  stringPtr("10.96.0.0/12"),
+				CertLifetime:                   stringPtr("8760h"),
+				SecretboxEncryptionSecret:      stringPtr("secret-key"),
+				AllowSchedulingOnControlPlanes: true,
+			},
+			verify: func(t *testing.T, cfg *config.TalosConfig) {
+				assert.Equal(t, "example.com", cfg.Cluster.Network.DNSDomain)
+				assert.Equal(t, []string{"10.96.0.0/12"}, cfg.Cluster.Network.ServiceSubnets)
+				assert.Equal(t, "8760h", cfg.Cluster.AdminKubeconfig.CertLifetime)
+				// "secret-key" base64 encoded is "c2VjcmV0LWtleQ=="
+				assert.Equal(t, "c2VjcmV0LWtleQ==", cfg.Cluster.SecretboxEncryptionSecret)
+				assert.True(t, cfg.Cluster.AllowSchedulingOnControlPlanes)
+			},
+		},
+		{
+			name: "with extra manifests",
+			args: &NodeConfigurationArgs{
+				ServerNodeType:                meta.ControlPlaneNode,
+				Subnet:                        "10.0.0.0/24",
+				PodSubnets:                    "10.244.0.0/16",
+				ExtraManifests:                []string{"https://example.com/manifest.yaml"},
+				EnableHetznerCCMExtraManifest: true,
+			},
+			verify: func(t *testing.T, cfg *config.TalosConfig) {
+				assert.Contains(t, cfg.Cluster.ExtraManifests, "https://example.com/manifest.yaml")
+				assert.Len(t, cfg.Cluster.ExternalCloudProvider.Manifests, 2)
+				assert.Contains(t, cfg.Cluster.ExternalCloudProvider.Manifests[0], "ccm-networks.yaml")
+			},
+		},
+		{
+			name: "with longhorn support",
+			args: &NodeConfigurationArgs{
+				ServerNodeType:        meta.WorkerNode,
+				Subnet:                "10.0.0.0/24",
+				PodSubnets:            "10.244.0.0/16",
+				EnableLonghornSupport: true,
+			},
+			verify: func(t *testing.T, cfg *config.TalosConfig) {
+				assert.Equal(t, "1024", cfg.Machine.Sysctls["vm.nr_hugepages"])
+				assert.Contains(t, cfg.Machine.Kernel.Modules, config.KernelModuleConfig{Name: "nvme_tcp"})
+				found := false
+				for _, mount := range cfg.Machine.Kubelet.ExtraMounts {
+					if mount.Destination == "/var/lib/longhorn" {
+						found = true
+						break
+					}
+				}
+				assert.True(t, found, "longhorn mount not found")
+			},
+		},
+		{
+			name: "with local storage",
+			args: &NodeConfigurationArgs{
+				ServerNodeType:      meta.WorkerNode,
+				Subnet:              "10.0.0.0/24",
+				PodSubnets:          "10.244.0.0/16",
+				LocalStorageFolders: []string{"/data/local"},
+			},
+			verify: func(t *testing.T, cfg *config.TalosConfig) {
+				found := false
+				for _, mount := range cfg.Machine.Kubelet.ExtraMounts {
+					if mount.Destination == "/data/local" {
+						found = true
+						break
+					}
+				}
+				assert.True(t, found, "local storage mount not found")
+			},
+		},
+		{
+			name: "with taints",
+			args: &NodeConfigurationArgs{
+				ServerNodeType: meta.WorkerNode,
+				Subnet:         "10.0.0.0/24",
+				PodSubnets:     "10.244.0.0/16",
+				NodeTaints: []core_config.Taint{
+					{Key: "key", Value: "val", Effect: "NoSchedule"},
+				},
+			},
+			verify: func(t *testing.T, cfg *config.TalosConfig) {
+				assert.Equal(t, "key=val:NoSchedule", cfg.Machine.Kubelet.ExtraArgs["register-with-taints"])
+			},
+		},
+		{
+			name: "with registries",
+			args: &NodeConfigurationArgs{
+				ServerNodeType: meta.WorkerNode,
+				Subnet:         "10.0.0.0/24",
+				PodSubnets:     "10.244.0.0/16",
+				Registries: &core_config.RegistriesConfig{
+					Mirrors: map[string]core_config.RegistryMirrorConfig{
+						"docker.io": {Endpoints: []string{"https://mirror.gcr.io"}},
+					},
+				},
+			},
+			verify: func(t *testing.T, cfg *config.TalosConfig) {
+				assert.NotNil(t, cfg.Machine.Registries)
+				assert.Contains(t, cfg.Machine.Registries.Mirrors, "docker.io")
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := NewNodeConfiguration(tt.args)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("NewNodeConfiguration() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !tt.wantErr {
+				require.Len(t, got, 1)
+				var cfg config.TalosConfig
+				err := yaml.Unmarshal([]byte(got[0]), &cfg)
+				require.NoError(t, err)
+				if tt.verify != nil {
+					tt.verify(t, &cfg)
+				}
+			}
+		})
+	}
+}
+
+func stringPtr(s string) *string {
+	return &s
+}
+
+func Test_toCNIConfig(t *testing.T) {
+	tests := []struct {
+		name string
+		cni  *core_config.CNIConfig
+		want *config.CNIConfig
+	}{
+		{
+			name: "nil input",
+			cni:  nil,
+			want: nil,
+		},
+		{
+			name: "valid config",
+			cni: &core_config.CNIConfig{
+				Name: "custom-cni",
+				URLs: []string{"https://example.com/cni.yaml"},
+			},
+			want: &config.CNIConfig{
+				Name: "custom-cni",
+				URLs: []string{"https://example.com/cni.yaml"},
+			},
+		},
+		{
+			name: "empty urls",
+			cni: &core_config.CNIConfig{
+				Name: "none",
+				URLs: []string{},
+			},
+			want: &config.CNIConfig{
+				Name: "none",
+				URLs: []string{},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := toCNIConfig(tt.cni); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("toCNIConfig() = %v, want %v", got, tt.want)
 			}
 		})
 	}

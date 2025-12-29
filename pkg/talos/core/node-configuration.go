@@ -57,7 +57,7 @@ type NodeConfigurationArgs struct {
 	CNI *core_config.CNIConfig
 }
 
-func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) { //nolint:funlen // TODO: refactor
+func NewNodeConfiguration(args *NodeConfigurationArgs) ([]string, error) { //nolint:funlen // TODO: refactor
 	var adminKubeconfig *config.AdminKubeconfigConfig
 	if args.CertLifetime != nil {
 		adminKubeconfig = &config.AdminKubeconfigConfig{
@@ -174,7 +174,14 @@ func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) { //nolin
 
 	configPatch.Machine.Registries = toRegistriesConfig(args.Registries)
 
-	return configPatch.YAML()
+	configPatchYAML, err := configPatch.YAML()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate Talos config YAML: %w", err)
+	}
+
+	return []string{
+		configPatchYAML,
+	}, nil
 }
 
 func toCNIConfig(cni *core_config.CNIConfig) *config.CNIConfig {
