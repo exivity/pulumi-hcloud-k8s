@@ -8,8 +8,6 @@ import (
 	"github.com/exivity/pulumi-hcloud-k8s/pkg/hetzner/meta"
 	"github.com/exivity/pulumi-hcloud-k8s/pkg/talos/config"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
 )
 
 func Test_toTalosTaints(t *testing.T) {
@@ -466,12 +464,57 @@ data:
 	}
 }
 
-func TestNewNodeConfiguration(t *testing.T) {
+func Test_toCNIConfig(t *testing.T) {
 	tests := []struct {
-		name    string
+		name string
+		cni  *core_config.CNIConfig
+		want *config.CNIConfig
+	}{
+		{
+			name: "nil input",
+			cni:  nil,
+			want: nil,
+		},
+		{
+			name: "valid config",
+			cni: &core_config.CNIConfig{
+				Name: "custom-cni",
+				URLs: []string{"https://example.com/cni.yaml"},
+			},
+			want: &config.CNIConfig{
+				Name: "custom-cni",
+				URLs: []string{"https://example.com/cni.yaml"},
+			},
+		},
+		{
+			name: "empty urls",
+			cni: &core_config.CNIConfig{
+				Name: "none",
+				URLs: []string{},
+			},
+			want: &config.CNIConfig{
+				Name: "none",
+				URLs: []string{},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := toCNIConfig(tt.cni); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("toCNIConfig() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_newMainTalosConfig(t *testing.T) {
+	tests := []struct {
+		name string // description of this test case
+		// Named input parameters for target function.
 		args    *NodeConfigurationArgs
-		verify  func(t *testing.T, cfg *config.TalosConfig)
+		want    *config.TalosConfig
 		wantErr bool
+		verify  func(t *testing.T, cfg *config.TalosConfig)
 	}{
 		{
 			name: "basic controlplane",
@@ -607,22 +650,20 @@ func TestNewNodeConfiguration(t *testing.T) {
 			},
 		},
 	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := NewNodeConfiguration(tt.args)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("NewNodeConfiguration() error = %v, wantErr %v", err, tt.wantErr)
+			got, gotErr := newMainTalosConfig(tt.args)
+			if gotErr != nil {
+				if !tt.wantErr {
+					t.Errorf("newMainTalosConfig() failed: %v", gotErr)
+				}
 				return
 			}
-			if !tt.wantErr {
-				require.Len(t, got, 1)
-				var cfg config.TalosConfig
-				err := yaml.Unmarshal([]byte(got[0]), &cfg)
-				require.NoError(t, err)
-				if tt.verify != nil {
-					tt.verify(t, &cfg)
-				}
+			if tt.wantErr {
+				t.Fatal("newMainTalosConfig() succeeded unexpectedly")
+			}
+			if tt.verify != nil {
+				tt.verify(t, got)
 			}
 		})
 	}
@@ -630,47 +671,4 @@ func TestNewNodeConfiguration(t *testing.T) {
 
 func stringPtr(s string) *string {
 	return &s
-}
-
-func Test_toCNIConfig(t *testing.T) {
-	tests := []struct {
-		name string
-		cni  *core_config.CNIConfig
-		want *config.CNIConfig
-	}{
-		{
-			name: "nil input",
-			cni:  nil,
-			want: nil,
-		},
-		{
-			name: "valid config",
-			cni: &core_config.CNIConfig{
-				Name: "custom-cni",
-				URLs: []string{"https://example.com/cni.yaml"},
-			},
-			want: &config.CNIConfig{
-				Name: "custom-cni",
-				URLs: []string{"https://example.com/cni.yaml"},
-			},
-		},
-		{
-			name: "empty urls",
-			cni: &core_config.CNIConfig{
-				Name: "none",
-				URLs: []string{},
-			},
-			want: &config.CNIConfig{
-				Name: "none",
-				URLs: []string{},
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := toCNIConfig(tt.cni); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("toCNIConfig() = %v, want %v", got, tt.want)
-			}
-		})
-	}
 }

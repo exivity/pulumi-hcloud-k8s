@@ -57,7 +57,45 @@ type NodeConfigurationArgs struct {
 	CNI *core_config.CNIConfig
 }
 
-func NewNodeConfiguration(args *NodeConfigurationArgs) ([]string, error) { //nolint:funlen // TODO: refactor
+func NewNodeConfiguration(args *NodeConfigurationArgs) ([]string, error) {
+	nodeConfig, err := newMainTalosConfig(args)
+	if err != nil {
+		return nil, err
+	}
+
+	nodeConfigYAML, err := nodeConfig.YAML()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate Talos config YAML: %w", err)
+	}
+
+	volumeConfig, err := newVolumeConfig(args)
+	if err != nil {
+		return nil, err
+	}
+
+	volumeConfigYAML, err := volumeConfig.YAML()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate Volume config YAML: %w", err)
+	}
+
+	userVolumeConfig, err := newUserVolumeConfig(args)
+	if err != nil {
+		return nil, err
+	}
+
+	userVolumeConfigYAML, err := userVolumeConfig.YAML()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate UserVolume config YAML: %w", err)
+	}
+
+	return []string{
+		nodeConfigYAML,
+		volumeConfigYAML,
+		userVolumeConfigYAML,
+	}, nil
+}
+
+func newMainTalosConfig(args *NodeConfigurationArgs) (*config.TalosConfig, error) { //nolint:funlen // lengthy function due to config mapping
 	var adminKubeconfig *config.AdminKubeconfigConfig
 	if args.CertLifetime != nil {
 		adminKubeconfig = &config.AdminKubeconfigConfig{
@@ -174,14 +212,7 @@ func NewNodeConfiguration(args *NodeConfigurationArgs) ([]string, error) { //nol
 
 	configPatch.Machine.Registries = toRegistriesConfig(args.Registries)
 
-	configPatchYAML, err := configPatch.YAML()
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate Talos config YAML: %w", err)
-	}
-
-	return []string{
-		configPatchYAML,
-	}, nil
+	return &configPatch, nil
 }
 
 func toCNIConfig(cni *core_config.CNIConfig) *config.CNIConfig {
@@ -275,4 +306,12 @@ func toInlineManifests(manifests []core_config.ClusterInlineManifest) []config.C
 		}
 	}
 	return out
+}
+
+func newVolumeConfig(args *NodeConfigurationArgs) (*config.VolumeConfig, error) {
+	return &config.VolumeConfig{}, nil
+}
+
+func newUserVolumeConfig(args *NodeConfigurationArgs) (*config.UserVolumeConfig, error) {
+	return &config.UserVolumeConfig{}, nil
 }
