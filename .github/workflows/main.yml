@@ -62,9 +62,6 @@ jobs:
       - name: Install Cookiecutter
         run: pip install cookiecutter
 
-      - name: Install Pulumi
-        uses: pulumi/actions@v6
-
       - name: Login to Pulumi local backend
         run: pulumi login --local
 
