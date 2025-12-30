@@ -14,9 +14,8 @@ on:
     paths-ignore: ["docs/**"]
 
 jobs:
-  test:
+  lint:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -25,15 +24,46 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version-file: ./go.mod
+          cache: true
 
-      - name: Downloads the dependencies
+      - name: Download go dependencies
         run: make download
 
       - name: Lints all code with golangci-lint
         run: make lint
 
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Install Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: ./go.mod
+          cache: true
+
+      - name: Download go dependencies
+        run: make download
+
       - name: Runs all tests
         run: make test
+
+  cookiecutter:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Install Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: ./go.mod
+          cache: true
+
+      - name: Download go dependencies
+        run: make download
 
       - name: Install Cookiecutter
         run: pip install cookiecutter

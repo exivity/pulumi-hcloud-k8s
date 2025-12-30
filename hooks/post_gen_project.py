@@ -42,7 +42,9 @@ def main():
     # Create a Go module with the specified module path
     module_path = "{{cookiecutter.go_module_path}}"
     subprocess.run(["go", "mod", "init", module_path], check=True)
-    subprocess.run(["go", "mod", "tidy"], check=True)
+    
+    if "{{cookiecutter.skip_go_mod_tidy}}" != "True":
+        subprocess.run(["go", "mod", "tidy"], check=True)
 
     # Initialize golangci-lint
     subprocess.run(

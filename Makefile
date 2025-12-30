@@ -54,7 +54,7 @@ test: ## Runs all tests
 
 test-cookiecutter: ## Test cookiecutter template by generating a project and running make lint
 	@rm -rf $(COOKIECUTTER_TEST_OUTPUT) && \
-	cookiecutter . --no-input && \
+	cookiecutter . --no-input skip_go_mod_tidy=True && \
 	cd $(COOKIECUTTER_TEST_OUTPUT) && \
 	go mod edit -replace github.com/exivity/pulumi-hcloud-k8s=../ && \
     go mod tidy && \
