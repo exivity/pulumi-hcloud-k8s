@@ -57,7 +57,7 @@ func writeScriptToProjectTmp() (string, error) {
 	if err := os.Chmod(file, scriptPerm); err != nil {
 		return "", err
 	}
-	return file, nil
+	return filepath.Join(scriptSubdir, "talos-upgrade-version.sh"), nil
 }
 
 // UpgradeTalos upgrades the Talos version on a node
