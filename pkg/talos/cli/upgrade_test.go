@@ -2,7 +2,6 @@ package cli
 
 import (
 	_ "embed"
-	"os"
 	"path/filepath"
 	"testing"
 
@@ -57,9 +56,6 @@ func TestTalosConfigPath(t *testing.T) {
 }
 
 func Test_writeScriptToProjectTmp(t *testing.T) {
-	cwd, err := os.Getwd()
-	assert.NoError(t, err)
-
 	tests := []struct {
 		name    string
 		want    string
@@ -67,7 +63,7 @@ func Test_writeScriptToProjectTmp(t *testing.T) {
 	}{
 		{
 			name:    "default",
-			want:    filepath.Join(cwd, ".pulumi-tmp", "talos-upgrade-version.sh"),
+			want:    filepath.Join(".pulumi-tmp", "talos-upgrade-version.sh"),
 			wantErr: false,
 		},
 	}
