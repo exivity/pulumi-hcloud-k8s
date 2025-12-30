@@ -473,10 +473,10 @@ github.com/pulumi/pulumi-hcloud/sdk v1.29.0 h1:TQasXTpZlib8zCQXnsRSUpX0cB1/pRoPB
 github.com/pulumi/pulumi-hcloud/sdk v1.29.0/go.mod h1:JID9el4HeuNGU9BJiPHQsGddjvkzoVbUUZtmD1dbuTg=
 github.com/pulumi/pulumi-kubernetes/sdk/v4 v4.24.1 h1:L1J2/PHgAziDXUvOWJ4HH1JBlgxzpQseZiEIu4K2x34=
 github.com/pulumi/pulumi-kubernetes/sdk/v4 v4.24.1/go.mod h1:vNiMC/N8GNHvDwU3gQRXQ6V+kbgSl5N/lKtfrUjGuXU=
-github.com/pulumi/pulumi/sdk/v3 v3.213.0 h1:ICp0WJlTShaTLrx2fDI52fJ3xwCf1h8T8tVrKDRNUB4=
-github.com/pulumi/pulumi/sdk/v3 v3.213.0/go.mod h1:Bn5Z9Rzp1lPqdAccaB+F2ivUBiamEl2TNR3Gg/h7iLs=
-github.com/pulumiverse/pulumi-talos/sdk v0.6.1 h1:X11e1wKTL7iH2G++N5XktwEPWkHOLzE6dG28PCkBEvc=
-github.com/pulumiverse/pulumi-talos/sdk v0.6.1/go.mod h1:Rcf9ULD6zXDnfYiwnM1WwFprqWdT/AxDCsX2896AOXs=
+github.com/pulumi/pulumi/sdk/v3 v3.214.0 h1:MBUrjhaY7i9RmEQddyH/HR0kvF5Kxl3WT+/Ra9wV3YM=
+github.com/pulumi/pulumi/sdk/v3 v3.214.0/go.mod h1:Bn5Z9Rzp1lPqdAccaB+F2ivUBiamEl2TNR3Gg/h7iLs=
+github.com/pulumiverse/pulumi-talos/sdk v0.7.0 h1:EqRvxmtnMpFFYDnt7FD+gtXWCslgaxR4ErYE4xxFGLU=
+github.com/pulumiverse/pulumi-talos/sdk v0.7.0/go.mod h1:o+FoHvxPzN2aE4A5d37aF8wEDDp9IllQ8pDaUtkFvko=
 github.com/quasilyte/go-ruleguard v0.4.5 h1:AGY0tiOT5hJX9BTdx/xBdoCubQUAE2grkqY2lSwvZcA=
 github.com/quasilyte/go-ruleguard v0.4.5/go.mod h1:Vl05zJ538vcEEwu16V/Hdu7IYZWyKSwIy4c88Ro1kRE=
 github.com/quasilyte/go-ruleguard/dsl v0.3.23 h1:lxjt5B6ZCiBeeNO8/oQsegE6fLeCzuMRoVWSkXC4uvY=
