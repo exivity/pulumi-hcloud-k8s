@@ -6,11 +6,15 @@ import (
 
 	core_config "github.com/exivity/pulumi-hcloud-k8s/pkg/config"
 	"github.com/exivity/pulumi-hcloud-k8s/pkg/hetzner/meta"
-	"github.com/exivity/pulumi-hcloud-k8s/pkg/talos/config"
+	"github.com/exivity/pulumi-hcloud-k8s/pkg/talos/config/core"
+	"github.com/exivity/pulumi-hcloud-k8s/pkg/talos/config/volume"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 )
+
+func stringPtr(s string) *string {
+	return &s
+}
 
 func Test_toTalosTaints(t *testing.T) {
 	type args struct {
@@ -112,7 +116,7 @@ func Test_toRegistriesConfig(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want *config.RegistriesConfig
+		want *core.RegistriesConfig
 	}{
 		{
 			name: "nil input",
@@ -139,15 +143,15 @@ func Test_toRegistriesConfig(t *testing.T) {
 				},
 				Config: map[string]core_config.RegistryConfig{},
 			}},
-			want: &config.RegistriesConfig{
-				Mirrors: map[string]config.RegistryMirrorConfig{
+			want: &core.RegistriesConfig{
+				Mirrors: map[string]core.RegistryMirrorConfig{
 					"docker.io": {
 						Endpoints:    []string{"https://mirror.gcr.io"},
 						OverridePath: true,
 						SkipFallback: false,
 					},
 				},
-				Config: map[string]config.RegistryConfig{},
+				Config: map[string]core.RegistryConfig{},
 			},
 		},
 		{
@@ -173,19 +177,19 @@ func Test_toRegistriesConfig(t *testing.T) {
 					},
 				},
 			}},
-			want: &config.RegistriesConfig{
-				Mirrors: map[string]config.RegistryMirrorConfig{},
-				Config: map[string]config.RegistryConfig{
+			want: &core.RegistriesConfig{
+				Mirrors: map[string]core.RegistryMirrorConfig{},
+				Config: map[string]core.RegistryConfig{
 					"quay.io": {
-						TLS: &config.RegistryTLSConfig{
-							ClientIdentity: &config.PEMEncodedCertificateAndKey{
+						TLS: &core.RegistryTLSConfig{
+							ClientIdentity: &core.PEMEncodedCertificateAndKey{
 								CRT: "crtdata",
 								Key: "keydata",
 							},
 							CA:                 "ca-data",
 							InsecureSkipVerify: true,
 						},
-						Auth: &config.RegistryAuthConfig{
+						Auth: &core.RegistryAuthConfig{
 							Username:      "user",
 							Password:      "pass",
 							Auth:          "authstr",
@@ -230,8 +234,8 @@ func Test_toRegistriesConfig(t *testing.T) {
 					},
 				},
 			}},
-			want: &config.RegistriesConfig{
-				Mirrors: map[string]config.RegistryMirrorConfig{
+			want: &core.RegistriesConfig{
+				Mirrors: map[string]core.RegistryMirrorConfig{
 					"docker.io": {
 						Endpoints:    []string{"https://mirror1", "https://mirror2"},
 						OverridePath: false,
@@ -243,10 +247,10 @@ func Test_toRegistriesConfig(t *testing.T) {
 						SkipFallback: false,
 					},
 				},
-				Config: map[string]config.RegistryConfig{
+				Config: map[string]core.RegistryConfig{
 					"docker.io": {
 						TLS: nil,
-						Auth: &config.RegistryAuthConfig{
+						Auth: &core.RegistryAuthConfig{
 							Username:      "dockeruser",
 							Password:      "dockerpass",
 							Auth:          "docker-auth",
@@ -254,7 +258,7 @@ func Test_toRegistriesConfig(t *testing.T) {
 						},
 					},
 					"gcr.io": {
-						TLS: &config.RegistryTLSConfig{
+						TLS: &core.RegistryTLSConfig{
 							ClientIdentity:     nil,
 							CA:                 "gcr-ca",
 							InsecureSkipVerify: false,
@@ -281,14 +285,14 @@ func Test_toInlineManifests(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want []config.ClusterInlineManifest
+		want []core.ClusterInlineManifest
 	}{
 		{
 			name: "empty manifests",
 			args: args{
 				manifests: []core_config.ClusterInlineManifest{},
 			},
-			want: []config.ClusterInlineManifest{},
+			want: []core.ClusterInlineManifest{},
 		},
 		{
 			name: "single manifest",
@@ -303,7 +307,7 @@ metadata:
 					},
 				},
 			},
-			want: []config.ClusterInlineManifest{
+			want: []core.ClusterInlineManifest{
 				{
 					Name: "namespace-ci",
 					Contents: `apiVersion: v1
@@ -339,7 +343,7 @@ data:
 					},
 				},
 			},
-			want: []config.ClusterInlineManifest{
+			want: []core.ClusterInlineManifest{
 				{
 					Name: "namespace-prod",
 					Contents: `apiVersion: v1
@@ -395,7 +399,7 @@ spec:
 					},
 				},
 			},
-			want: []config.ClusterInlineManifest{
+			want: []core.ClusterInlineManifest{
 				{
 					Name: "deployment-app",
 					Contents: `apiVersion: apps/v1
@@ -442,7 +446,7 @@ data:
 					},
 				},
 			},
-			want: []config.ClusterInlineManifest{
+			want: []core.ClusterInlineManifest{
 				{
 					Name: "secret-config",
 					Contents: `apiVersion: v1
@@ -466,12 +470,56 @@ data:
 	}
 }
 
-func TestNewNodeConfiguration(t *testing.T) {
+func Test_toCNIConfig(t *testing.T) {
 	tests := []struct {
-		name    string
-		args    *NodeConfigurationArgs
-		verify  func(t *testing.T, cfg *config.TalosConfig)
-		wantErr bool
+		name string
+		cni  *core_config.CNIConfig
+		want *core.CNIConfig
+	}{
+		{
+			name: "nil input",
+			cni:  nil,
+			want: nil,
+		},
+		{
+			name: "valid config",
+			cni: &core_config.CNIConfig{
+				Name: "custom-cni",
+				URLs: []string{"https://example.com/cni.yaml"},
+			},
+			want: &core.CNIConfig{
+				Name: "custom-cni",
+				URLs: []string{"https://example.com/cni.yaml"},
+			},
+		},
+		{
+			name: "empty urls",
+			cni: &core_config.CNIConfig{
+				Name: "none",
+				URLs: []string{},
+			},
+			want: &core.CNIConfig{
+				Name: "none",
+				URLs: []string{},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := toCNIConfig(tt.cni); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("toCNIConfig() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_newMainTalosConfig(t *testing.T) {
+	tests := []struct {
+		name string // description of this test case
+		// Named input parameters for target function.
+		args   *NodeConfigurationArgs
+		want   *core.TalosConfig
+		verify func(t *testing.T, cfg *core.TalosConfig)
 	}{
 		{
 			name: "basic controlplane",
@@ -480,7 +528,7 @@ func TestNewNodeConfiguration(t *testing.T) {
 				Subnet:         "10.0.0.0/24",
 				PodSubnets:     "10.244.0.0/16",
 			},
-			verify: func(t *testing.T, cfg *config.TalosConfig) {
+			verify: func(t *testing.T, cfg *core.TalosConfig) {
 				assert.Equal(t, "controlplane", cfg.Machine.Type)
 				assert.Equal(t, []string{"10.0.0.0/24"}, cfg.Machine.Kubelet.NodeIP.ValidSubnets)
 				assert.Equal(t, []string{"10.244.0.0/16"}, cfg.Cluster.Network.PodSubnets)
@@ -495,7 +543,7 @@ func TestNewNodeConfiguration(t *testing.T) {
 				Subnet:         "10.0.1.0/24",
 				PodSubnets:     "10.244.0.0/16",
 			},
-			verify: func(t *testing.T, cfg *config.TalosConfig) {
+			verify: func(t *testing.T, cfg *core.TalosConfig) {
 				assert.Equal(t, "worker", cfg.Machine.Type)
 			},
 		},
@@ -511,7 +559,7 @@ func TestNewNodeConfiguration(t *testing.T) {
 				SecretboxEncryptionSecret:      stringPtr("secret-key"),
 				AllowSchedulingOnControlPlanes: true,
 			},
-			verify: func(t *testing.T, cfg *config.TalosConfig) {
+			verify: func(t *testing.T, cfg *core.TalosConfig) {
 				assert.Equal(t, "example.com", cfg.Cluster.Network.DNSDomain)
 				assert.Equal(t, []string{"10.96.0.0/12"}, cfg.Cluster.Network.ServiceSubnets)
 				assert.Equal(t, "8760h", cfg.Cluster.AdminKubeconfig.CertLifetime)
@@ -529,7 +577,7 @@ func TestNewNodeConfiguration(t *testing.T) {
 				ExtraManifests:                []string{"https://example.com/manifest.yaml"},
 				EnableHetznerCCMExtraManifest: true,
 			},
-			verify: func(t *testing.T, cfg *config.TalosConfig) {
+			verify: func(t *testing.T, cfg *core.TalosConfig) {
 				assert.Contains(t, cfg.Cluster.ExtraManifests, "https://example.com/manifest.yaml")
 				assert.Len(t, cfg.Cluster.ExternalCloudProvider.Manifests, 2)
 				assert.Contains(t, cfg.Cluster.ExternalCloudProvider.Manifests[0], "ccm-networks.yaml")
@@ -543,9 +591,9 @@ func TestNewNodeConfiguration(t *testing.T) {
 				PodSubnets:            "10.244.0.0/16",
 				EnableLonghornSupport: true,
 			},
-			verify: func(t *testing.T, cfg *config.TalosConfig) {
+			verify: func(t *testing.T, cfg *core.TalosConfig) {
 				assert.Equal(t, "1024", cfg.Machine.Sysctls["vm.nr_hugepages"])
-				assert.Contains(t, cfg.Machine.Kernel.Modules, config.KernelModuleConfig{Name: "nvme_tcp"})
+				assert.Contains(t, cfg.Machine.Kernel.Modules, core.KernelModuleConfig{Name: "nvme_tcp"})
 				found := false
 				for _, mount := range cfg.Machine.Kubelet.ExtraMounts {
 					if mount.Destination == "/var/lib/longhorn" {
@@ -564,7 +612,7 @@ func TestNewNodeConfiguration(t *testing.T) {
 				PodSubnets:          "10.244.0.0/16",
 				LocalStorageFolders: []string{"/data/local"},
 			},
-			verify: func(t *testing.T, cfg *config.TalosConfig) {
+			verify: func(t *testing.T, cfg *core.TalosConfig) {
 				found := false
 				for _, mount := range cfg.Machine.Kubelet.ExtraMounts {
 					if mount.Destination == "/data/local" {
@@ -585,7 +633,7 @@ func TestNewNodeConfiguration(t *testing.T) {
 					{Key: "key", Value: "val", Effect: "NoSchedule"},
 				},
 			},
-			verify: func(t *testing.T, cfg *config.TalosConfig) {
+			verify: func(t *testing.T, cfg *core.TalosConfig) {
 				assert.Equal(t, "key=val:NoSchedule", cfg.Machine.Kubelet.ExtraArgs["register-with-taints"])
 			},
 		},
@@ -601,13 +649,84 @@ func TestNewNodeConfiguration(t *testing.T) {
 					},
 				},
 			},
-			verify: func(t *testing.T, cfg *config.TalosConfig) {
+			verify: func(t *testing.T, cfg *core.TalosConfig) {
 				assert.NotNil(t, cfg.Machine.Registries)
 				assert.Contains(t, cfg.Machine.Registries.Mirrors, "docker.io")
 			},
 		},
 	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := newMainTalosConfig(tt.args)
+			if tt.verify != nil {
+				tt.verify(t, got)
+			}
+		})
+	}
+}
 
+func TestNewNodeConfiguration(t *testing.T) {
+	tests := []struct {
+		name    string
+		args    *NodeConfigurationArgs
+		wantLen int
+		wantErr bool
+		verify  func(t *testing.T, configs []string)
+	}{
+		{
+			name: "returns all config files",
+			args: &NodeConfigurationArgs{
+				ServerNodeType: meta.ControlPlaneNode,
+				Subnet:         "10.0.0.0/24",
+				PodSubnets:     "10.244.0.0/16",
+			},
+			wantLen: 1,
+			wantErr: false,
+			verify: func(t *testing.T, configs []string) {
+				var talosConfig core.TalosConfig
+				err := yaml.Unmarshal([]byte(configs[0]), &talosConfig)
+				assert.NoError(t, err, "failed to unmarshal TalosConfig")
+				assert.Equal(t, "controlplane", talosConfig.Machine.Type)
+			},
+		},
+		{
+			name: "with disk encryption",
+			args: &NodeConfigurationArgs{
+				ServerNodeType: meta.ControlPlaneNode,
+				Subnet:         "10.0.0.0/24",
+				PodSubnets:     "10.244.0.0/16",
+				DiskEncryption: &core_config.DiskEncryptionConfig{
+					EncryptState:     true,
+					EncryptEphemeral: true,
+					Keys: []core_config.EncryptionKeyConfig{
+						{
+							Slot:   0,
+							NodeID: &core_config.EncryptionKeyNodeID{},
+						},
+					},
+				},
+			},
+			wantLen: 3,
+			wantErr: false,
+			verify: func(t *testing.T, configs []string) {
+				// Verify STATE volume config
+				var stateConfig volume.VolumeConfig
+				err := yaml.Unmarshal([]byte(configs[1]), &stateConfig)
+				assert.NoError(t, err)
+				assert.Equal(t, "STATE", stateConfig.Name)
+				assert.Equal(t, "luks2", stateConfig.Encryption.Provider)
+				assert.Len(t, stateConfig.Encryption.Keys, 1)
+				assert.NotNil(t, stateConfig.Encryption.Keys[0].NodeID)
+
+				// Verify EPHEMERAL volume config
+				var ephemeralConfig volume.VolumeConfig
+				err = yaml.Unmarshal([]byte(configs[2]), &ephemeralConfig)
+				assert.NoError(t, err)
+				assert.Equal(t, "EPHEMERAL", ephemeralConfig.Name)
+				assert.Equal(t, "luks2", ephemeralConfig.Encryption.Provider)
+			},
+		},
+	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := NewNodeConfiguration(tt.args)
@@ -616,60 +735,10 @@ func TestNewNodeConfiguration(t *testing.T) {
 				return
 			}
 			if !tt.wantErr {
-				require.Len(t, got, 1)
-				var cfg config.TalosConfig
-				err := yaml.Unmarshal([]byte(got[0]), &cfg)
-				require.NoError(t, err)
+				assert.Len(t, got, tt.wantLen)
 				if tt.verify != nil {
-					tt.verify(t, &cfg)
+					tt.verify(t, got)
 				}
-			}
-		})
-	}
-}
-
-func stringPtr(s string) *string {
-	return &s
-}
-
-func Test_toCNIConfig(t *testing.T) {
-	tests := []struct {
-		name string
-		cni  *core_config.CNIConfig
-		want *config.CNIConfig
-	}{
-		{
-			name: "nil input",
-			cni:  nil,
-			want: nil,
-		},
-		{
-			name: "valid config",
-			cni: &core_config.CNIConfig{
-				Name: "custom-cni",
-				URLs: []string{"https://example.com/cni.yaml"},
-			},
-			want: &config.CNIConfig{
-				Name: "custom-cni",
-				URLs: []string{"https://example.com/cni.yaml"},
-			},
-		},
-		{
-			name: "empty urls",
-			cni: &core_config.CNIConfig{
-				Name: "none",
-				URLs: []string{},
-			},
-			want: &config.CNIConfig{
-				Name: "none",
-				URLs: []string{},
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := toCNIConfig(tt.cni); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("toCNIConfig() = %v, want %v", got, tt.want)
 			}
 		})
 	}

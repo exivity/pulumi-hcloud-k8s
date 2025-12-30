@@ -34,6 +34,7 @@ This **experimental** project comes with pre-configured Kubernetes components th
 ### **Security & Networking**
 
 - **🔒 etcd Encryption at Rest:** Optional Kubernetes secrets encryption using secretbox encryption
+- **💾 Disk Encryption:** Optional LUKS encryption for STATE and EPHEMERAL partitions to secure data at rest
 - **🌐 Private Networking:** VPC with custom subnets, private IPs, and secure inter-node communication
 - **🔧 Custom Registry Support:** Configure private container registries with authentication and TLS
 

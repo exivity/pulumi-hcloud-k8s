@@ -6,7 +6,8 @@ import (
 
 	core_config "github.com/exivity/pulumi-hcloud-k8s/pkg/config"
 	"github.com/exivity/pulumi-hcloud-k8s/pkg/hetzner/meta"
-	"github.com/exivity/pulumi-hcloud-k8s/pkg/talos/config"
+	"github.com/exivity/pulumi-hcloud-k8s/pkg/talos/config/core"
+	"github.com/exivity/pulumi-hcloud-k8s/pkg/talos/config/volume"
 )
 
 type NodeConfigurationArgs struct {
@@ -55,12 +56,36 @@ type NodeConfigurationArgs struct {
 	EnableKubeSpan bool
 	// CNI is the CNI configuration for the cluster.
 	CNI *core_config.CNIConfig
+	// DiskEncryption configures disk encryption for system partitions.
+	DiskEncryption *core_config.DiskEncryptionConfig
 }
 
-func NewNodeConfiguration(args *NodeConfigurationArgs) ([]string, error) { //nolint:funlen // TODO: refactor
-	var adminKubeconfig *config.AdminKubeconfigConfig
+func NewNodeConfiguration(args *NodeConfigurationArgs) ([]string, error) {
+	nodeConfig := newMainTalosConfig(args)
+	nodeConfigYAML, err := nodeConfig.YAML()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate Talos config YAML: %w", err)
+	}
+
+	configs := []string{nodeConfigYAML}
+
+	volumeConfigs := newVolumeConfigs(args)
+
+	for _, vc := range volumeConfigs {
+		vcYAML, err := vc.YAML()
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate Volume config YAML: %w", err)
+		}
+		configs = append(configs, vcYAML)
+	}
+
+	return configs, nil
+}
+
+func newMainTalosConfig(args *NodeConfigurationArgs) *core.TalosConfig { //nolint:funlen // lengthy function due to config mapping
+	var adminKubeconfig *core.AdminKubeconfigConfig
 	if args.CertLifetime != nil {
-		adminKubeconfig = &config.AdminKubeconfigConfig{
+		adminKubeconfig = &core.AdminKubeconfigConfig{
 			CertLifetime: *args.CertLifetime,
 		}
 	}
@@ -73,7 +98,7 @@ func NewNodeConfiguration(args *NodeConfigurationArgs) ([]string, error) { //nol
 		}
 	}
 
-	clusterNetwork := &config.ClusterNetworkConfig{
+	clusterNetwork := &core.ClusterNetworkConfig{
 		PodSubnets: []string{args.PodSubnets},
 		CNI:        toCNIConfig(args.CNI),
 	}
@@ -86,14 +111,14 @@ func NewNodeConfiguration(args *NodeConfigurationArgs) ([]string, error) { //nol
 		clusterNetwork.ServiceSubnets = []string{*args.ServiceSubnet}
 	}
 
-	configPatch := config.TalosConfig{
-		Cluster: &config.ClusterConfig{
-			ExternalCloudProvider: &config.ExternalCloudProviderConfig{
+	configPatch := core.TalosConfig{
+		Cluster: &core.ClusterConfig{
+			ExternalCloudProvider: &core.ExternalCloudProviderConfig{
 				Enabled:   true,
 				Manifests: ccmExtraManifests,
 			},
 			Network: clusterNetwork,
-			Discovery: &config.ClusterDiscoveryConfig{
+			Discovery: &core.ClusterDiscoveryConfig{
 				Enabled: true, // Enable discovery, required for network encryption via kube span
 			},
 			AllowSchedulingOnControlPlanes: args.AllowSchedulingOnControlPlanes,
@@ -102,24 +127,24 @@ func NewNodeConfiguration(args *NodeConfigurationArgs) ([]string, error) { //nol
 			ExtraManifestHeaders:           args.ExtraManifestHeaders,
 			InlineManifests:                toInlineManifests(args.InlineManifests),
 		},
-		Machine: &config.MachineConfig{
+		Machine: &core.MachineConfig{
 			Type:            string(args.ServerNodeType),
 			NodeLabels:      args.NodeLabels,
 			NodeAnnotations: args.NodeAnnotations,
-			Network: &config.NetworkConfig{
-				Interfaces: []config.Device{
+			Network: &core.NetworkConfig{
+				Interfaces: []core.Device{
 					{
 						Interface: "eth1",
 						DHCP:      true,
 					},
 				},
 				Nameservers: args.Nameservers,
-				KubeSpan: &config.NetworkKubeSpan{
+				KubeSpan: &core.NetworkKubeSpan{
 					Enabled: args.EnableKubeSpan, // Enable kube span (wireguard)
 				},
 			},
-			Kubelet: &config.KubeletConfig{
-				NodeIP: &config.KubeletNodeIPConfig{
+			Kubelet: &core.KubeletConfig{
+				NodeIP: &core.KubeletNodeIPConfig{
 					ValidSubnets: []string{
 						args.Subnet,
 					},
@@ -131,13 +156,13 @@ func NewNodeConfiguration(args *NodeConfigurationArgs) ([]string, error) { //nol
 					// See: https://www.talos.dev/v1.11/kubernetes-guides/configuration/deploy-metrics-server/
 					"rotate-server-certificates": "true",
 				},
-				ExtraMounts: []config.ExtraMount{},
+				ExtraMounts: []core.ExtraMount{},
 			},
 		},
 	}
 
 	for _, folder := range args.LocalStorageFolders {
-		configPatch.Machine.Kubelet.ExtraMounts = append(configPatch.Machine.Kubelet.ExtraMounts, config.ExtraMount{
+		configPatch.Machine.Kubelet.ExtraMounts = append(configPatch.Machine.Kubelet.ExtraMounts, core.ExtraMount{
 			Destination: folder,
 			Type:        "bind",
 			Source:      folder,
@@ -156,15 +181,15 @@ func NewNodeConfiguration(args *NodeConfigurationArgs) ([]string, error) { //nol
 			"vm.nr_hugepages": "1024",
 		}
 
-		configPatch.Machine.Kernel = &config.KernelConfig{
-			Modules: []config.KernelModuleConfig{
+		configPatch.Machine.Kernel = &core.KernelConfig{
+			Modules: []core.KernelModuleConfig{
 				{Name: "nvme_tcp"},
 				{Name: "vfio_pci"},
 				{Name: "uio_pci_generic"},
 			},
 		}
 
-		configPatch.Machine.Kubelet.ExtraMounts = append(configPatch.Machine.Kubelet.ExtraMounts, config.ExtraMount{
+		configPatch.Machine.Kubelet.ExtraMounts = append(configPatch.Machine.Kubelet.ExtraMounts, core.ExtraMount{
 			Destination: "/var/lib/longhorn",
 			Type:        "bind",
 			Source:      "/var/lib/longhorn",
@@ -174,22 +199,15 @@ func NewNodeConfiguration(args *NodeConfigurationArgs) ([]string, error) { //nol
 
 	configPatch.Machine.Registries = toRegistriesConfig(args.Registries)
 
-	configPatchYAML, err := configPatch.YAML()
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate Talos config YAML: %w", err)
-	}
-
-	return []string{
-		configPatchYAML,
-	}, nil
+	return &configPatch
 }
 
-func toCNIConfig(cni *core_config.CNIConfig) *config.CNIConfig {
+func toCNIConfig(cni *core_config.CNIConfig) *core.CNIConfig {
 	if cni == nil {
 		return nil
 	}
 
-	return &config.CNIConfig{
+	return &core.CNIConfig{
 		Name: cni.Name,
 		URLs: cni.URLs,
 	}
@@ -206,18 +224,18 @@ func toTalosTaints(taints []core_config.Taint) string {
 	return t
 }
 
-func toRegistriesConfig(args *core_config.RegistriesConfig) *config.RegistriesConfig {
+func toRegistriesConfig(args *core_config.RegistriesConfig) *core.RegistriesConfig {
 	if args == nil {
 		return nil
 	}
 
-	out := &config.RegistriesConfig{
-		Mirrors: map[string]config.RegistryMirrorConfig{},
-		Config:  map[string]config.RegistryConfig{},
+	out := &core.RegistriesConfig{
+		Mirrors: map[string]core.RegistryMirrorConfig{},
+		Config:  map[string]core.RegistryConfig{},
 	}
 
 	for key, mirror := range args.Mirrors {
-		out.Mirrors[key] = config.RegistryMirrorConfig{
+		out.Mirrors[key] = core.RegistryMirrorConfig{
 			Endpoints:    mirror.Endpoints,
 			OverridePath: mirror.OverridePath,
 			SkipFallback: mirror.SkipFallback,
@@ -225,26 +243,26 @@ func toRegistriesConfig(args *core_config.RegistriesConfig) *config.RegistriesCo
 	}
 
 	for key, registry := range args.Config {
-		var tls *config.RegistryTLSConfig
+		var tls *core.RegistryTLSConfig
 		if registry.TLS != nil {
-			var clientIdentity *config.PEMEncodedCertificateAndKey
+			var clientIdentity *core.PEMEncodedCertificateAndKey
 			if registry.TLS.ClientIdentity != nil {
-				clientIdentity = &config.PEMEncodedCertificateAndKey{
+				clientIdentity = &core.PEMEncodedCertificateAndKey{
 					CRT: registry.TLS.ClientIdentity.CRT,
 					Key: registry.TLS.ClientIdentity.Key,
 				}
 			}
 
-			tls = &config.RegistryTLSConfig{
+			tls = &core.RegistryTLSConfig{
 				ClientIdentity:     clientIdentity,
 				CA:                 registry.TLS.CA,
 				InsecureSkipVerify: registry.TLS.InsecureSkipVerify,
 			}
 		}
 
-		var auth *config.RegistryAuthConfig
+		var auth *core.RegistryAuthConfig
 		if registry.Auth != nil {
-			auth = &config.RegistryAuthConfig{
+			auth = &core.RegistryAuthConfig{
 				Username:      registry.Auth.Username,
 				Password:      registry.Auth.Password,
 				Auth:          registry.Auth.Auth,
@@ -252,7 +270,7 @@ func toRegistriesConfig(args *core_config.RegistriesConfig) *config.RegistriesCo
 			}
 		}
 
-		out.Config[key] = config.RegistryConfig{
+		out.Config[key] = core.RegistryConfig{
 			TLS:  tls,
 			Auth: auth,
 		}
@@ -266,12 +284,55 @@ func toRegistriesConfig(args *core_config.RegistriesConfig) *config.RegistriesCo
 	return out
 }
 
-func toInlineManifests(manifests []core_config.ClusterInlineManifest) []config.ClusterInlineManifest {
-	out := make([]config.ClusterInlineManifest, len(manifests))
+func toInlineManifests(manifests []core_config.ClusterInlineManifest) []core.ClusterInlineManifest {
+	out := make([]core.ClusterInlineManifest, len(manifests))
 	for i, manifest := range manifests {
-		out[i] = config.ClusterInlineManifest{
+		out[i] = core.ClusterInlineManifest{
 			Name:     manifest.Name,
 			Contents: manifest.Contents,
+		}
+	}
+	return out
+}
+
+func newVolumeConfigs(args *NodeConfigurationArgs) []*volume.VolumeConfig {
+	if args.DiskEncryption == nil {
+		return nil
+	}
+
+	var configs []*volume.VolumeConfig
+
+	if args.DiskEncryption.EncryptState {
+		configs = append(configs, &volume.VolumeConfig{
+			Name: "STATE",
+			Encryption: &volume.EncryptionSpec{
+				Provider: "luks2",
+				Keys:     toEncryptionKeys(args.DiskEncryption.Keys),
+			},
+		})
+	}
+
+	if args.DiskEncryption.EncryptEphemeral {
+		configs = append(configs, &volume.VolumeConfig{
+			Name: "EPHEMERAL",
+			Encryption: &volume.EncryptionSpec{
+				Provider: "luks2",
+				Keys:     toEncryptionKeys(args.DiskEncryption.Keys),
+			},
+		})
+	}
+
+	return configs
+}
+
+func toEncryptionKeys(keys []core_config.EncryptionKeyConfig) []volume.EncryptionKey {
+	out := make([]volume.EncryptionKey, len(keys))
+	for i, key := range keys {
+		out[i] = volume.EncryptionKey{
+			Slot: key.Slot,
+		}
+		if key.NodeID != nil {
+			out[i].NodeID = &volume.EncryptionKeyNodeID{}
 		}
 	}
 	return out

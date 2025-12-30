@@ -287,7 +287,7 @@ func DeployControlPlanePools(ctx *pulumi.Context, cfg *config.PulumiConfig, imag
 	cpPools := []*NodePool{}
 
 	for _, pool := range cfg.ControlPlane.NodePools {
-		cpNodeConfigurationBootstrap, err := core.NewNodeConfiguration(&core.NodeConfigurationArgs{ //nolint:dupl // TODO: refactor
+		cpNodeConfigurationBootstrap, err := core.NewNodeConfiguration(&core.NodeConfigurationArgs{
 			ServerNodeType:                 meta.ControlPlaneNode,
 			Subnet:                         cfg.Network.Subnet,
 			PodSubnets:                     cfg.Network.PodSubnets,
@@ -309,12 +309,13 @@ func DeployControlPlanePools(ctx *pulumi.Context, cfg *config.PulumiConfig, imag
 			EnableHetznerCCMExtraManifest:  cfg.Talos.EnableHetznerCCMExtraManifest,
 			EnableKubeSpan:                 cfg.Talos.EnableKubeSpan,
 			CNI:                            cfg.Talos.CNI,
+			DiskEncryption:                 cfg.Talos.DiskEncryption,
 		})
 		if err != nil {
 			return nil, err
 		}
 
-		cpNodeConfiguration, err := core.NewNodeConfiguration(&core.NodeConfigurationArgs{ //nolint:dupl // TODO: refactor
+		cpNodeConfiguration, err := core.NewNodeConfiguration(&core.NodeConfigurationArgs{
 			ServerNodeType:                 meta.ControlPlaneNode,
 			Subnet:                         cfg.Network.Subnet,
 			PodSubnets:                     cfg.Network.PodSubnets,
@@ -399,6 +400,7 @@ func DeployWorkerPools(ctx *pulumi.Context, cfg *config.PulumiConfig, images *im
 			Registries:            cfg.Talos.Registries,
 			EnableKubeSpan:        cfg.Talos.EnableKubeSpan,
 			CNI:                   cfg.Talos.CNI,
+			DiskEncryption:        cfg.Talos.DiskEncryption,
 		})
 		if err != nil {
 			return nil, err

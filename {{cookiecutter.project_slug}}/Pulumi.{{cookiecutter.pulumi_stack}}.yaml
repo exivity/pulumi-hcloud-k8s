@@ -2,6 +2,12 @@ config:
   hcloud-k8s:talos:
     image_version: "{{cookiecutter.talos_version}}"
     kubernetes_version: "{{cookiecutter.kubernetes_version}}"
+    disk_encryption:
+      encrypt_state: true
+      encrypt_ephemeral: true
+      keys:
+        - slot: 0
+          node_id: {}
   hcloud-k8s:network:
     nameservers:
       # Quad9 DNS

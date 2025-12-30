@@ -2,6 +2,12 @@ config:
   hcloud-k8s:talos:
     image_version: v1.12.0
     kubernetes_version: "1.35.0"
+    disk_encryption:
+      encrypt_state: true
+      encrypt_ephemeral: true
+      keys:
+        - slot: 0
+          node_id: {}
     enable_longhorn: true
   hcloud-k8s:network:
     nameservers:

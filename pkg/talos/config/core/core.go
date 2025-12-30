@@ -1,4 +1,4 @@
-package config
+package core
 
 import (
 	"fmt"
@@ -41,7 +41,6 @@ type MachineConfig struct {
 	Sysctls                  map[string]string            `yaml:"sysctls,omitempty"` // sysctl
 	Sysfs                    map[string]string            `yaml:"sysfs,omitempty"`
 	Registries               *RegistriesConfig            `yaml:"registries,omitempty"`
-	SystemDiskEncryption     *SystemDiskEncryptionConfig  `yaml:"systemDiskEncryption,omitempty"`
 	Features                 *FeaturesConfig              `yaml:"features,omitempty"`
 	Udev                     *UdevConfig                  `yaml:"udev,omitempty"`
 	Logging                  *LoggingConfig               `yaml:"logging,omitempty"`
@@ -383,49 +382,6 @@ type RegistryAuthConfig struct {
 	Password      string `yaml:"password,omitempty"`
 	Auth          string `yaml:"auth,omitempty"`
 	IdentityToken string `yaml:"identityToken,omitempty"`
-}
-
-// SystemDiskEncryptionConfig configures ephemeral/state partition encryption.
-type SystemDiskEncryptionConfig struct {
-	State     *EncryptionConfig `yaml:"state,omitempty"`
-	Ephemeral *EncryptionConfig `yaml:"ephemeral,omitempty"`
-}
-
-// EncryptionConfig is partition-level encryption settings.
-type EncryptionConfig struct {
-	Provider  string          `yaml:"provider,omitempty"`
-	Keys      []EncryptionKey `yaml:"keys,omitempty"`
-	Cipher    string          `yaml:"cipher,omitempty"`
-	KeySize   uint            `yaml:"keySize,omitempty"`
-	BlockSize uint64          `yaml:"blockSize,omitempty"`
-	Options   []string        `yaml:"options,omitempty"`
-}
-
-// EncryptionKey is one key entry for disk encryption.
-type EncryptionKey struct {
-	Static *EncryptionKeyStatic `yaml:"static,omitempty"`
-	NodeID *EncryptionKeyNodeID `yaml:"nodeID,omitempty"`
-	KMS    *EncryptionKeyKMS    `yaml:"kms,omitempty"`
-	Slot   int                  `yaml:"slot,omitempty"`
-	TPM    *EncryptionKeyTPM    `yaml:"tpm,omitempty"`
-}
-
-// EncryptionKeyStatic is a stored passphrase.
-type EncryptionKeyStatic struct {
-	Passphrase string `yaml:"passphrase"`
-}
-
-// EncryptionKeyNodeID is derived from node UUID/PartitionLabel.
-type EncryptionKeyNodeID struct{}
-
-// EncryptionKeyKMS is sealed/unsealed by a KMS service.
-type EncryptionKeyKMS struct {
-	Endpoint string `yaml:"endpoint,omitempty"`
-}
-
-// EncryptionKeyTPM is sealed/unsealed by a TPM.
-type EncryptionKeyTPM struct {
-	CheckSecurebootStatusOnEnroll bool `yaml:"checkSecurebootStatusOnEnroll,omitempty"`
 }
 
 // FeaturesConfig toggles RBAC, stableHostname, kubernetesTalosAPIAccess, etc.
