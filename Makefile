@@ -3,6 +3,8 @@ PWD = $(shell pwd)
 
 COOKIECUTTER_TEST_OUTPUT = my_awesome_project
 
+.PHONY: pulumi-vars k9s kubeconfig talosconfig talosctl kubectl out download tidy fmt lint test test-cookiecutter govulncheck clean manifests manifests-clean manifests-help help
+
 # Pulumi related variables
 pulumi-vars:
 	$(eval STACK_NAME=$(shell pulumi stack --show-name))
@@ -66,6 +68,15 @@ govulncheck: ## Vulnerability detection using govulncheck
 
 clean: ## Cleans up everything
 	@rm -rf bin out
+
+manifests: manifests-clean ## Build all Talos extra manifests
+	@$(MAKE) -C manifests build
+
+manifests-clean: ## Clean all generated manifests
+	@$(MAKE) -C manifests clean
+
+manifests-help: ## Show manifest build help
+	@$(MAKE) -C manifests help
 
 help: ## Shows the help
 	@echo 'Usage: make <OPTIONS> ... <TARGETS>'

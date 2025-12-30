@@ -13,6 +13,9 @@ out/
 # cookiecutter output
 my_awesome_project/
 
+# extra manifest build files
+manifests/build/
+
 # Talos
 controlplane.yaml
 worker.yaml

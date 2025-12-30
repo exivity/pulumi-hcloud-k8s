@@ -1,0 +1,11 @@
+# Hetzner Cloud Controller Manager Values
+# This file contains common configuration for Hetzner CCM deployments
+
+kind: DaemonSet
+replicaCount: 0 # Set to 0 to help prevent Deployment template rendering
+nodeSelector:
+  node-role.kubernetes.io/control-plane: ""
+additionalTolerations:
+  - key: "node-role.kubernetes.io/control-plane"
+    operator: "Equal"
+    effect: "NoSchedule"
