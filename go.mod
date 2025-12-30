@@ -7,7 +7,7 @@ tool github.com/golangci/golangci-lint/v2/cmd/golangci-lint
 require (
 	dario.cat/mergo v1.0.2
 	github.com/exivity/pulumi-hcloud-upload-image v0.0.4
-	github.com/exivity/pulumiconfig v0.3.1
+	github.com/exivity/pulumiconfig v0.3.2
 	github.com/go-playground/validator/v10 v10.30.0
 	github.com/pulumi/pulumi-command/sdk v1.1.3
 	github.com/pulumi/pulumi-hcloud/sdk v1.29.0
