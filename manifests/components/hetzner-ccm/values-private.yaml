@@ -1,0 +1,7 @@
+# Hetzner Cloud Controller Manager Values - Private Network Configuration
+# This file extends the base values.yaml for private network deployments
+
+# Networking configuration for private network
+networking:
+  enabled: true
+  clusterCIDR: "172.20.0.0/16"
