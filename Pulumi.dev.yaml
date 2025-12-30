@@ -2,6 +2,13 @@ config:
   hcloud-k8s:talos:
     image_version: v1.12.0
     kubernetes_version: "1.35.0"
+    image_generation_location: hel1
+    disk_encryption:
+      encrypt_state: true
+      encrypt_ephemeral: true
+      keys:
+        - slot: 0
+          node_id: {}
   hcloud-k8s:network:
     nameservers:
       # Quad9 DNS
@@ -16,7 +23,7 @@ config:
     node_pools:
       - count: 1
         server_size: cx23
-        region: fsn1
+        region: hel1
       - count: 1
         server_size: cx23
         region: nbg1
@@ -27,7 +34,7 @@ config:
     node_pools:
       - name: worker
         count: 1
-        server_size: cx43
+        server_size: cx33
         region: hel1
         auto_scaler:
           min_count: 1
