@@ -14,9 +14,8 @@ on:
     paths-ignore: ["docs/**"]
 
 jobs:
-  test:
+  lint:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -26,17 +25,45 @@ jobs:
         with:
           go-version-file: ./go.mod
 
-      - name: Downloads the dependencies
-        run: make download
-
       - name: Lints all code with golangci-lint
         run: make lint
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Install Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: ./go.mod
 
       - name: Runs all tests
         run: make test
 
+  cookiecutter:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Install Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: ./go.mod
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+          cache: "pip"
+
       - name: Install Cookiecutter
         run: pip install cookiecutter
+
+      - name: Install Pulumi
+        uses: pulumi/actions@v6
 
       - name: Login to Pulumi local backend
         run: pulumi login --local
