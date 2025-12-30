@@ -50,6 +50,24 @@ jobs:
       - name: Runs all tests
         run: make test
 
+  manifests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Build all manifests
+        run: make manifests
+
+      - name: Verify manifests were generated
+        run: |
+          test -f extra-manifests/argocd-namespaced-stable.yaml
+          test -f extra-manifests/argocd-namespaced-ha.yaml
+          test -f extra-manifests/hetzner-ccm-public.yaml
+          test -f extra-manifests/hetzner-ccm-private.yaml
+          test -f extra-manifests/cilium-with-kube-proxy.yaml
+          test -f extra-manifests/cilium-with-kube-proxy-gateway.yaml
+
   cookiecutter:
     runs-on: ubuntu-latest
     steps:
