@@ -24,6 +24,7 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version-file: ./go.mod
+          cache: true
 
       - name: Lints all code with golangci-lint
         run: make lint
@@ -38,6 +39,7 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version-file: ./go.mod
+          cache: true
 
       - name: Runs all tests
         run: make test
@@ -52,6 +54,7 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version-file: ./go.mod
+          cache: true
 
       - name: Install Cookiecutter
         run: pip install cookiecutter
