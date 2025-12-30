@@ -287,7 +287,7 @@ func DeployControlPlanePools(ctx *pulumi.Context, cfg *config.PulumiConfig, imag
 	cpPools := []*NodePool{}
 
 	for _, pool := range cfg.ControlPlane.NodePools {
-		cpNodeConfigurationBootstrap, err := core.NewNodeConfiguration(&core.NodeConfigurationArgs{ //nolint:dupl // TODO: refactor
+		cpNodeConfigurationBootstrap, err := core.NewNodeConfiguration(&core.NodeConfigurationArgs{
 			ServerNodeType:                 meta.ControlPlaneNode,
 			Subnet:                         cfg.Network.Subnet,
 			PodSubnets:                     cfg.Network.PodSubnets,
@@ -315,7 +315,7 @@ func DeployControlPlanePools(ctx *pulumi.Context, cfg *config.PulumiConfig, imag
 			return nil, err
 		}
 
-		cpNodeConfiguration, err := core.NewNodeConfiguration(&core.NodeConfigurationArgs{ //nolint:dupl // TODO: refactor
+		cpNodeConfiguration, err := core.NewNodeConfiguration(&core.NodeConfigurationArgs{
 			ServerNodeType:                 meta.ControlPlaneNode,
 			Subnet:                         cfg.Network.Subnet,
 			PodSubnets:                     cfg.Network.PodSubnets,
