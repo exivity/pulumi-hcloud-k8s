@@ -73,6 +73,7 @@ type EncryptionKeyNodeID struct{}
 
 // EncryptionKeyConfig defines a single encryption key.
 type EncryptionKeyConfig struct {
+	// Slot is the LUKS2 keyslot index; LUKS2 supports keyslots 0–31.
 	Slot   int                  `json:"slot" validate:"min=0,max=31"`
 	NodeID *EncryptionKeyNodeID `json:"node_id,omitempty"`
 }
