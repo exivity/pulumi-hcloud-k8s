@@ -10,9 +10,6 @@ HELM_REPO_NAME = cilium
 HELM_REPO_URL = https://helm.cilium.io/
 HELM_CHART = cilium/cilium
 
-# Version
-CILIUM_VERSION = 1.18.0
-
 # Build directories for different variants
 BUILD_DIR_KUBE_PROXY = $(BUILD_DIR)/kube-proxy
 BUILD_DIR_KUBE_PROXY_GATEWAY = $(BUILD_DIR)/kube-proxy-gateway
@@ -43,7 +40,6 @@ template-kube-proxy: helm-repo-update
 	@mkdir -p $(BUILD_DIR_KUBE_PROXY)
 	@echo "Templating Cilium with kube-proxy (without GatewayAPI)..."
 	helm template $(RELEASE_NAME) $(HELM_CHART) \
-		--version $(CILIUM_VERSION) \
 		--namespace $(NAMESPACE) \
 		--create-namespace \
 		--set ipam.mode=kubernetes \
@@ -59,7 +55,6 @@ template-kube-proxy-gateway: helm-repo-update
 	@mkdir -p $(BUILD_DIR_KUBE_PROXY_GATEWAY)
 	@echo "Templating Cilium with kube-proxy and GatewayAPI..."
 	helm template $(RELEASE_NAME) $(HELM_CHART) \
-		--version $(CILIUM_VERSION) \
 		--namespace $(NAMESPACE) \
 		--create-namespace \
 		--set ipam.mode=kubernetes \
@@ -101,7 +96,6 @@ build-kube-proxy-gateway: template-kube-proxy-gateway
 install-kube-proxy: helm-repo-update
 	@echo "Installing Cilium with kube-proxy via Helm..."
 	helm upgrade --install $(RELEASE_NAME)-kube-proxy $(HELM_CHART) \
-		--version $(CILIUM_VERSION) \
 		--namespace $(NAMESPACE) \
 		--create-namespace \
 		--set ipam.mode=kubernetes \
@@ -115,7 +109,6 @@ install-kube-proxy: helm-repo-update
 install-kube-proxy-gateway: helm-repo-update
 	@echo "Installing Cilium with kube-proxy and GatewayAPI via Helm..."
 	helm upgrade --install $(RELEASE_NAME)-kube-proxy-gateway $(HELM_CHART) \
-		--version $(CILIUM_VERSION) \
 		--namespace $(NAMESPACE) \
 		--create-namespace \
 		--set ipam.mode=kubernetes \

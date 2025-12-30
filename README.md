@@ -134,6 +134,31 @@ After the first deployment completes (with failures), wait a few minutes for the
 pulumi up --yes
 ```
 
+### Generate Talos Extra Manifests (Optional)
+
+The project includes a manifest generator for creating Talos extra manifests that can be applied during cluster bootstrap. These manifests provide an alternative to Helm-based installations for core components:
+
+```sh
+# Generate all available manifests
+make manifests
+
+# View detailed help and available options
+make manifests-help
+
+# Clean generated manifests
+make manifests-clean
+```
+
+**Available Components:**
+
+- **ArgoCD**: GitOps continuous delivery tool (HA and stable variants)
+- **Hetzner CCM**: Cloud Controller Manager (public and private network variants)
+- **Cilium**: Advanced CNI with optional kube-proxy replacement
+
+**Generated manifests location:** `extra-manifests/`
+
+For detailed usage instructions, component-specific configuration, and integration with Pulumi, see the [manifests/README.md](manifests/README.md) documentation.
+
 ### Access Your Cluster
 
 Export kubeconfig and talosconfig:
