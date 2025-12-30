@@ -53,12 +53,6 @@ jobs:
         with:
           go-version-file: ./go.mod
 
-      - name: Install Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.x"
-          cache: "pip"
-
       - name: Install Cookiecutter
         run: pip install cookiecutter
 
