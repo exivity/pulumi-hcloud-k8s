@@ -26,6 +26,8 @@ type ControlplaneArgs struct {
 	Network *network.Network
 	// Location is the location to create the load balancer in
 	Location *string
+	// Protect the resource from accidental deletion
+	Protect bool
 }
 
 // Controlplane represents a control plane load balancer
@@ -63,7 +65,7 @@ func NewControlplane(ctx *pulumi.Context, name string, args *ControlplaneArgs, o
 	} else {
 		lbArgs.NetworkZone = args.Network.NetworkSubnet.NetworkZone
 	}
-	loadBalancer, err := hcloud.NewLoadBalancer(ctx, resourceName, lbArgs, opts...)
+	loadBalancer, err := hcloud.NewLoadBalancer(ctx, resourceName, lbArgs, append(opts, pulumi.Protect(args.Protect))...)
 	if err != nil {
 		return nil, err
 	}

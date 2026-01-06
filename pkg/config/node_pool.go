@@ -28,6 +28,9 @@ type NodePoolConfig struct {
 	Arch       image.CPUArchitecture `json:"arch" validate:"omitempty,oneof=amd64 arm64"`
 	Region     string                `json:"region" validate:"required"`
 
+	// Protect the resource from accidental deletion
+	Protect bool `json:"protect"`
+
 	Labels      map[string]string `json:"labels" validate:"dive,keys,excludes=/"`
 	Annotations map[string]string `json:"annotations" validate:"dive,keys,excludes=/"`
 	// Taints will only be applied, when a node is created. Update of taints is not supported by talos.

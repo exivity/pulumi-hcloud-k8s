@@ -15,6 +15,9 @@ type ControlPlaneConfig struct {
 	// guarantees provided by the load balancer.
 	DisableLoadBalancer bool `json:"disable_load_balancer"`
 
+	// Protect the resource from accidental deletion
+	Protect bool `json:"protect"`
+
 	// Hetzner load‑balancer type (e.g. "lb11")
 	LoadBalancerType string `json:"load_balancer_type" validate:"default=lb11"`
 
@@ -41,6 +44,9 @@ type ControlPlaneNodePoolConfig struct {
 
 	// Daily backups, kept 7 days
 	EnableBackup bool `json:"enable_backup"`
+
+	// Protect the resource from accidental deletion
+	Protect bool `json:"protect"`
 
 	Labels      map[string]string `json:"labels" validate:"dive,keys,excludes=/"`
 	Annotations map[string]string `json:"annotations" validate:"dive,keys,excludes=/"`
