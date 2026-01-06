@@ -5,26 +5,28 @@
 ARGOCD_NAMESPACE ?= argocd
 HETZNER_CCM_NAMESPACE ?= kube-system
 CILIUM_NAMESPACE ?= kube-system
+WEBSECURE_EXTERNAL_SECRETS_NAMESPACE ?= websecure-external-secrets
 
 # Component directories
 COMPONENTS_DIR = components
 ARGOCD_DIR = $(COMPONENTS_DIR)/argocd
 HETZNER_CCM_DIR = $(COMPONENTS_DIR)/hetzner-ccm
 CILIUM_DIR = $(COMPONENTS_DIR)/cilium
+WEBSECURE_EXTERNAL_SECRETS_DIR = $(COMPONENTS_DIR)/websecure-external-secrets
 
 # Output directory
 OUTPUT_DIR = extra-manifests
 
 # Component list
-COMPONENTS = argocd hetzner-ccm cilium
+COMPONENTS = argocd hetzner-ccm cilium websecure-external-secrets
 
-.PHONY: all build clean help list-components argocd hetzner-ccm hetzner-ccm-public hetzner-ccm-private cilium cilium-kube-proxy cilium-no-kube-proxy
+.PHONY: all build clean help list-components argocd hetzner-ccm hetzner-ccm-public hetzner-ccm-private cilium cilium-kube-proxy cilium-no-kube-proxy websecure-external-secrets
 
 # Default target builds all components
 all: build
 
 # Build all components
-build: argocd hetzner-ccm cilium
+build: argocd hetzner-ccm cilium websecure-external-secrets
 	@echo "✅ All components built successfully!"
 	@echo "📁 Manifests available in: $(OUTPUT_DIR)/"
 	@ls -lh $(OUTPUT_DIR)/
@@ -64,12 +66,18 @@ cilium-no-kube-proxy:
 	@echo "🏗️  Building Cilium without kube-proxy..."
 	@$(MAKE) -C $(CILIUM_DIR) build-no-kube-proxy NAMESPACE=$(CILIUM_NAMESPACE) OUTPUT_DIR=../../$(OUTPUT_DIR)
 
+# Build WebSecure External Secrets namespace
+websecure-external-secrets:
+	@echo "🏗️  Building WebSecure External Secrets namespace..."
+	@$(MAKE) -C $(WEBSECURE_EXTERNAL_SECRETS_DIR) build NAMESPACE=$(WEBSECURE_EXTERNAL_SECRETS_NAMESPACE) OUTPUT_DIR=../../$(OUTPUT_DIR)
+
 # Clean all components
 clean:
 	@echo "🧹 Cleaning all components..."
 	@$(MAKE) -C $(ARGOCD_DIR) clean OUTPUT_DIR=../../$(OUTPUT_DIR) 2>/dev/null || true
 	@$(MAKE) -C $(HETZNER_CCM_DIR) clean OUTPUT_DIR=../../$(OUTPUT_DIR) 2>/dev/null || true
 	@$(MAKE) -C $(CILIUM_DIR) clean OUTPUT_DIR=../../$(OUTPUT_DIR) 2>/dev/null || true
+	@$(MAKE) -C $(WEBSECURE_EXTERNAL_SECRETS_DIR) clean OUTPUT_DIR=../../$(OUTPUT_DIR) 2>/dev/null || true
 	@rm -rf $(OUTPUT_DIR)/*.yaml
 	@echo "✅ Cleanup completed!"
 
@@ -94,6 +102,7 @@ help:
 	@echo "  cilium                   - Build all Cilium variants"
 	@echo "  cilium-kube-proxy        - Build Cilium with kube-proxy"
 	@echo "  cilium-no-kube-proxy     - Build Cilium without kube-proxy"
+	@echo "  websecure-external-secrets - Build WebSecure External Secrets namespace"
 	@echo "  clean                    - Clean all generated files"
 	@echo "  list-components          - List available components"
 	@echo "  help                     - Show this help message"
@@ -102,6 +111,7 @@ help:
 	@echo "  ARGOCD_NAMESPACE         - Namespace for ArgoCD (default: argocd)"
 	@echo "  HETZNER_CCM_NAMESPACE    - Namespace for Hetzner CCM (default: kube-system)"
 	@echo "  CILIUM_NAMESPACE         - Namespace for Cilium (default: kube-system)"
+	@echo "  WEBSECURE_EXTERNAL_SECRETS_NAMESPACE - Namespace for WebSecure External Secrets (default: websecure-external-secrets)"
 	@echo ""
 	@echo "Examples:"
 	@echo "  make build"
