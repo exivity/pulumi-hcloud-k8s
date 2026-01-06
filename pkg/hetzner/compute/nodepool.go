@@ -222,7 +222,7 @@ func (n *NodePool) ApplyConfigPatches(ctx *pulumi.Context, opts ...pulumi.Resour
 			MachineConfigurationInput: machineConfiguration,
 			Node:                      node.Ipv4Address,
 			ConfigPatches:             n.ConfigPatches,
-		}, append(opts, pulumi.Parent(node), pulumi.DependsOn(talosUpgradeQueue))...)
+		}, append(opts, pulumi.Parent(node), pulumi.DependsOn(talosUpgradeQueue), pulumi.Protect(false))...)
 		if err != nil {
 			return nil, err
 		}
@@ -235,7 +235,7 @@ func (n *NodePool) ApplyConfigPatches(ctx *pulumi.Context, opts ...pulumi.Resour
 			MachineConfigurationInput: machineConfiguration,
 			Node:                      pulumi.String(node.Ipv4Address),
 			ConfigPatches:             n.ConfigPatches,
-		}, opts...)
+		}, append(opts, pulumi.Protect(false))...)
 		if err != nil {
 			return nil, err
 		}
@@ -261,7 +261,7 @@ func (n *NodePool) UpgradeTalos(ctx *pulumi.Context, args *UpgradeTalosArgs, opt
 			Images:          args.Images,
 			NodeIpv4Address: node.Ipv4Address,
 			NodeImage:       node.Image,
-		}, append(opts, pulumi.Parent(node), pulumi.DependsOn(talosUpgradeQueue))...)
+		}, append(opts, pulumi.Parent(node), pulumi.DependsOn(talosUpgradeQueue), pulumi.Protect(false))...)
 		if err != nil {
 			return nil, err
 		}
@@ -275,7 +275,7 @@ func (n *NodePool) UpgradeTalos(ctx *pulumi.Context, args *UpgradeTalosArgs, opt
 			Images:          args.Images,
 			NodeIpv4Address: pulumi.String(node.Ipv4Address).ToStringOutput(),
 			NodeImage:       pulumi.StringPtr(node.Image).ToStringPtrOutput(),
-		}, append(opts, pulumi.DependsOn(talosUpgradeQueue))...)
+		}, append(opts, pulumi.DependsOn(talosUpgradeQueue), pulumi.Protect(false))...)
 		if err != nil {
 			return nil, err
 		}
