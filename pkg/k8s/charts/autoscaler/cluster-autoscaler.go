@@ -118,7 +118,7 @@ func DeployAutoscalerConfiguration(ctx *pulumi.Context, args *AutoscalerConfigur
 
 		workerMachineConfiguration, err := args.MachineConfigurationManager.NewMachineConfiguration(ctx, &core.MachineConfigurationArgs{
 			ServerNodeType: meta.WorkerNode,
-			ConfigPatches:  pulumi.ToStringArray(workerNodeConfiguration),
+			ConfigPatches:  workerNodeConfiguration,
 		})
 		if err != nil {
 			return nil, err

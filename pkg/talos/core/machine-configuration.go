@@ -62,7 +62,7 @@ type MachineConfigurationArgs struct {
 	// ServerNodeType is the type of server node
 	ServerNodeType meta.ServerNodeType
 	// ConfigPatches is the configuration patches to apply to the machine
-	ConfigPatches pulumi.StringArrayInput
+	ConfigPatches string
 }
 
 // NewMachineConfiguration generates a new machine configuration for the cluster
@@ -75,9 +75,11 @@ func (c *MachineConfigurationManager) NewMachineConfiguration(ctx *pulumi.Contex
 		MachineSecrets:    c.Secrets.MachineSecrets,
 		TalosVersion:      pulumi.String(c.TalosVersion),
 		KubernetesVersion: pulumi.String(c.KubernetesVersion),
-		ConfigPatches:     args.ConfigPatches,
-		Docs:              pulumi.BoolPtr(false),
-		Examples:          pulumi.BoolPtr(false),
+		ConfigPatches: pulumi.StringArray{
+			pulumi.String(args.ConfigPatches),
+		},
+		Docs:     pulumi.BoolPtr(false),
+		Examples: pulumi.BoolPtr(false),
 	}
 
 	// If we have a single control plane IP, use that

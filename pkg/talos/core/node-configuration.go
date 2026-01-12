@@ -3,6 +3,7 @@ package core
 import (
 	"encoding/base64"
 	"fmt"
+	"strings"
 
 	core_config "github.com/exivity/pulumi-hcloud-k8s/pkg/config"
 	"github.com/exivity/pulumi-hcloud-k8s/pkg/hetzner/meta"
@@ -60,11 +61,11 @@ type NodeConfigurationArgs struct {
 	DiskEncryption *core_config.DiskEncryptionConfig
 }
 
-func NewNodeConfiguration(args *NodeConfigurationArgs) ([]string, error) {
+func NewNodeConfiguration(args *NodeConfigurationArgs) (string, error) {
 	nodeConfig := newMainTalosConfig(args)
 	nodeConfigYAML, err := nodeConfig.YAML()
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate Talos config YAML: %w", err)
+		return "", fmt.Errorf("failed to generate Talos config YAML: %w", err)
 	}
 
 	configs := []string{nodeConfigYAML}
@@ -74,12 +75,12 @@ func NewNodeConfiguration(args *NodeConfigurationArgs) ([]string, error) {
 	for _, vc := range volumeConfigs {
 		vcYAML, err := vc.YAML()
 		if err != nil {
-			return nil, fmt.Errorf("failed to generate Volume config YAML: %w", err)
+			return "", fmt.Errorf("failed to generate Volume config YAML: %w", err)
 		}
 		configs = append(configs, vcYAML)
 	}
 
-	return configs, nil
+	return strings.Join(configs, "\n---\n"), nil
 }
 
 func newMainTalosConfig(args *NodeConfigurationArgs) *core.TalosConfig { //nolint:funlen // lengthy function due to config mapping

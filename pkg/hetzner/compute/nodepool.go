@@ -48,9 +48,9 @@ type NodePoolArgs struct {
 	// MachineConfigurationManager generates the machine configuration for the nodes
 	MachineConfigurationManager *core.MachineConfigurationManager
 	// ConfigPatchesBootstrap are the talos config patches to use for the nodes to apply for creation
-	ConfigPatchesBootstrap pulumi.StringArrayInput
+	ConfigPatchesBootstrap string
 	// ConfigPatches are the talos config patches to use for the nodes to apply after creation
-	ConfigPatches pulumi.StringArrayInput
+	ConfigPatches string
 	// PlacementGroup is the placement group to use for the nodes
 	// this is optional and can be nil
 	PlacementGroup *hcloud.PlacementGroup
@@ -70,7 +70,7 @@ type NodePool struct {
 	// MachineConfigurationManager generates the machine configuration for the nodes
 	MachineConfigurationManager *core.MachineConfigurationManager
 	// ConfigPatches are the talos config patches to use for the nodes
-	ConfigPatches pulumi.StringArrayInput
+	ConfigPatches string
 	// Nodes of the node pool
 	Nodes []*hcloud.Server
 	// AutoScalerNodes are the nodes in the node pool that are part of the auto-scaler
@@ -356,8 +356,8 @@ func DeployControlPlanePools(ctx *pulumi.Context, cfg *config.PulumiConfig, imag
 			Network:                     net,
 			EnableBackup:                pool.EnableBackup,
 			MachineConfigurationManager: machineConfigurationManager,
-			ConfigPatchesBootstrap:      pulumi.ToStringArray(cpNodeConfigurationBootstrap),
-			ConfigPatches:               pulumi.ToStringArray(cpNodeConfiguration),
+			ConfigPatchesBootstrap:      cpNodeConfigurationBootstrap,
+			ConfigPatches:               cpNodeConfiguration,
 			Firewall:                    firewallCp,
 			Protect:                     pool.Protect,
 		},
@@ -440,8 +440,8 @@ func DeployWorkerPools(ctx *pulumi.Context, cfg *config.PulumiConfig, images *im
 			ServerNodeType:              meta.WorkerNode,
 			Network:                     net,
 			MachineConfigurationManager: machineConfigurationManager,
-			ConfigPatchesBootstrap:      pulumi.ToStringArray(workerNodeConfigurationBootstrap),
-			ConfigPatches:               pulumi.ToStringArray(workerNodeConfiguration),
+			ConfigPatchesBootstrap:      workerNodeConfigurationBootstrap,
+			ConfigPatches:               workerNodeConfiguration,
 			Firewall:                    firewallWorker,
 			Protect:                     pool.Protect,
 		},
