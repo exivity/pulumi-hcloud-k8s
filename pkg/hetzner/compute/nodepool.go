@@ -221,9 +221,6 @@ func (n *NodePool) ApplyConfigPatches(ctx *pulumi.Context, opts ...pulumi.Resour
 			ClientConfiguration:       n.MachineConfigurationManager.Secrets.ClientConfiguration,
 			MachineConfigurationInput: machineConfiguration,
 			Node:                      node.Ipv4Address,
-			ConfigPatches: pulumi.StringArray{
-				pulumi.String(n.ConfigPatches),
-			},
 		}, append(opts, pulumi.Parent(node), pulumi.DependsOn(talosUpgradeQueue), pulumi.Protect(false))...)
 		if err != nil {
 			return nil, err
@@ -236,9 +233,6 @@ func (n *NodePool) ApplyConfigPatches(ctx *pulumi.Context, opts ...pulumi.Resour
 			ClientConfiguration:       n.MachineConfigurationManager.Secrets.ClientConfiguration,
 			MachineConfigurationInput: machineConfiguration,
 			Node:                      pulumi.String(node.Ipv4Address),
-			ConfigPatches: pulumi.StringArray{
-				pulumi.String(n.ConfigPatches),
-			},
 		}, append(opts, pulumi.Protect(false))...)
 		if err != nil {
 			return nil, err
