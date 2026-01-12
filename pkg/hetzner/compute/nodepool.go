@@ -58,6 +58,8 @@ type NodePoolArgs struct {
 	Network *network.Network
 	// Firewall is the firewall to use for the nodes
 	Firewall *hcloud.Firewall
+	// Protect the resource from accidental deletion
+	Protect bool
 }
 
 type NodePool struct {
@@ -141,6 +143,7 @@ func NewNodePool(ctx *pulumi.Context, name string, args *NodePoolArgs, opts ...p
 		}, append(opts,
 			pulumi.AdditionalSecretOutputs([]string{"userData"}),
 			pulumi.IgnoreChanges([]string{"userData", "image"}),
+			pulumi.Protect(args.Protect),
 		)...)
 		if err != nil {
 			return nil, err
@@ -219,7 +222,7 @@ func (n *NodePool) ApplyConfigPatches(ctx *pulumi.Context, opts ...pulumi.Resour
 			MachineConfigurationInput: machineConfiguration,
 			Node:                      node.Ipv4Address,
 			ConfigPatches:             n.ConfigPatches,
-		}, append(opts, pulumi.Parent(node), pulumi.DependsOn(talosUpgradeQueue))...)
+		}, append(opts, pulumi.Parent(node), pulumi.DependsOn(talosUpgradeQueue), pulumi.Protect(false))...)
 		if err != nil {
 			return nil, err
 		}
@@ -232,7 +235,7 @@ func (n *NodePool) ApplyConfigPatches(ctx *pulumi.Context, opts ...pulumi.Resour
 			MachineConfigurationInput: machineConfiguration,
 			Node:                      pulumi.String(node.Ipv4Address),
 			ConfigPatches:             n.ConfigPatches,
-		}, opts...)
+		}, append(opts, pulumi.Protect(false))...)
 		if err != nil {
 			return nil, err
 		}
@@ -258,7 +261,7 @@ func (n *NodePool) UpgradeTalos(ctx *pulumi.Context, args *UpgradeTalosArgs, opt
 			Images:          args.Images,
 			NodeIpv4Address: node.Ipv4Address,
 			NodeImage:       node.Image,
-		}, append(opts, pulumi.Parent(node), pulumi.DependsOn(talosUpgradeQueue))...)
+		}, append(opts, pulumi.Parent(node), pulumi.DependsOn(talosUpgradeQueue), pulumi.Protect(false))...)
 		if err != nil {
 			return nil, err
 		}
@@ -272,7 +275,7 @@ func (n *NodePool) UpgradeTalos(ctx *pulumi.Context, args *UpgradeTalosArgs, opt
 			Images:          args.Images,
 			NodeIpv4Address: pulumi.String(node.Ipv4Address).ToStringOutput(),
 			NodeImage:       pulumi.StringPtr(node.Image).ToStringPtrOutput(),
-		}, append(opts, pulumi.DependsOn(talosUpgradeQueue))...)
+		}, append(opts, pulumi.DependsOn(talosUpgradeQueue), pulumi.Protect(false))...)
 		if err != nil {
 			return nil, err
 		}
@@ -356,6 +359,7 @@ func DeployControlPlanePools(ctx *pulumi.Context, cfg *config.PulumiConfig, imag
 			ConfigPatchesBootstrap:      pulumi.ToStringArray(cpNodeConfigurationBootstrap),
 			ConfigPatches:               pulumi.ToStringArray(cpNodeConfiguration),
 			Firewall:                    firewallCp,
+			Protect:                     pool.Protect,
 		},
 			pulumi.Parent(cpPg),
 			pulumi.Provider(hetznerProvider),
@@ -439,6 +443,7 @@ func DeployWorkerPools(ctx *pulumi.Context, cfg *config.PulumiConfig, images *im
 			ConfigPatchesBootstrap:      pulumi.ToStringArray(workerNodeConfigurationBootstrap),
 			ConfigPatches:               pulumi.ToStringArray(workerNodeConfiguration),
 			Firewall:                    firewallWorker,
+			Protect:                     pool.Protect,
 		},
 			pulumi.Provider(hetznerProvider),
 			pulumi.DependsOn([]pulumi.Resource{firewallWorker}),
