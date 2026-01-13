@@ -143,6 +143,10 @@ func newMainTalosConfig(args *NodeConfigurationArgs) *core.TalosConfig { //nolin
 					Enabled: args.EnableKubeSpan, // Enable kube span (wireguard)
 				},
 			},
+			Sysctls: map[string]string{
+				// Disable kexec to force full BIOS POST on reboot, fixing UEFI boot entry detection issues
+				"kernel.kexec_load_disabled": "1",
+			},
 			Kubelet: &core.KubeletConfig{
 				NodeIP: &core.KubeletNodeIPConfig{
 					ValidSubnets: []string{
@@ -177,9 +181,7 @@ func newMainTalosConfig(args *NodeConfigurationArgs) *core.TalosConfig { //nolin
 	}
 
 	if args.EnableLonghornSupport {
-		configPatch.Machine.Sysctls = map[string]string{
-			"vm.nr_hugepages": "1024",
-		}
+		configPatch.Machine.Sysctls["vm.nr_hugepages"] = "1024"
 
 		configPatch.Machine.Kernel = &core.KernelConfig{
 			Modules: []core.KernelModuleConfig{
