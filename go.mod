@@ -10,7 +10,7 @@ require (
 	github.com/exivity/pulumiconfig v0.3.2
 	github.com/go-playground/validator/v10 v10.30.1
 	github.com/pulumi/pulumi-command/sdk v1.1.3
-	github.com/pulumi/pulumi-hcloud/sdk v1.29.0
+	github.com/pulumi/pulumi-hcloud/sdk v1.31.0
 	github.com/pulumi/pulumi-kubernetes/sdk/v4 v4.24.1
 	github.com/pulumi/pulumi/sdk/v3 v3.215.0
 	github.com/pulumiverse/pulumi-talos/sdk v0.7.0
