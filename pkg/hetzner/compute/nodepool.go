@@ -267,6 +267,7 @@ type UpgradeTalosArgs struct {
 
 func (n *NodePool) UpgradeTalos(ctx *pulumi.Context, args *UpgradeTalosArgs, opts ...pulumi.ResourceOption) ([]pulumi.Resource, error) {
 	for i, node := range n.Nodes {
+		talosUpgradeQueue = append(talosUpgradeQueue, node.Network)
 		upgradeTalos, err := cli.UpgradeTalos(ctx, fmt.Sprintf("%s-%d", n.NodePoolName, i), &cli.UpgradeTalosArgs{
 			Talosconfig:     args.Talosconfig,
 			TalosVersion:    args.TalosVersion,
@@ -275,7 +276,7 @@ func (n *NodePool) UpgradeTalos(ctx *pulumi.Context, args *UpgradeTalosArgs, opt
 			NodeImage:       node.Node.Image,
 		}, append(opts,
 			pulumi.Parent(node.Node),
-			pulumi.DependsOn(append(talosUpgradeQueue, node.Network)),
+			pulumi.DependsOn(talosUpgradeQueue),
 			pulumi.Protect(false),
 		)...)
 		if err != nil {
