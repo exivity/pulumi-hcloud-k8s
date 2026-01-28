@@ -121,7 +121,7 @@ func TestNodePool_ApplyConfigPatches(t *testing.T) {
 					NodePoolName:                "worker-pool",
 					ServerNodeType:              meta.WorkerNode,
 					MachineConfigurationManager: mcm,
-					Nodes:                       []*hcloud.Server{node},
+					Nodes:                       []Node{{Node: node}},
 				},
 				wantErr:   false,
 				wantCount: 1,
@@ -132,7 +132,7 @@ func TestNodePool_ApplyConfigPatches(t *testing.T) {
 					NodePoolName:                "worker-pool-autoscaler",
 					ServerNodeType:              meta.WorkerNode,
 					MachineConfigurationManager: mcm,
-					Nodes:                       []*hcloud.Server{node},
+					Nodes:                       []Node{{Node: node}},
 					AutoScalerNodes: []hcloud.GetServersServer{
 						{
 							Name:        "autoscaler-node-1",
@@ -164,7 +164,7 @@ func TestNodePool_ApplyConfigPatches(t *testing.T) {
 	}
 }
 
-func TestNodePool_UpgradeTalos(t *testing.T) {
+func TestNodePool_UpgradeTalos(t *testing.T) { //nolint:cyclop // test function
 	err := pulumi.RunErr(func(ctx *pulumi.Context) error {
 		// Setup MachineConfigurationManager
 		mcm, err := core.NewMachineConfigurationManager(ctx, "test-cluster", &core.MachineConfigurationManagerArgs{
@@ -180,6 +180,15 @@ func TestNodePool_UpgradeTalos(t *testing.T) {
 		node, err := hcloud.NewServer(ctx, "test-node", &hcloud.ServerArgs{
 			ServerType: pulumi.String("cx11"),
 			Image:      pulumi.String("ubuntu-20.04"),
+		})
+		if err != nil {
+			return err
+		}
+
+		// Create a mock network attachment
+		network, err := hcloud.NewServerNetwork(ctx, "test-network", &hcloud.ServerNetworkArgs{
+			ServerId:  pulumi.Int(123),
+			NetworkId: pulumi.Int(456),
 		})
 		if err != nil {
 			return err
@@ -226,7 +235,7 @@ func TestNodePool_UpgradeTalos(t *testing.T) {
 					NodePoolName:                "worker-pool",
 					ServerNodeType:              meta.WorkerNode,
 					MachineConfigurationManager: mcm,
-					Nodes:                       []*hcloud.Server{node},
+					Nodes:                       []Node{{Node: node, Network: network}},
 				},
 				args: &UpgradeTalosArgs{
 					Talosconfig:  pulumi.Sprintf("talosconfig"),
@@ -242,7 +251,7 @@ func TestNodePool_UpgradeTalos(t *testing.T) {
 					NodePoolName:                "worker-pool-autoscaler",
 					ServerNodeType:              meta.WorkerNode,
 					MachineConfigurationManager: mcm,
-					Nodes:                       []*hcloud.Server{node},
+					Nodes:                       []Node{{Node: node, Network: network}},
 					AutoScalerNodes: []hcloud.GetServersServer{
 						{
 							Name:        "autoscaler-node-1",
