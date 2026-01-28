@@ -72,9 +72,14 @@ type NodePool struct {
 	// ConfigPatches are the talos config patches to use for the nodes
 	ConfigPatches pulumi.StringArrayInput
 	// Nodes of the node pool
-	Nodes []*hcloud.Server
+	Nodes []Node
 	// AutoScalerNodes are the nodes in the node pool that are part of the auto-scaler
 	AutoScalerNodes []hcloud.GetServersServer
+}
+
+type Node struct {
+	Node    *hcloud.Server
+	Network *hcloud.ServerNetwork
 }
 
 // NewNodePool creates a new node pool in Hetzner Cloud.
@@ -107,7 +112,7 @@ func NewNodePool(ctx *pulumi.Context, name string, args *NodePoolArgs, opts ...p
 		}
 	}
 
-	nodes := make([]*hcloud.Server, args.Count)
+	nodes := make([]Node, args.Count)
 
 	for i := 0; i < args.Count; i++ {
 		nodeName := fmt.Sprintf("%s-%d", name, i)
@@ -150,7 +155,7 @@ func NewNodePool(ctx *pulumi.Context, name string, args *NodePoolArgs, opts ...p
 		}
 
 		// attach the server to the network
-		_, err = hcloud.NewServerNetwork(ctx, nodeName, &hcloud.ServerNetworkArgs{
+		network, err := hcloud.NewServerNetwork(ctx, nodeName, &hcloud.ServerNetworkArgs{
 			ServerId: server.ID().ApplyT(func(id pulumi.ID) int {
 				idInt, _ := strconv.Atoi(string(id))
 				return idInt
@@ -166,7 +171,10 @@ func NewNodePool(ctx *pulumi.Context, name string, args *NodePoolArgs, opts ...p
 			return nil, err
 		}
 
-		nodes[i] = server
+		nodes[i] = Node{
+			Node:    server,
+			Network: network,
+		}
 	}
 
 	if args.NodePoolName == nil {
@@ -220,9 +228,13 @@ func (n *NodePool) ApplyConfigPatches(ctx *pulumi.Context, opts ...pulumi.Resour
 		configurationApply, err := machine.NewConfigurationApply(ctx, fmt.Sprintf("%s-%d", n.NodePoolName, i), &machine.ConfigurationApplyArgs{
 			ClientConfiguration:       n.MachineConfigurationManager.Secrets.ClientConfiguration,
 			MachineConfigurationInput: machineConfiguration,
-			Node:                      node.Ipv4Address,
+			Node:                      node.Node.Ipv4Address,
 			ConfigPatches:             n.ConfigPatches,
-		}, append(opts, pulumi.Parent(node), pulumi.DependsOn(talosUpgradeQueue), pulumi.Protect(false))...)
+		}, append(opts,
+			pulumi.Parent(node.Node),
+			pulumi.DependsOn(talosUpgradeQueue),
+			pulumi.Protect(false),
+		)...)
 		if err != nil {
 			return nil, err
 		}
@@ -259,9 +271,14 @@ func (n *NodePool) UpgradeTalos(ctx *pulumi.Context, args *UpgradeTalosArgs, opt
 			Talosconfig:     args.Talosconfig,
 			TalosVersion:    args.TalosVersion,
 			Images:          args.Images,
-			NodeIpv4Address: node.Ipv4Address,
-			NodeImage:       node.Image,
-		}, append(opts, pulumi.Parent(node), pulumi.DependsOn(talosUpgradeQueue), pulumi.Protect(false))...)
+			NodeIpv4Address: node.Node.Ipv4Address,
+			NodeImage:       node.Node.Image,
+		}, append(opts,
+			pulumi.Parent(node.Node),
+			pulumi.DependsOn(talosUpgradeQueue),
+			pulumi.DependsOn([]pulumi.Resource{node.Network}),
+			pulumi.Protect(false),
+		)...)
 		if err != nil {
 			return nil, err
 		}
@@ -369,7 +386,7 @@ func DeployControlPlanePools(ctx *pulumi.Context, cfg *config.PulumiConfig, imag
 			return nil, err
 		}
 
-		machineConfigurationManager.SetSingleControlPlaneNodeIP(cpPool.Nodes[0].Ipv4Address)
+		machineConfigurationManager.SetSingleControlPlaneNodeIP(cpPool.Nodes[0].Node.Ipv4Address)
 
 		cpPools = append(cpPools, cpPool)
 	}
