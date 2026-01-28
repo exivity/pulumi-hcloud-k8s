@@ -243,7 +243,7 @@ func TestNodePool_UpgradeTalos(t *testing.T) { //nolint:cyclop // test function
 					Images:       images,
 				},
 				wantErr:   false,
-				wantCount: 1,
+				wantCount: 2,
 			},
 			{
 				name: "WorkerNodeWithAutoScaler",
@@ -265,7 +265,7 @@ func TestNodePool_UpgradeTalos(t *testing.T) { //nolint:cyclop // test function
 					Images:       images,
 				},
 				wantErr:   false,
-				wantCount: 2,
+				wantCount: 3,
 			},
 		}
 		for _, tt := range tests {
