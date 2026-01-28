@@ -44,7 +44,7 @@ func NewKubeconfig(ctx *pulumi.Context, args *KubeconfigArgs, opts ...pulumi.Res
 		Endpoint:                   args.FirstControlPlane.Ipv4Address,
 	},
 		pulumi.Parent(bootstrap),
-		pulumi.IgnoreChanges([]string{"node"}), // Ignore changes to the node address, as it may change after initial creation
+		pulumi.IgnoreChanges([]string{"node", "endpoint"}), // Ignore changes to the node address, as it may change after initial creation
 	)
 	if err != nil {
 		return nil, err
