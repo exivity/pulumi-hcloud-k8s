@@ -14,6 +14,9 @@ import (
 //go:embed talos-upgrade-version.sh
 var talosUpgradeScript []byte
 
+//go:embed talos-delete-node.sh
+var talosDeleteScript []byte
+
 const scriptSubdir = ".pulumi-tmp"
 const (
 	dirPerm    = 0o700
@@ -35,12 +38,20 @@ type UpgradeTalosArgs struct {
 	NodeImage pulumi.StringPtrOutput
 }
 
+// DeleteTalosArgs are the arguments for the DeleteTalos function
+type DeleteTalosArgs struct {
+	// Talosconfig is the Talos configuration
+	Talosconfig pulumi.StringOutput
+	// NodeIpv4Address is the IPv4 address of the node
+	NodeIpv4Address pulumi.StringOutput
+}
+
 func TalosConfigPath(ctx *pulumi.Context) string {
 	return fmt.Sprintf("%s.talosconfig.json", ctx.Stack())
 }
 
 // writeScriptToProjectTmp writes the embedded script to a persistent project subfolder and returns its path
-func writeScriptToProjectTmp() (string, error) {
+func writeScriptToProjectTmp(name string, content []byte) (string, error) {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return "", err
@@ -49,15 +60,15 @@ func writeScriptToProjectTmp() (string, error) {
 	if err := os.MkdirAll(dir, dirPerm); err != nil {
 		return "", err
 	}
-	file := filepath.Join(dir, "talos-upgrade-version.sh")
-	if err := os.WriteFile(file, talosUpgradeScript, filePerm); err != nil {
+	file := filepath.Join(dir, name)
+	if err := os.WriteFile(file, content, filePerm); err != nil {
 		return "", err
 	}
 	// Set executable permission on the script
 	if err := os.Chmod(file, scriptPerm); err != nil {
 		return "", err
 	}
-	return filepath.Join(scriptSubdir, "talos-upgrade-version.sh"), nil
+	return filepath.Join(scriptSubdir, name), nil
 }
 
 // UpgradeTalos upgrades the Talos version on a node
@@ -72,13 +83,19 @@ func UpgradeTalos(ctx *pulumi.Context, name string, args *UpgradeTalosArgs, opts
 		return nil, err
 	}
 
-	scriptPath, err := writeScriptToProjectTmp()
+	upgradeScriptPath, err := writeScriptToProjectTmp("talos-upgrade-version.sh", talosUpgradeScript)
+	if err != nil {
+		return nil, err
+	}
+
+	deleteScriptPath, err := writeScriptToProjectTmp("talos-delete-node.sh", talosDeleteScript)
 	if err != nil {
 		return nil, err
 	}
 
 	return local.NewCommand(ctx, fmt.Sprintf("upgrade-talos-%s", name), &local.CommandArgs{
-		Create: pulumi.String(scriptPath),
+		Create: pulumi.String(upgradeScriptPath),
+		Delete: pulumi.String(deleteScriptPath),
 		Environment: pulumi.StringMap{
 			"TALOSCONFIG":       pulumi.String(TalosConfigPath(ctx)),
 			"TALOSCONFIG_VALUE": args.Talosconfig,

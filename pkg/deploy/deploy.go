@@ -137,12 +137,12 @@ func NewHetznerTalosKubernetesCluster(ctx *pulumi.Context, name string, cfg *con
 	workerPoolDependsOn := []pulumi.Resource{}
 	for _, cpPool := range cpPools {
 		for _, node := range cpPool.Nodes {
-			workerPoolDependsOn = append(workerPoolDependsOn, node)
+			workerPoolDependsOn = append(workerPoolDependsOn, node.Node)
 		}
 	}
 
 	workerPoolDependsOn = append(workerPoolDependsOn,
-		cpPools[0].Nodes[0],
+		cpPools[0].Nodes[0].Node,
 	)
 
 	if cpLb != nil {
@@ -163,7 +163,7 @@ func NewHetznerTalosKubernetesCluster(ctx *pulumi.Context, name string, cfg *con
 	// TODO: remove bootstrap creation from k8s package
 	out.Kubeconfig, err = core.NewKubeconfig(ctx, &core.KubeconfigArgs{
 		CertificateRenewalDuration: cfg.Talos.K8sCertificateRenewalDuration,
-		FirstControlPlane:          cpPools[0].Nodes[0],
+		FirstControlPlane:          cpPools[0].Nodes[0].Node,
 		Secrets:                    machineConfigurationManager.Secrets,
 	},
 		pulumi.DependsOn(workerPoolDependsOn),
@@ -177,14 +177,14 @@ func NewHetznerTalosKubernetesCluster(ctx *pulumi.Context, name string, cfg *con
 	nodes := []pulumi.StringOutput{}
 	for _, cpPool := range cpPools {
 		for _, node := range cpPool.Nodes {
-			endpoints = append(endpoints, node.Ipv4Address)
-			nodes = append(nodes, node.Ipv4Address)
+			endpoints = append(endpoints, node.Node.Ipv4Address)
+			nodes = append(nodes, node.Node.Ipv4Address)
 		}
 	}
 
 	for _, workerPool := range workerPools {
 		for _, node := range workerPool.Nodes {
-			nodes = append(nodes, node.Ipv4Address)
+			nodes = append(nodes, node.Node.Ipv4Address)
 		}
 	}
 

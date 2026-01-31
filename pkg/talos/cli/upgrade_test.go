@@ -59,20 +59,29 @@ func TestTalosConfigPath(t *testing.T) {
 }
 
 func Test_writeScriptToProjectTmp(t *testing.T) {
+	type args struct {
+		name    string
+		content []byte
+	}
 	tests := []struct {
 		name    string
+		args    args
 		want    string
 		wantErr bool
 	}{
 		{
-			name:    "default",
+			name: "default",
+			args: args{
+				name:    "talos-upgrade-version.sh",
+				content: []byte("test content"),
+			},
 			want:    filepath.Join(".pulumi-tmp", "talos-upgrade-version.sh"),
 			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := writeScriptToProjectTmp()
+			got, err := writeScriptToProjectTmp(tt.args.name, tt.args.content)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("writeScriptToProjectTmp() error = %v, wantErr %v", err, tt.wantErr)
 				return
