@@ -88,14 +88,14 @@ func UpgradeTalos(ctx *pulumi.Context, name string, args *UpgradeTalosArgs, opts
 		return nil, err
 	}
 
-	deleteScriptPath, err := writeScriptToProjectTmp("talos-delete-node.sh", talosDeleteScript)
-	if err != nil {
-		return nil, err
-	}
+	// deleteScriptPath, err := writeScriptToProjectTmp("talos-delete-node.sh", talosDeleteScript)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	return local.NewCommand(ctx, fmt.Sprintf("upgrade-talos-%s", name), &local.CommandArgs{
 		Create: pulumi.String(upgradeScriptPath),
-		Delete: pulumi.String(deleteScriptPath),
+		// Delete: pulumi.String(deleteScriptPath),
 		Environment: pulumi.StringMap{
 			"TALOSCONFIG":       pulumi.String(TalosConfigPath(ctx)),
 			"TALOSCONFIG_VALUE": args.Talosconfig,
