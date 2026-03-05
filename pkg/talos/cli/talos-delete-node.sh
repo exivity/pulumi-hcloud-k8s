@@ -9,4 +9,4 @@ if ! talosctl --talosconfig $TALOSCONFIG -n $NODE_IP reset; then
   exit 1
 fi
 
-exit 1
+exit 0
