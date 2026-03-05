@@ -106,7 +106,6 @@ func NewUpgradeTalos(ctx *pulumi.Context, name string, args *UpgradeTalosArgs, o
 
 	upgrade, err := local.NewCommand(ctx, fmt.Sprintf("upgrade-talos-%s", name), &local.CommandArgs{
 		Create: pulumi.String(upgradeScriptPath),
-		// Delete: pulumi.String(deleteScriptPath),
 		Environment: pulumi.StringMap{
 			"TALOSCONFIG":       pulumi.String(TalosConfigPath(ctx)),
 			"TALOSCONFIG_VALUE": args.Talosconfig,
