@@ -164,7 +164,7 @@ func TestNodePool_ApplyConfigPatches(t *testing.T) {
 	}
 }
 
-func TestNodePool_UpgradeTalos(t *testing.T) { //nolint:cyclop // test function
+func TestNodePool_NewUpgradeTalos(t *testing.T) { //nolint:cyclop // test function
 	err := pulumi.RunErr(func(ctx *pulumi.Context) error {
 		// Setup MachineConfigurationManager
 		mcm, err := core.NewMachineConfigurationManager(ctx, "test-cluster", &core.MachineConfigurationManagerArgs{
@@ -273,7 +273,7 @@ func TestNodePool_UpgradeTalos(t *testing.T) { //nolint:cyclop // test function
 				// Reset the queue
 				talosUpgradeQueue = []pulumi.Resource{}
 
-				got, gotErr := tt.nodePool.UpgradeTalos(ctx, tt.args)
+				got, gotErr := tt.nodePool.NewUpgradeTalos(ctx, tt.args)
 				if (gotErr != nil) != tt.wantErr {
 					t.Errorf("UpgradeTalos() error = %v, wantErr %v", gotErr, tt.wantErr)
 					return
