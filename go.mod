@@ -1,6 +1,6 @@
 module github.com/exivity/pulumi-hcloud-k8s
 
-go 1.25.5
+go 1.25.7
 
 tool github.com/golangci/golangci-lint/v2/cmd/golangci-lint
 
