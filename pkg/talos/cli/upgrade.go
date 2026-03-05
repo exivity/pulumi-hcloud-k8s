@@ -133,7 +133,7 @@ func NewUpgradeTalos(ctx *pulumi.Context, name string, args *UpgradeTalosArgs, o
 
 	var delete *local.Command
 	if args.RemoveNodeFromClusterOnDelete {
-		delete, err = local.NewCommand(ctx, fmt.Sprintf("upgrade-talos-%s", name), &local.CommandArgs{
+		delete, err = local.NewCommand(ctx, fmt.Sprintf("delete-talos-%s", name), &local.CommandArgs{
 			Delete: pulumi.String(deleteScriptPath),
 			Environment: pulumi.StringMap{
 				"TALOSCONFIG":       pulumi.String(TalosConfigPath(ctx)),
