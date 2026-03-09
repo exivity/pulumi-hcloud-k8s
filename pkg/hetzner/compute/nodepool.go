@@ -80,6 +80,7 @@ type NodePool struct {
 type Node struct {
 	Node    *hcloud.Server
 	Network *hcloud.ServerNetwork
+	Protect bool
 }
 
 // NewNodePool creates a new node pool in Hetzner Cloud.
@@ -145,6 +146,8 @@ func NewNodePool(ctx *pulumi.Context, name string, args *NodePoolArgs, opts ...p
 					return idInt
 				}).(pulumi.IntOutput),
 			},
+			RebuildProtection: pulumi.Bool(args.Protect),
+			DeleteProtection:  pulumi.Bool(args.Protect),
 		}, append(opts,
 			pulumi.AdditionalSecretOutputs([]string{"userData"}),
 			pulumi.IgnoreChanges([]string{"userData", "image"}),
@@ -174,6 +177,7 @@ func NewNodePool(ctx *pulumi.Context, name string, args *NodePoolArgs, opts ...p
 		nodes[i] = Node{
 			Node:    server,
 			Network: network,
+			Protect: args.Protect,
 		}
 	}
 
@@ -265,42 +269,45 @@ type UpgradeTalosArgs struct {
 	Images *image.Images
 }
 
-func (n *NodePool) UpgradeTalos(ctx *pulumi.Context, args *UpgradeTalosArgs, opts ...pulumi.ResourceOption) ([]pulumi.Resource, error) {
+func (n *NodePool) NewUpgradeTalos(ctx *pulumi.Context, args *UpgradeTalosArgs, opts ...pulumi.ResourceOption) ([]pulumi.Resource, error) {
 	for i, node := range n.Nodes {
 		// add network as dependency to ensure network is ready before upgrading Talos
 		talosUpgradeQueue = append(talosUpgradeQueue, node.Network)
 
-		upgradeTalos, err := cli.UpgradeTalos(ctx, fmt.Sprintf("%s-%d", n.NodePoolName, i), &cli.UpgradeTalosArgs{
-			Talosconfig:     args.Talosconfig,
-			TalosVersion:    args.TalosVersion,
-			Images:          args.Images,
-			NodeIpv4Address: node.Node.Ipv4Address,
-			NodeImage:       node.Node.Image,
+		upgradeTalos, err := cli.NewUpgradeTalos(ctx, fmt.Sprintf("%s-%d", n.NodePoolName, i), &cli.UpgradeTalosArgs{
+			Talosconfig:                   args.Talosconfig,
+			TalosVersion:                  args.TalosVersion,
+			Images:                        args.Images,
+			NodeIpv4Address:               node.Node.Ipv4Address,
+			NodeImage:                     node.Node.Image,
+			Protection:                    node.Protect,
+			RemoveNodeFromClusterOnDelete: true,
 		}, append(opts,
 			pulumi.Parent(node.Node),
 			pulumi.DependsOn(talosUpgradeQueue),
-			pulumi.Protect(false),
+			pulumi.Protect(node.Protect),
 		)...)
 		if err != nil {
 			return nil, err
 		}
 
 		// add to the upgrade queue to ensure controlled upgrade
-		talosUpgradeQueue = append(talosUpgradeQueue, upgradeTalos)
+		talosUpgradeQueue = append(talosUpgradeQueue, upgradeTalos.Upgrade)
 	}
 
 	for _, node := range n.AutoScalerNodes {
-		upgradeTalos, err := cli.UpgradeTalos(ctx, node.Name, &cli.UpgradeTalosArgs{
-			Talosconfig:     args.Talosconfig,
-			TalosVersion:    args.TalosVersion,
-			Images:          args.Images,
-			NodeIpv4Address: pulumi.String(node.Ipv4Address).ToStringOutput(),
-			NodeImage:       pulumi.StringPtr(node.Image).ToStringPtrOutput(),
+		upgradeTalos, err := cli.NewUpgradeTalos(ctx, node.Name, &cli.UpgradeTalosArgs{
+			Talosconfig:                   args.Talosconfig,
+			TalosVersion:                  args.TalosVersion,
+			Images:                        args.Images,
+			NodeIpv4Address:               pulumi.String(node.Ipv4Address).ToStringOutput(),
+			NodeImage:                     pulumi.StringPtr(node.Image).ToStringPtrOutput(),
+			RemoveNodeFromClusterOnDelete: false,
 		}, append(opts, pulumi.DependsOn(talosUpgradeQueue), pulumi.Protect(false))...)
 		if err != nil {
 			return nil, err
 		}
-		talosUpgradeQueue = append(talosUpgradeQueue, upgradeTalos)
+		talosUpgradeQueue = append(talosUpgradeQueue, upgradeTalos.Upgrade)
 	}
 
 	return talosUpgradeQueue, nil
@@ -527,7 +534,7 @@ func UpgradeTalosOnAllPools(ctx *pulumi.Context, cpPools []*NodePool, workerPool
 
 	// Upgrade control plane pools
 	for _, cpPool := range cpPools {
-		talosUpgradeQueuePool, err := cpPool.UpgradeTalos(ctx, &UpgradeTalosArgs{
+		talosUpgradeQueuePool, err := cpPool.NewUpgradeTalos(ctx, &UpgradeTalosArgs{
 			Talosconfig:  talosConfig,
 			TalosVersion: talosVersion,
 			Images:       images,
@@ -540,7 +547,7 @@ func UpgradeTalosOnAllPools(ctx *pulumi.Context, cpPools []*NodePool, workerPool
 
 	// Upgrade worker pools
 	for _, workerPool := range workerPools {
-		talosUpgradeQueuePool, err := workerPool.UpgradeTalos(ctx, &UpgradeTalosArgs{
+		talosUpgradeQueuePool, err := workerPool.NewUpgradeTalos(ctx, &UpgradeTalosArgs{
 			Talosconfig:  talosConfig,
 			TalosVersion: talosVersion,
 			Images:       images,
