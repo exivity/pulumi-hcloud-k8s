@@ -7,6 +7,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const apiVersion = "v1alpha1"
+
 // RegistryMirrorConfig configures an image registry mirror.
 // Generated based on Talos v1.12 documentation:
 // https://docs.siderolabs.com/talos/v1.12/reference/configuration/cri/registrymirrorconfig
@@ -27,7 +29,7 @@ type RegistryEndpoint struct {
 // YAML marshals the RegistryMirrorConfig to YAML.
 func (c *RegistryMirrorConfig) YAML() (string, error) {
 	if c.APIVersion == "" {
-		c.APIVersion = "v1alpha1"
+		c.APIVersion = apiVersion
 	}
 	if c.Kind == "" {
 		c.Kind = "RegistryMirrorConfig"
@@ -61,7 +63,7 @@ type RegistryAuthConfig struct {
 // YAML marshals the RegistryAuthConfig to YAML.
 func (c *RegistryAuthConfig) YAML() (string, error) {
 	if c.APIVersion == "" {
-		c.APIVersion = "v1alpha1"
+		c.APIVersion = apiVersion
 	}
 	if c.Kind == "" {
 		c.Kind = "RegistryAuthConfig"
@@ -100,7 +102,7 @@ type CertificateAndKey struct {
 // YAML marshals the RegistryTLSConfig to YAML.
 func (c *RegistryTLSConfig) YAML() (string, error) {
 	if c.APIVersion == "" {
-		c.APIVersion = "v1alpha1"
+		c.APIVersion = apiVersion
 	}
 	if c.Kind == "" {
 		c.Kind = "RegistryTLSConfig"

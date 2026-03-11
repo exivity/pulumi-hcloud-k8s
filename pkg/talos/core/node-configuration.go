@@ -90,7 +90,7 @@ func NewNodeConfiguration(args *NodeConfigurationArgs) ([]string, error) {
 	return configs, nil
 }
 
-func newMainTalosConfig(args *NodeConfigurationArgs) *core.TalosConfig { //nolint:funlen // lengthy function due to config mapping
+func newMainTalosConfig(args *NodeConfigurationArgs) *core.TalosConfig {
 	var adminKubeconfig *core.AdminKubeconfigConfig
 	if args.CertLifetime != nil {
 		adminKubeconfig = &core.AdminKubeconfigConfig{
@@ -235,17 +235,33 @@ func newRegistryConfigs(args *core_config.RegistriesConfig) ([]string, error) {
 		return nil, nil
 	}
 
-	var configs []string
-
-	// Sort mirror keys for deterministic output
-	mirrorKeys := make([]string, 0, len(args.Mirrors))
-	for key := range args.Mirrors {
-		mirrorKeys = append(mirrorKeys, key)
+	mirrorConfigs, err := newMirrorConfigs(args.Mirrors)
+	if err != nil {
+		return nil, err
 	}
-	sort.Strings(mirrorKeys)
 
-	for _, key := range mirrorKeys {
-		mirror := args.Mirrors[key]
+	endpointConfigs, err := newEndpointConfigs(args.Config)
+	if err != nil {
+		return nil, err
+	}
+
+	configs := make([]string, 0, len(mirrorConfigs)+len(endpointConfigs))
+	configs = append(configs, mirrorConfigs...)
+	configs = append(configs, endpointConfigs...)
+
+	return configs, nil
+}
+
+func newMirrorConfigs(mirrors map[string]core_config.RegistryMirrorConfig) ([]string, error) {
+	keys := make([]string, 0, len(mirrors))
+	for key := range mirrors {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	configs := make([]string, 0, len(keys))
+	for _, key := range keys {
+		mirror := mirrors[key]
 		endpoints := make([]registry.RegistryEndpoint, len(mirror.Endpoints))
 		for i, ep := range mirror.Endpoints {
 			endpoints[i] = registry.RegistryEndpoint{
@@ -266,15 +282,19 @@ func newRegistryConfigs(args *core_config.RegistriesConfig) ([]string, error) {
 		configs = append(configs, yamlStr)
 	}
 
-	// Sort config keys for deterministic output
-	configKeys := make([]string, 0, len(args.Config))
-	for key := range args.Config {
-		configKeys = append(configKeys, key)
-	}
-	sort.Strings(configKeys)
+	return configs, nil
+}
 
-	for _, key := range configKeys {
-		regCfg := args.Config[key]
+func newEndpointConfigs(endpointCfgs map[string]core_config.RegistryConfig) ([]string, error) {
+	keys := make([]string, 0, len(endpointCfgs))
+	for key := range endpointCfgs {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	configs := make([]string, 0, len(keys)*2) //nolint:mnd // each entry can produce both a TLS and Auth config
+	for _, key := range keys {
+		regCfg := endpointCfgs[key]
 
 		if regCfg.TLS != nil {
 			var clientIdentity *registry.CertificateAndKey
