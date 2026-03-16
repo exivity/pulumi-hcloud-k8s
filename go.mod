@@ -11,7 +11,7 @@ require (
 	github.com/go-playground/validator/v10 v10.30.1
 	github.com/pulumi/pulumi-command/sdk v1.1.3
 	github.com/pulumi/pulumi-hcloud/sdk v1.32.1
-	github.com/pulumi/pulumi-kubernetes/sdk/v4 v4.27.0
+	github.com/pulumi/pulumi-kubernetes/sdk/v4 v4.28.0
 	github.com/pulumi/pulumi/sdk/v3 v3.223.0
 	github.com/pulumiverse/pulumi-talos/sdk v0.7.1
 	github.com/stretchr/testify v1.11.1
