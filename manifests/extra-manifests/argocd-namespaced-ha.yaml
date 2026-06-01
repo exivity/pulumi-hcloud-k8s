@@ -51,6 +51,176 @@ spec:
     configMap:
       name: argocd-redis-ha-configmap
 ---
+# Source: argo-cd/charts/redis-ha/templates/tests/test-redis-ha-configmap.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: argocd-redis-ha-configmap-test
+  namespace: "argocd"
+  labels:
+    app: redis-ha
+    heritage: "Helm"
+    release: "argocd"
+    chart: redis-ha-4.34.11
+  annotations:
+    "helm.sh/hook": test-success
+spec:
+  nodeSelector: 
+    {}
+  tolerations: 
+    []
+  containers:
+  - name: check-init
+    image: koalaman/shellcheck:v0.10.0
+    args:
+    - --shell=sh
+    - /readonly-config/init.sh
+    volumeMounts:
+    - name: config
+      mountPath: /readonly-config
+      readOnly: true
+    resources: 
+      {}
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      readOnlyRootFilesystem: true
+      runAsNonRoot: true
+      runAsUser: 1000
+      seccompProfile:
+        type: RuntimeDefault
+  restartPolicy: Never
+  volumes:
+  - name: config
+    configMap:
+      name: argocd-redis-ha-configmap
+---
+# Source: argo-cd/charts/redis-ha/templates/tests/test-redis-ha-configmap.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: argocd-redis-ha-configmap-test
+  namespace: "argocd"
+  labels:
+    app: redis-ha
+    heritage: "Helm"
+    release: "argocd"
+    chart: redis-ha-4.34.11
+  annotations:
+    "helm.sh/hook": test-success
+spec:
+  nodeSelector: 
+    {}
+  tolerations: 
+    []
+  containers:
+  - name: check-init
+    image: koalaman/shellcheck:v0.10.0
+    args:
+    - --shell=sh
+    - /readonly-config/init.sh
+    volumeMounts:
+    - name: config
+      mountPath: /readonly-config
+      readOnly: true
+    resources: 
+      {}
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      readOnlyRootFilesystem: true
+      runAsNonRoot: true
+      runAsUser: 1000
+      seccompProfile:
+        type: RuntimeDefault
+  restartPolicy: Never
+  volumes:
+  - name: config
+    configMap:
+      name: argocd-redis-ha-configmap
+---
+# Source: argo-cd/charts/redis-ha/templates/tests/test-redis-ha-pod.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: argocd-redis-ha-service-test
+  namespace: "argocd"
+  labels:
+    app: redis-ha
+    heritage: "Helm"
+    release: "argocd"
+    chart: redis-ha-4.34.11
+  annotations:
+    "helm.sh/hook": test-success
+spec:
+  nodeSelector:
+    {}
+  tolerations:
+    []
+  containers:
+  - name: "argocd-service-test"
+    image: ecr-public.aws.com/docker/library/redis:8.2.3-alpine
+    command:
+      - sh
+      - -c
+      - redis-cli -h argocd-redis-ha-haproxy -p 6379 info server
+    resources: 
+      {}
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      readOnlyRootFilesystem: true
+      runAsNonRoot: true
+      runAsUser: 1000
+      seccompProfile:
+        type: RuntimeDefault
+  restartPolicy: Never
+---
+# Source: argo-cd/charts/redis-ha/templates/tests/test-redis-ha-pod.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: argocd-redis-ha-service-test
+  namespace: "argocd"
+  labels:
+    app: redis-ha
+    heritage: "Helm"
+    release: "argocd"
+    chart: redis-ha-4.34.11
+  annotations:
+    "helm.sh/hook": test-success
+spec:
+  nodeSelector:
+    {}
+  tolerations:
+    []
+  containers:
+  - name: "argocd-service-test"
+    image: ecr-public.aws.com/docker/library/redis:8.2.3-alpine
+    command:
+      - sh
+      - -c
+      - redis-cli -h argocd-redis-ha-haproxy -p 6379 info server
+    resources: 
+      {}
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      readOnlyRootFilesystem: true
+      runAsNonRoot: true
+      runAsUser: 1000
+      seccompProfile:
+        type: RuntimeDefault
+  restartPolicy: Never
+---
 # Source: argo-cd/charts/redis-ha/templates/tests/test-redis-ha-pod.yaml
 apiVersion: v1
 kind: Pod
@@ -35187,6 +35357,198 @@ rules:
     verbs:
       - create
 ---
+# Source: argo-cd/templates/redis-secret-init/role.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation
+  labels:
+    helm.sh/chart: argo-cd-9.5.17
+    app.kubernetes.io/name: argocd-redis-secret-init
+    app.kubernetes.io/instance: argocd
+    app.kubernetes.io/component: redis-secret-init
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: argocd
+    app.kubernetes.io/version: "v3.4.3"
+  name: argocd-redis-secret-init
+  namespace: "argocd"
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    resourceNames:
+      - argocd-redis
+    verbs:
+      - get
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - create
+---
+# Source: argo-cd/templates/redis-secret-init/role.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation
+  labels:
+    helm.sh/chart: argo-cd-9.5.17
+    app.kubernetes.io/name: argocd-redis-secret-init
+    app.kubernetes.io/instance: argocd
+    app.kubernetes.io/component: redis-secret-init
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: argocd
+    app.kubernetes.io/version: "v3.4.3"
+  name: argocd-redis-secret-init
+  namespace: "argocd"
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    resourceNames:
+      - argocd-redis
+    verbs:
+      - get
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - create
+---
+# Source: argo-cd/templates/redis-secret-init/job.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: argocd-redis-secret-init
+  namespace: "argocd"
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation
+  labels:
+    helm.sh/chart: argo-cd-9.5.17
+    app.kubernetes.io/name: argocd-redis-secret-init
+    app.kubernetes.io/instance: argocd
+    app.kubernetes.io/component: redis-secret-init
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: argocd
+    app.kubernetes.io/version: "v3.4.3"
+spec:
+  ttlSecondsAfterFinished: 60
+  template:
+    metadata:
+      labels:
+        helm.sh/chart: argo-cd-9.5.17
+        app.kubernetes.io/name: argocd-redis-secret-init
+        app.kubernetes.io/instance: argocd
+        app.kubernetes.io/component: redis-secret-init
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/part-of: argocd
+        app.kubernetes.io/version: "v3.4.3"
+    spec:
+      containers:
+      - command:
+          - argocd
+          - admin
+          - redis-initial-password
+        image: quay.io/argoproj/argocd:v3.4.3
+        imagePullPolicy: IfNotPresent
+        name: secret-init
+        resources:
+          {}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+      restartPolicy: OnFailure
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: argocd-redis-secret-init
+              topologyKey: kubernetes.io/hostname
+      nodeSelector:
+        kubernetes.io/os: linux
+      serviceAccountName: argocd-redis-secret-init
+---
+# Source: argo-cd/templates/redis-secret-init/job.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: argocd-redis-secret-init
+  namespace: "argocd"
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation
+  labels:
+    helm.sh/chart: argo-cd-9.5.17
+    app.kubernetes.io/name: argocd-redis-secret-init
+    app.kubernetes.io/instance: argocd
+    app.kubernetes.io/component: redis-secret-init
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: argocd
+    app.kubernetes.io/version: "v3.4.3"
+spec:
+  ttlSecondsAfterFinished: 60
+  template:
+    metadata:
+      labels:
+        helm.sh/chart: argo-cd-9.5.17
+        app.kubernetes.io/name: argocd-redis-secret-init
+        app.kubernetes.io/instance: argocd
+        app.kubernetes.io/component: redis-secret-init
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/part-of: argocd
+        app.kubernetes.io/version: "v3.4.3"
+    spec:
+      containers:
+      - command:
+          - argocd
+          - admin
+          - redis-initial-password
+        image: quay.io/argoproj/argocd:v3.4.3
+        imagePullPolicy: IfNotPresent
+        name: secret-init
+        resources:
+          {}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+      restartPolicy: OnFailure
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: argocd-redis-secret-init
+              topologyKey: kubernetes.io/hostname
+      nodeSelector:
+        kubernetes.io/os: linux
+      serviceAccountName: argocd-redis-secret-init
+---
 # Source: argo-cd/templates/redis-secret-init/job.yaml
 apiVersion: batch/v1
 kind: Job
@@ -35268,6 +35630,94 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/part-of: argocd
     app.kubernetes.io/version: "v3.4.3"
+---
+# Source: argo-cd/templates/redis-secret-init/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+automountServiceAccountToken: true
+metadata:
+  name: argocd-redis-secret-init
+  namespace: "argocd"
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation
+  labels:
+    helm.sh/chart: argo-cd-9.5.17
+    app.kubernetes.io/name: argocd-redis-secret-init
+    app.kubernetes.io/instance: argocd
+    app.kubernetes.io/component: redis-secret-init
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: argocd
+    app.kubernetes.io/version: "v3.4.3"
+---
+# Source: argo-cd/templates/redis-secret-init/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+automountServiceAccountToken: true
+metadata:
+  name: argocd-redis-secret-init
+  namespace: "argocd"
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation
+  labels:
+    helm.sh/chart: argo-cd-9.5.17
+    app.kubernetes.io/name: argocd-redis-secret-init
+    app.kubernetes.io/instance: argocd
+    app.kubernetes.io/component: redis-secret-init
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: argocd
+    app.kubernetes.io/version: "v3.4.3"
+---
+# Source: argo-cd/templates/redis-secret-init/rolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation
+  labels:
+    helm.sh/chart: argo-cd-9.5.17
+    app.kubernetes.io/name: argocd-redis-secret-init
+    app.kubernetes.io/instance: argocd
+    app.kubernetes.io/component: redis-secret-init
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: argocd
+    app.kubernetes.io/version: "v3.4.3"
+  name: argocd-redis-secret-init
+  namespace: "argocd"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: argocd-redis-secret-init
+subjects:
+  - kind: ServiceAccount
+    name: argocd-redis-secret-init
+---
+# Source: argo-cd/templates/redis-secret-init/rolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation
+  labels:
+    helm.sh/chart: argo-cd-9.5.17
+    app.kubernetes.io/name: argocd-redis-secret-init
+    app.kubernetes.io/instance: argocd
+    app.kubernetes.io/component: redis-secret-init
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: argocd
+    app.kubernetes.io/version: "v3.4.3"
+  name: argocd-redis-secret-init
+  namespace: "argocd"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: argocd-redis-secret-init
+subjects:
+  - kind: ServiceAccount
+    name: argocd-redis-secret-init
 ---
 # Source: argo-cd/templates/redis-secret-init/rolebinding.yaml
 apiVersion: rbac.authorization.k8s.io/v1

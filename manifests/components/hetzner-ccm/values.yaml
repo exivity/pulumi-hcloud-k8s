@@ -9,3 +9,5 @@ additionalTolerations:
   - key: "node-role.kubernetes.io/control-plane"
     operator: "Equal"
     effect: "NoSchedule"
+rbac:
+  create: true
