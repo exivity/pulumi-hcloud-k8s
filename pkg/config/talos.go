@@ -14,9 +14,14 @@ type RegistriesConfig struct {
 
 // RegistryMirrorConfig configures a single mirror.
 type RegistryMirrorConfig struct {
-	Endpoints    []string `json:"endpoints"`
-	OverridePath bool     `json:"overridePath"`
-	SkipFallback bool     `json:"skipFallback"`
+	Endpoints    []RegistryMirrorEndpoint `json:"endpoints"`
+	SkipFallback bool                     `json:"skipFallback"`
+}
+
+// RegistryMirrorEndpoint defines a registry mirror endpoint.
+type RegistryMirrorEndpoint struct {
+	URL          string `json:"url"`
+	OverridePath bool   `json:"overridePath"`
 }
 
 // RegistryConfig for TLS & auth in container registries.
@@ -40,10 +45,10 @@ type RegistryAuthConfig struct {
 	IdentityToken string `json:"identityToken"`
 }
 
-// PEMEncodedCertificateAndKey is a base64-encoded certificate + key.
+// PEMEncodedCertificateAndKey is a PEM-encoded certificate + key.
 type PEMEncodedCertificateAndKey struct {
-	CRT string `json:"crt"`
-	Key string `json:"key"`
+	Cert string `json:"cert"`
+	Key  string `json:"key"`
 }
 
 // ClusterInlineManifest represents an inline Kubernetes manifest.

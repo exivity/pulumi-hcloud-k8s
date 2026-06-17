@@ -3,10 +3,12 @@ package core
 import (
 	"encoding/base64"
 	"fmt"
+	"sort"
 
 	core_config "github.com/exivity/pulumi-hcloud-k8s/pkg/config"
 	"github.com/exivity/pulumi-hcloud-k8s/pkg/hetzner/meta"
 	"github.com/exivity/pulumi-hcloud-k8s/pkg/talos/config/core"
+	"github.com/exivity/pulumi-hcloud-k8s/pkg/talos/config/registry"
 	"github.com/exivity/pulumi-hcloud-k8s/pkg/talos/config/volume"
 )
 
@@ -79,10 +81,16 @@ func NewNodeConfiguration(args *NodeConfigurationArgs) ([]string, error) {
 		configs = append(configs, vcYAML)
 	}
 
+	registryConfigs, err := newRegistryConfigs(args.Registries)
+	if err != nil {
+		return nil, err
+	}
+	configs = append(configs, registryConfigs...)
+
 	return configs, nil
 }
 
-func newMainTalosConfig(args *NodeConfigurationArgs) *core.TalosConfig { //nolint:funlen // lengthy function due to config mapping
+func newMainTalosConfig(args *NodeConfigurationArgs) *core.TalosConfig {
 	var adminKubeconfig *core.AdminKubeconfigConfig
 	if args.CertLifetime != nil {
 		adminKubeconfig = &core.AdminKubeconfigConfig{
@@ -197,8 +205,6 @@ func newMainTalosConfig(args *NodeConfigurationArgs) *core.TalosConfig { //nolin
 		})
 	}
 
-	configPatch.Machine.Registries = toRegistriesConfig(args.Registries)
-
 	return &configPatch
 }
 
@@ -224,64 +230,111 @@ func toTalosTaints(taints []core_config.Taint) string {
 	return t
 }
 
-func toRegistriesConfig(args *core_config.RegistriesConfig) *core.RegistriesConfig {
+func newRegistryConfigs(args *core_config.RegistriesConfig) ([]string, error) {
 	if args == nil {
-		return nil
+		return nil, nil
 	}
 
-	out := &core.RegistriesConfig{
-		Mirrors: map[string]core.RegistryMirrorConfig{},
-		Config:  map[string]core.RegistryConfig{},
+	mirrorConfigs, err := newMirrorConfigs(args.Mirrors)
+	if err != nil {
+		return nil, err
 	}
 
-	for key, mirror := range args.Mirrors {
-		out.Mirrors[key] = core.RegistryMirrorConfig{
-			Endpoints:    mirror.Endpoints,
-			OverridePath: mirror.OverridePath,
+	endpointConfigs, err := newEndpointConfigs(args.Config)
+	if err != nil {
+		return nil, err
+	}
+
+	configs := make([]string, 0, len(mirrorConfigs)+len(endpointConfigs))
+	configs = append(configs, mirrorConfigs...)
+	configs = append(configs, endpointConfigs...)
+
+	return configs, nil
+}
+
+func newMirrorConfigs(mirrors map[string]core_config.RegistryMirrorConfig) ([]string, error) {
+	keys := make([]string, 0, len(mirrors))
+	for key := range mirrors {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	configs := make([]string, 0, len(keys))
+	for _, key := range keys {
+		mirror := mirrors[key]
+		endpoints := make([]registry.RegistryEndpoint, len(mirror.Endpoints))
+		for i, ep := range mirror.Endpoints {
+			endpoints[i] = registry.RegistryEndpoint{
+				URL:          ep.URL,
+				OverridePath: ep.OverridePath,
+			}
+		}
+
+		cfg := &registry.RegistryMirrorConfig{
+			Name:         key,
+			Endpoints:    endpoints,
 			SkipFallback: mirror.SkipFallback,
 		}
+		yamlStr, err := cfg.YAML()
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate RegistryMirrorConfig YAML for %q: %w", key, err)
+		}
+		configs = append(configs, yamlStr)
 	}
 
-	for key, registry := range args.Config {
-		var tls *core.RegistryTLSConfig
-		if registry.TLS != nil {
-			var clientIdentity *core.PEMEncodedCertificateAndKey
-			if registry.TLS.ClientIdentity != nil {
-				clientIdentity = &core.PEMEncodedCertificateAndKey{
-					CRT: registry.TLS.ClientIdentity.CRT,
-					Key: registry.TLS.ClientIdentity.Key,
+	return configs, nil
+}
+
+func newEndpointConfigs(endpointCfgs map[string]core_config.RegistryConfig) ([]string, error) {
+	keys := make([]string, 0, len(endpointCfgs))
+	for key := range endpointCfgs {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	configs := make([]string, 0, len(keys)*2) //nolint:mnd // each entry can produce both a TLS and Auth config
+	for _, key := range keys {
+		regCfg := endpointCfgs[key]
+
+		if regCfg.TLS != nil {
+			var clientIdentity *registry.CertificateAndKey
+			if regCfg.TLS.ClientIdentity != nil {
+				clientIdentity = &registry.CertificateAndKey{
+					Cert: regCfg.TLS.ClientIdentity.Cert,
+					Key:  regCfg.TLS.ClientIdentity.Key,
 				}
 			}
 
-			tls = &core.RegistryTLSConfig{
+			tlsCfg := &registry.RegistryTLSConfig{
+				Name:               key,
 				ClientIdentity:     clientIdentity,
-				CA:                 registry.TLS.CA,
-				InsecureSkipVerify: registry.TLS.InsecureSkipVerify,
+				CA:                 regCfg.TLS.CA,
+				InsecureSkipVerify: regCfg.TLS.InsecureSkipVerify,
 			}
+			yamlStr, err := tlsCfg.YAML()
+			if err != nil {
+				return nil, fmt.Errorf("failed to generate RegistryTLSConfig YAML for %q: %w", key, err)
+			}
+			configs = append(configs, yamlStr)
 		}
 
-		var auth *core.RegistryAuthConfig
-		if registry.Auth != nil {
-			auth = &core.RegistryAuthConfig{
-				Username:      registry.Auth.Username,
-				Password:      registry.Auth.Password,
-				Auth:          registry.Auth.Auth,
-				IdentityToken: registry.Auth.IdentityToken,
+		if regCfg.Auth != nil {
+			authCfg := &registry.RegistryAuthConfig{
+				Name:          key,
+				Username:      regCfg.Auth.Username,
+				Password:      regCfg.Auth.Password,
+				Auth:          regCfg.Auth.Auth,
+				IdentityToken: regCfg.Auth.IdentityToken,
 			}
-		}
-
-		out.Config[key] = core.RegistryConfig{
-			TLS:  tls,
-			Auth: auth,
+			yamlStr, err := authCfg.YAML()
+			if err != nil {
+				return nil, fmt.Errorf("failed to generate RegistryAuthConfig YAML for %q: %w", key, err)
+			}
+			configs = append(configs, yamlStr)
 		}
 	}
 
-	// If both maps are empty, return nil to avoid serializing empty registries configuration
-	if len(out.Mirrors) == 0 && len(out.Config) == 0 {
-		return nil
-	}
-
-	return out
+	return configs, nil
 }
 
 func toInlineManifests(manifests []core_config.ClusterInlineManifest) []core.ClusterInlineManifest {

@@ -2,11 +2,13 @@ package core
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 
 	core_config "github.com/exivity/pulumi-hcloud-k8s/pkg/config"
 	"github.com/exivity/pulumi-hcloud-k8s/pkg/hetzner/meta"
 	"github.com/exivity/pulumi-hcloud-k8s/pkg/talos/config/core"
+	"github.com/exivity/pulumi-hcloud-k8s/pkg/talos/config/registry"
 	"github.com/exivity/pulumi-hcloud-k8s/pkg/talos/config/volume"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v3"
@@ -109,61 +111,65 @@ func Test_toTalosTaints(t *testing.T) {
 	}
 }
 
-func Test_toRegistriesConfig(t *testing.T) {
-	type args struct {
-		args *core_config.RegistriesConfig
-	}
+func Test_newRegistryConfigs(t *testing.T) {
 	tests := []struct {
-		name string
-		args args
-		want *core.RegistriesConfig
+		name    string
+		args    *core_config.RegistriesConfig
+		wantLen int
+		wantErr bool
+		verify  func(t *testing.T, configs []string)
 	}{
 		{
-			name: "nil input",
-			args: args{args: nil},
-			want: nil,
+			name:    "nil input",
+			args:    nil,
+			wantLen: 0,
+			wantErr: false,
 		},
 		{
 			name: "empty input",
-			args: args{args: &core_config.RegistriesConfig{
+			args: &core_config.RegistriesConfig{
 				Mirrors: map[string]core_config.RegistryMirrorConfig{},
 				Config:  map[string]core_config.RegistryConfig{},
-			}},
-			want: nil,
+			},
+			wantLen: 0,
+			wantErr: false,
 		},
 		{
 			name: "single mirror",
-			args: args{args: &core_config.RegistriesConfig{
+			args: &core_config.RegistriesConfig{
 				Mirrors: map[string]core_config.RegistryMirrorConfig{
 					"docker.io": {
-						Endpoints:    []string{"https://mirror.gcr.io"},
-						OverridePath: true,
+						Endpoints: []core_config.RegistryMirrorEndpoint{
+							{URL: "https://mirror.gcr.io", OverridePath: true},
+						},
 						SkipFallback: false,
 					},
 				},
 				Config: map[string]core_config.RegistryConfig{},
-			}},
-			want: &core.RegistriesConfig{
-				Mirrors: map[string]core.RegistryMirrorConfig{
-					"docker.io": {
-						Endpoints:    []string{"https://mirror.gcr.io"},
-						OverridePath: true,
-						SkipFallback: false,
-					},
-				},
-				Config: map[string]core.RegistryConfig{},
+			},
+			wantLen: 1,
+			wantErr: false,
+			verify: func(t *testing.T, configs []string) {
+				var mirrorCfg registry.RegistryMirrorConfig
+				err := yaml.Unmarshal([]byte(configs[0]), &mirrorCfg)
+				assert.NoError(t, err)
+				assert.Equal(t, "RegistryMirrorConfig", mirrorCfg.Kind)
+				assert.Equal(t, "docker.io", mirrorCfg.Name)
+				assert.Len(t, mirrorCfg.Endpoints, 1)
+				assert.Equal(t, "https://mirror.gcr.io", mirrorCfg.Endpoints[0].URL)
+				assert.True(t, mirrorCfg.Endpoints[0].OverridePath)
 			},
 		},
 		{
 			name: "single registry config with TLS and Auth",
-			args: args{args: &core_config.RegistriesConfig{
+			args: &core_config.RegistriesConfig{
 				Mirrors: map[string]core_config.RegistryMirrorConfig{},
 				Config: map[string]core_config.RegistryConfig{
 					"quay.io": {
 						TLS: &core_config.RegistryTLSConfig{
 							ClientIdentity: &core_config.PEMEncodedCertificateAndKey{
-								CRT: "crtdata",
-								Key: "keydata",
+								Cert: "crtdata",
+								Key:  "keydata",
 							},
 							CA:                 "ca-data",
 							InsecureSkipVerify: true,
@@ -176,41 +182,46 @@ func Test_toRegistriesConfig(t *testing.T) {
 						},
 					},
 				},
-			}},
-			want: &core.RegistriesConfig{
-				Mirrors: map[string]core.RegistryMirrorConfig{},
-				Config: map[string]core.RegistryConfig{
-					"quay.io": {
-						TLS: &core.RegistryTLSConfig{
-							ClientIdentity: &core.PEMEncodedCertificateAndKey{
-								CRT: "crtdata",
-								Key: "keydata",
-							},
-							CA:                 "ca-data",
-							InsecureSkipVerify: true,
-						},
-						Auth: &core.RegistryAuthConfig{
-							Username:      "user",
-							Password:      "pass",
-							Auth:          "authstr",
-							IdentityToken: "token",
-						},
-					},
-				},
+			},
+			wantLen: 2, // TLS + Auth
+			wantErr: false,
+			verify: func(t *testing.T, configs []string) {
+				// First config should be TLS
+				var tlsCfg registry.RegistryTLSConfig
+				err := yaml.Unmarshal([]byte(configs[0]), &tlsCfg)
+				assert.NoError(t, err)
+				assert.Equal(t, "RegistryTLSConfig", tlsCfg.Kind)
+				assert.Equal(t, "quay.io", tlsCfg.Name)
+				assert.Equal(t, "ca-data", tlsCfg.CA)
+				assert.True(t, tlsCfg.InsecureSkipVerify)
+				assert.Equal(t, "crtdata", tlsCfg.ClientIdentity.Cert)
+				assert.Equal(t, "keydata", tlsCfg.ClientIdentity.Key)
+
+				// Second config should be Auth
+				var authCfg registry.RegistryAuthConfig
+				err = yaml.Unmarshal([]byte(configs[1]), &authCfg)
+				assert.NoError(t, err)
+				assert.Equal(t, "RegistryAuthConfig", authCfg.Kind)
+				assert.Equal(t, "quay.io", authCfg.Name)
+				assert.Equal(t, "user", authCfg.Username)
+				assert.Equal(t, "pass", authCfg.Password)
 			},
 		},
 		{
 			name: "multiple mirrors and registries",
-			args: args{args: &core_config.RegistriesConfig{
+			args: &core_config.RegistriesConfig{
 				Mirrors: map[string]core_config.RegistryMirrorConfig{
 					"docker.io": {
-						Endpoints:    []string{"https://mirror1", "https://mirror2"},
-						OverridePath: false,
+						Endpoints: []core_config.RegistryMirrorEndpoint{
+							{URL: "https://mirror1"},
+							{URL: "https://mirror2"},
+						},
 						SkipFallback: true,
 					},
 					"gcr.io": {
-						Endpoints:    []string{"https://gcr-mirror"},
-						OverridePath: true,
+						Endpoints: []core_config.RegistryMirrorEndpoint{
+							{URL: "https://gcr-mirror", OverridePath: true},
+						},
 						SkipFallback: false,
 					},
 				},
@@ -233,46 +244,36 @@ func Test_toRegistriesConfig(t *testing.T) {
 						Auth: nil,
 					},
 				},
-			}},
-			want: &core.RegistriesConfig{
-				Mirrors: map[string]core.RegistryMirrorConfig{
-					"docker.io": {
-						Endpoints:    []string{"https://mirror1", "https://mirror2"},
-						OverridePath: false,
-						SkipFallback: true,
-					},
-					"gcr.io": {
-						Endpoints:    []string{"https://gcr-mirror"},
-						OverridePath: true,
-						SkipFallback: false,
-					},
-				},
-				Config: map[string]core.RegistryConfig{
-					"docker.io": {
-						TLS: nil,
-						Auth: &core.RegistryAuthConfig{
-							Username:      "dockeruser",
-							Password:      "dockerpass",
-							Auth:          "docker-auth",
-							IdentityToken: "docker-token",
-						},
-					},
-					"gcr.io": {
-						TLS: &core.RegistryTLSConfig{
-							ClientIdentity:     nil,
-							CA:                 "gcr-ca",
-							InsecureSkipVerify: false,
-						},
-						Auth: nil,
-					},
-				},
+			},
+			wantLen: 4, // 2 mirrors + 1 auth (docker.io) + 1 TLS (gcr.io)
+			wantErr: false,
+			verify: func(t *testing.T, configs []string) {
+				// Mirrors come first (sorted by key), then TLS/Auth configs (sorted by key)
+				// docker.io mirror
+				assert.True(t, strings.Contains(configs[0], "docker.io"))
+				assert.True(t, strings.Contains(configs[0], "RegistryMirrorConfig"))
+				// gcr.io mirror
+				assert.True(t, strings.Contains(configs[1], "gcr.io"))
+				assert.True(t, strings.Contains(configs[1], "RegistryMirrorConfig"))
+				// docker.io auth
+				assert.True(t, strings.Contains(configs[2], "docker.io"))
+				assert.True(t, strings.Contains(configs[2], "RegistryAuthConfig"))
+				// gcr.io TLS
+				assert.True(t, strings.Contains(configs[3], "gcr.io"))
+				assert.True(t, strings.Contains(configs[3], "RegistryTLSConfig"))
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := toRegistriesConfig(tt.args.args); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("toRegistriesConfig() = %v, want %v", got, tt.want)
+			got, err := newRegistryConfigs(tt.args)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("newRegistryConfigs() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			assert.Len(t, got, tt.wantLen)
+			if tt.verify != nil {
+				tt.verify(t, got)
 			}
 		})
 	}
@@ -638,20 +639,23 @@ func Test_newMainTalosConfig(t *testing.T) {
 			},
 		},
 		{
-			name: "with registries",
+			name: "registries not in main config",
 			args: &NodeConfigurationArgs{
 				ServerNodeType: meta.WorkerNode,
 				Subnet:         "10.0.0.0/24",
 				PodSubnets:     "10.244.0.0/16",
 				Registries: &core_config.RegistriesConfig{
 					Mirrors: map[string]core_config.RegistryMirrorConfig{
-						"docker.io": {Endpoints: []string{"https://mirror.gcr.io"}},
+						"docker.io": {Endpoints: []core_config.RegistryMirrorEndpoint{
+							{URL: "https://mirror.gcr.io"},
+						}},
 					},
 				},
 			},
 			verify: func(t *testing.T, cfg *core.TalosConfig) {
-				assert.NotNil(t, cfg.Machine.Registries)
-				assert.Contains(t, cfg.Machine.Registries.Mirrors, "docker.io")
+				// Registries should no longer be embedded in the main TalosConfig;
+				// they are now emitted as separate config documents.
+				assert.Nil(t, cfg.Machine.Registries)
 			},
 		},
 	}
@@ -724,6 +728,54 @@ func TestNewNodeConfiguration(t *testing.T) {
 				assert.NoError(t, err)
 				assert.Equal(t, "EPHEMERAL", ephemeralConfig.Name)
 				assert.Equal(t, "luks2", ephemeralConfig.Encryption.Provider)
+			},
+		},
+		{
+			name: "with registries",
+			args: &NodeConfigurationArgs{
+				ServerNodeType: meta.WorkerNode,
+				Subnet:         "10.0.0.0/24",
+				PodSubnets:     "10.244.0.0/16",
+				Registries: &core_config.RegistriesConfig{
+					Mirrors: map[string]core_config.RegistryMirrorConfig{
+						"docker.io": {
+							Endpoints: []core_config.RegistryMirrorEndpoint{
+								{URL: "https://mirror.gcr.io"},
+							},
+						},
+					},
+					Config: map[string]core_config.RegistryConfig{
+						"mirror.gcr.io": {
+							Auth: &core_config.RegistryAuthConfig{
+								Username: "user",
+								Password: "pass",
+							},
+						},
+					},
+				},
+			},
+			wantLen: 3, // 1 main + 1 mirror + 1 auth
+			wantErr: false,
+			verify: func(t *testing.T, configs []string) {
+				// First config is the main Talos config
+				var talosConfig core.TalosConfig
+				err := yaml.Unmarshal([]byte(configs[0]), &talosConfig)
+				assert.NoError(t, err)
+				assert.Nil(t, talosConfig.Machine.Registries)
+
+				// Second config is the mirror
+				var mirrorCfg registry.RegistryMirrorConfig
+				err = yaml.Unmarshal([]byte(configs[1]), &mirrorCfg)
+				assert.NoError(t, err)
+				assert.Equal(t, "RegistryMirrorConfig", mirrorCfg.Kind)
+				assert.Equal(t, "docker.io", mirrorCfg.Name)
+
+				// Third config is the auth
+				var authCfg registry.RegistryAuthConfig
+				err = yaml.Unmarshal([]byte(configs[2]), &authCfg)
+				assert.NoError(t, err)
+				assert.Equal(t, "RegistryAuthConfig", authCfg.Kind)
+				assert.Equal(t, "mirror.gcr.io", authCfg.Name)
 			},
 		},
 	}
